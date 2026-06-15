@@ -1,0 +1,440 @@
+[
+  {
+    "t": "DBG",
+    "full": "Dicing Before Grinding",
+    "cn": "先划片后减薄",
+    "d": "在背面磨削之前将硅片正面切割出一定深度的切口，然后再进行背面磨削，避免减薄引起的翘曲"
+  },
+  {
+    "t": "DBT",
+    "full": "Dicing By Thinning",
+    "cn": "减薄划片",
+    "d": "先用机械或化学方式切割出切口，然后磨削减薄，用ADPE腐蚀去除剩余加工量实现裸芯片自动分离"
+  },
+  {
+    "t": "ADPE",
+    "full": "Atmospheric Downstream Plasma Etching",
+    "cn": "常压下游等离子腐蚀",
+    "d": "在DBT工艺中用于腐蚀去除剩余加工量，实现裸芯片自动分离"
+  },
+  {
+    "t": "CMP",
+    "full": "Chemical Mechanical Polishing",
+    "cn": "化学机械抛光",
+    "d": "利用化学腐蚀和机械磨削相结合的方法对硅片进行减薄抛光，抛光液PH值控制在9-11之间"
+  },
+  {
+    "t": "PECE",
+    "full": "Plasma-Enhanced Chemical Etching",
+    "cn": "等离子增强化学腐蚀",
+    "d": "一种硅片减薄技术，利用等离子体增强化学腐蚀效果"
+  },
+  {
+    "t": "DPW",
+    "full": "Die Per Wafer",
+    "cn": "晶圆可切割晶粒数",
+    "d": "一片晶圆可以切出多少芯片的表征参数，与圆周率π密切相关"
+  },
+  {
+    "t": "UBM",
+    "full": "Under Bump Metallurgy",
+    "cn": "凸点下金属层",
+    "d": "通过电子束蒸发形成Ti和Cu层，再电镀铅锡合金层"
+  },
+  {
+    "t": "T/C",
+    "full": "Temperature Cycle",
+    "cn": "温度循环测试",
+    "d": "可靠性测试项目，测试热胀冷缩的耐久性，反复1000次"
+  },
+  {
+    "t": "T/S",
+    "full": "Thermal Shock",
+    "cn": "热冲击测试",
+    "d": "可靠性测试项目，测试抗热冲击的能力"
+  },
+  {
+    "t": "HTST",
+    "full": "High Temperature Storage Test",
+    "cn": "高温储藏测试",
+    "d": "可靠性测试项目，长时间暴露在高温环境下的耐久性试验"
+  },
+  {
+    "t": "T/H",
+    "full": "Temperature Humidity",
+    "cn": "温湿度测试",
+    "d": "可靠性测试项目，在高温潮湿环境下的耐久性试验"
+  },
+  {
+    "t": "PCT",
+    "full": "Pressure Cooker Test",
+    "cn": "高压蒸煮测试",
+    "d": "可靠性测试项目，测试产品的电路通断性能"
+  },
+  {
+    "t": "PPV",
+    "full": "Production Process Verification",
+    "cn": "生产过程验证",
+    "d": "可靠性测试项目，测试产品的整体性能"
+  },
+  {
+    "t": "SOP",
+    "full": "Small Outline Package",
+    "cn": "小外形封装",
+    "d": "表面贴装型封装，引脚从两侧引出，内引脚为邦定引线，外引脚为翼形引线"
+  },
+  {
+    "t": "BGA",
+    "full": "Ball Grid Array",
+    "cn": "球栅阵列封装",
+    "d": "外引脚为锡球阵列分布，引脚间距大、共面性好，特别适合高频电路"
+  },
+  {
+    "t": "TBGA",
+    "full": "Tape Ball Grid Array",
+    "cn": "载带球栅阵列封装",
+    "d": "BGA封装类型之一，采用载带基板，球间距0.65~1mm"
+  },
+  {
+    "t": "uBGA",
+    "full": "Micro Ball Grid Array",
+    "cn": "微型球栅阵列封装",
+    "d": "BGA封装类型之一，超微型球栅阵列，球间距0.5mm"
+  },
+  {
+    "t": "FBGA",
+    "full": "Fine Pitch Ball Grid Array",
+    "cn": "细间距球栅阵列封装",
+    "d": "BGA封装类型之一，细间距球栅阵列，球间距1mm"
+  },
+  {
+    "t": "LGA",
+    "full": "Land Grid Array",
+    "cn": "栅格阵列封装",
+    "d": "BGA封装类型之一，采用金属触点代替焊球，球间距0.5mm"
+  },
+  {
+    "t": "FC",
+    "full": "Flip Chip",
+    "cn": "倒装焊接",
+    "d": "将芯片电极(凸点)面朝下放置，通过加热加压使凸点与基板焊区互连，适用于WLCSP和BGA封装"
+  },
+  {
+    "t": "WB",
+    "full": "Wire Bonding",
+    "cn": "引线键合",
+    "d": "通过极细的金属丝(18~50μm)将芯片电极与引线框架互连，占领约90%的互连市场"
+  },
+  {
+    "t": "QFP",
+    "full": "Quad Flat Package",
+    "cn": "四方扁平封装",
+    "d": "正方形封装，引脚从四边引出，引脚间距0.4~1mm，翼形引脚"
+  },
+  {
+    "t": "LCC",
+    "full": "Leadless Chip Carrier",
+    "cn": "无引线芯片载体",
+    "d": "采用金丝球焊工艺的封装类型之一，无引脚陶瓷封装"
+  },
+  {
+    "t": "PBGA",
+    "full": "Plastic BGA",
+    "cn": "塑料BGA",
+    "d": "基板一般为2~4层有机材料构成的多层板"
+  },
+  {
+    "t": "WLCSP",
+    "full": "Wafer Level Chip Size Packaging",
+    "cn": "晶圆级芯片尺寸封装",
+    "d": "对整片晶圆进行封装测试后再切割得到单个成品芯片，封装后尺寸与裸片一致"
+  },
+  {
+    "t": "PoP",
+    "full": "Package on Package",
+    "cn": "叠层封装",
+    "d": "将多个封装在垂直方向上堆叠的微组装技术"
+  },
+  {
+    "t": "MCM",
+    "full": "Multi-Chip Module",
+    "cn": "多芯片模块",
+    "d": "将多个芯片组装在同一基板上的微组装技术"
+  },
+  {
+    "t": "PCB",
+    "full": "Printed Circuit Board",
+    "cn": "印刷电路板",
+    "d": "IC封装中用于承载和连接芯片的基板"
+  },
+  {
+    "t": "LED",
+    "full": "Light Emitting Diode",
+    "cn": "发光二极管",
+    "d": "半导体发光器件，LED粘片机用于将管芯电极与引线框架连接"
+  },
+  {
+    "t": "TAB",
+    "full": "Tape Automatic Bonding",
+    "cn": "载带自动焊",
+    "d": "将IC芯片键合到组件基板上的焊接技术，包括ILB和OLB两个步骤"
+  },
+  {
+    "t": "ILB",
+    "full": "Inner Lead Bonding",
+    "cn": "内部导线键合",
+    "d": "将内部TAB线头键合到IC芯片I/O电极上的过程，有列式和单点两种方式"
+  },
+  {
+    "t": "OLB",
+    "full": "Outer Lead Bonding",
+    "cn": "外部导线键合",
+    "d": "将载带铜箔引线与基板焊区互连，可采用批量群焊、单个元件群焊和逐点焊接"
+  },
+  {
+    "t": "FR-4",
+    "full": "Flame Retardant 4",
+    "cn": "阻燃4型基板",
+    "d": "OLB外部导线键合可在FR-4及陶瓷基板上完成，常用的PCB基板材料"
+  },
+  {
+    "t": "SMT",
+    "full": "Surface Mount Technology",
+    "cn": "表面贴装技术",
+    "d": "传统的表面贴装技术，OLB清洗工序可采用SMT中的清洗工艺"
+  },
+  {
+    "t": "WBLP",
+    "full": "Wire Bonding Layer Package",
+    "cn": "引线式叠层封装",
+    "d": "采用引线连接及研磨减薄技术将裸芯片叠放后引线连接，由BGA端子引出"
+  },
+  {
+    "t": "SRAM",
+    "full": "Static Random Access Memory",
+    "cn": "静态随机存取存储器",
+    "d": "WBLP叠层封装的典型应用存储芯片"
+  },
+  {
+    "t": "TSV",
+    "full": "Through Silicon Via",
+    "cn": "硅通孔",
+    "d": "在硅片穿孔后的通孔中填充金属(通常是Cu)进行垂直方向互连"
+  },
+  {
+    "t": "CMOS",
+    "full": "Complementary Metal-Oxide-Semiconductor",
+    "cn": "互补金属氧化物半导体",
+    "d": "TSV最先的3D应用是CMOS图像传感器，与SiGe、GaAs工艺互不兼容"
+  },
+  {
+    "t": "CIS",
+    "full": "CMOS Image Sensor",
+    "cn": "CMOS图像传感器",
+    "d": "TSV硅通孔最先的3D应用，随后是DRAM和异质集成"
+  },
+  {
+    "t": "DRAM",
+    "full": "Dynamic Random Access Memory",
+    "cn": "动态随机存取存储器",
+    "d": "TSV硅通孔的应用之一，继CIS之后的重要3D应用领域"
+  },
+  {
+    "t": "DRIE",
+    "full": "Deep Reactive Ion Etching",
+    "cn": "深反应离子刻蚀",
+    "d": "采用氯和氟等离子体刻蚀近似垂直壁面的深层结构，目前已能刻蚀200μm深度"
+  },
+  {
+    "t": "PAECE",
+    "full": "Plasma Assisted Electrochemical Etching",
+    "cn": "等离子辅助电化学刻蚀",
+    "d": "TSV打孔方式之一，最小孔径4.4μm，深宽比可达109，适用于N型硅片"
+  },
+  {
+    "t": "I/O",
+    "full": "Input/Output",
+    "cn": "输入/输出",
+    "d": "芯片的输入输出引线，WLCSP的再分配与凸点技术为其I/O引线的关键技术"
+  },
+  {
+    "t": "SOC",
+    "full": "System on Chip",
+    "cn": "系统级芯片",
+    "d": "将各种功能集成在单一芯片上，但不能融合互不兼容的工艺技术"
+  },
+  {
+    "t": "MPU",
+    "full": "Microprocessor Unit",
+    "cn": "微处理器单元",
+    "d": "SOC通常将MPU、DSP、图像处理、存储等集成在单一芯片上"
+  },
+  {
+    "t": "DSP",
+    "full": "Digital Signal Processor",
+    "cn": "数字信号处理器",
+    "d": "SOC/SIP中集成的功能模块，用于数字信号处理"
+  },
+  {
+    "t": "SiGe",
+    "full": "Silicon Germanium",
+    "cn": "硅锗",
+    "d": "与CMOS互不兼容的半导体工艺技术，SIP可将其融合在同一单元内"
+  },
+  {
+    "t": "GaAs",
+    "full": "Gallium Arsenide",
+    "cn": "砷化镓",
+    "d": "与CMOS互不兼容的半导体工艺技术，SIP可将其融合在同一单元内"
+  },
+  {
+    "t": "SIP",
+    "full": "System in Package",
+    "cn": "系统级封装",
+    "d": "在一个模块内提供完整系统，可融合CMOS/GaAs/SiGe等互不兼容的半导体技术"
+  },
+  {
+    "t": "ASIC",
+    "full": "Application Specific Integrated Circuit",
+    "cn": "专用集成电路",
+    "d": "SIP中集成的功能模块，如ASIC+存储器组合"
+  },
+  {
+    "t": "PDA",
+    "full": "Personal Digital Assistant",
+    "cn": "个人数字助理",
+    "d": "SIP市场目标之一，面向无线通信、PDA装置和消费类产品"
+  },
+  {
+    "t": "COF",
+    "full": "Chip on Film",
+    "cn": "晶粒软膜构装",
+    "d": "将芯片直接安装在柔性PCB上，集成度较高，挠折性和厚度优于其他技术"
+  },
+  {
+    "t": "FPC",
+    "full": "Flexible Printed Circuit",
+    "cn": "柔性印刷电路板",
+    "d": "COF结构类似于单层板的FPC，一层基膜加一层铜"
+  },
+  {
+    "t": "MEMS",
+    "full": "Micro-Electro-Mechanical System",
+    "cn": "微电子机械系统",
+    "d": "具有信号处理能力和对外部世界的感知和执行功能，特征尺寸至微米/纳米级"
+  },
+  {
+    "t": "DMD",
+    "full": "Digital Micro Mirror Device",
+    "cn": "数字微镜器件",
+    "d": "MEMS执行器的一种，用于数字微镜阵列"
+  },
+  {
+    "t": "RF",
+    "full": "Radio Frequency",
+    "cn": "射频",
+    "d": "MEMS中的RF开关，属于执行MEMS类型"
+  },
+  {
+    "t": "LIGA",
+    "full": "Lithographie Galvanoformung Abformung",
+    "cn": "深度X射线刻蚀+电铸+铸膜",
+    "d": "MEMS加工技术，高宽比可达100"
+  },
+  {
+    "t": "PMMA",
+    "full": "Polymethyl Methacrylate",
+    "cn": "聚甲基丙烯酸甲酯",
+    "d": "LIGA技术中使用的光刻胶材料"
+  },
+  {
+    "t": "PLCC",
+    "full": "Plastic Leaded Chip Carrier",
+    "cn": "塑料有引线芯片载体",
+    "d": "钩形引脚封装，属于SMD封装形式"
+  },
+  {
+    "t": "PTH",
+    "full": "Pin Through Hole",
+    "cn": "通孔插装",
+    "d": "引脚间距一般为2.54mm(100mil)，DIP属于此类"
+  },
+  {
+    "t": "DIP",
+    "full": "Dual In line Package",
+    "cn": "双列直插式封装",
+    "d": "PTH封装，两列引脚间距7.62mm(300mil)或15.24mm(600mil)"
+  },
+  {
+    "t": "SMD",
+    "full": "Surface Mount Device",
+    "cn": "表面安装器件",
+    "d": "I/O电极有翼形(SOT/SOP/QFP)、钩形(SOJ/PLCC)和球形(BGA/CSP)三种引脚形式"
+  },
+  {
+    "t": "LCCC",
+    "full": "Leadless Ceramic Chip Carrier",
+    "cn": "无引线陶瓷芯片载体",
+    "d": "SMD无引脚形式封装"
+  },
+  {
+    "t": "SOT",
+    "full": "Small Outline Transistor",
+    "cn": "小外形晶体管封装",
+    "d": "翼形引脚封装，SMD中翼形引脚用于SOT/SOP/QFP封装"
+  },
+  {
+    "t": "SOJ",
+    "full": "Small Outline J-lead",
+    "cn": "J形引脚小外形封装",
+    "d": "钩形引脚封装，SMD中钩形引脚用于SOJ/PLCC封装"
+  },
+  {
+    "t": "CSP",
+    "full": "Chip Scale Package",
+    "cn": "芯片级封装",
+    "d": "球形引脚封装，SMD中球形引脚用于BGA/CSP/Flip Chip封装"
+  },
+  {
+    "t": "AGV",
+    "full": "Automated Guided Vehicle",
+    "cn": "自动导引车",
+    "d": "封装生产工厂中用于物料传输的自动小车，实验工厂使用人工传输"
+  },
+  {
+    "t": "Cu",
+    "full": "Copper",
+    "cn": "铜",
+    "d": "TSV通孔填充和键合中常用的金属材料，Cu-Cu直接键合是TSV的重要互连技术"
+  },
+  {
+    "t": "FEOL",
+    "full": "Front End Of Line",
+    "cn": "前道互连",
+    "d": "在IC布线工艺开始之前制作的TSV，通孔在所有CMOS工艺开始之前在空白硅晶圆上制造，导电材料为多晶硅(可承受>1000℃热冲击)"
+  },
+  {
+    "t": "BEOL",
+    "full": "Back End Of Line",
+    "cn": "后道互连",
+    "d": "在金属布线工艺过程中在IC制造厂中实现的TSV，互连层是拥有不同介质和金属层(钨或铜)的复杂混合体"
+  },
+  {
+    "t": "VR",
+    "full": "Virtual Reality",
+    "cn": "虚拟现实",
+    "d": "IC封装工厂模拟系统中使用的虚拟现实技术，可模拟工厂设备操作、生产运行和物流传输"
+  },
+  {
+    "t": "SiO2",
+    "full": "Silicon Dioxide",
+    "cn": "二氧化硅",
+    "d": "MEMS牺牲层技术中常用的牺牲层材料，可用HF腐蚀去除，释放微机构"
+  },
+  {
+    "t": "C4",
+    "full": "Controlled Collapse Chip Connection",
+    "cn": "可控塌陷芯片连接",
+    "d": "IBM开发的倒装焊凸点技术，通过焊料凸点实现芯片与基板的电连接，是WLCSP和SIP的关键互连技术"
+  }
+]

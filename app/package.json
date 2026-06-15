@@ -1,0 +1,20 @@
+{
+  "name": "pigeonlib",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "PigeonLib — 可加载 .pigeon 课程包的学习平台",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:course": "node ../tools/build-pigeon.mjs ic-packaging"
+  },
+  "devDependencies": {
+    "node-html-parser": "^6.1.13",
+    "vite": "^6.0.7"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  }
+}
