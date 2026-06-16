@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "demo-course",
+  "title": "示例课程·解耦验证",
+  "subtitle": "证明 PigeonLib 可加载任意 .pigeon 内容",
+  "author": "PigeonLib",
+  "version": "1.0",
+  "stats": { "chapters": 1, "knowledgePoints": 2, "questions": 4 },
+  "chapters": [
+    {
+      "id": "1",
+      "title": "第1章 解耦验证",
+      "tabLabel": "第1章",
+      "sections": [
+        {
+          "id": "1.1",
+          "title": "第1.1节 内容渲染验证",
+          "knowledgePoints": [
+            { "id": "1-1-1", "title": "块类型渲染" },
+            { "id": "1-1-2", "title": "题型与术语" }
+          ]
+        }
+      ]
+    }
+  ]
+}
