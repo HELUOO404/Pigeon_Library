@@ -49,8 +49,10 @@ export function submitQuiz(qid) {
     const kpId = card?.id.replace('kp-', '') || '';
     const options = Array.from(item.querySelectorAll('.quiz-opt span')).map((el) => getCleanText(el));
     wrongbook.addWrongQuestion({
-      id: `quiz-${qid}`,
-      type: 'single',
+      // 用题库 id 作为错题 key:同一道题在小节小测与章节考试里共享同一 id,
+      // 错题本(按 id 去重)因此不再把它记成两条。
+      id: qid,
+      type: q.type || 'single',
       chapter: kpId.split('-')[0],
       question: getCleanText(item.querySelector('.quiz-q')),
       options,

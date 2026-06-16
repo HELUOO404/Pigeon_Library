@@ -25,15 +25,30 @@ dist-courses/        打包产物 *.pigeon
 docs/                pigeon-format.md(格式规范) / ai-course-authoring-prompt.md(给AI的制作提示词) / 首页布局参考.md
 ```
 
+## 最快上手
+
+**双击仓库根目录的 `启动PigeonLib.bat`** —— 它会自动(首次)安装依赖、打包内置课程、启动本地服务器,并打开浏览器。
+
+> ⚠️ 不能直接双击 `app/index.html`(`file://`)打开:Chrome 在 `file://` 下禁止 ES 模块加载与本地 `fetch`,页面无法渲染。本站必须经由一个 HTTP 源访问 —— 启动器(或下面的 `npm run dev`)就是为此提供本地服务器。
+
 ## 开发 / 构建 / 部署
 
 ```bash
 cd app
 npm install
-npm run dev        # 本地开发:http://localhost:5173/index.html
-npm run build      # 产出静态站点到 app/dist/(含 dist/courses/ic-packaging.pigeon)
+npm run dev        # 本地开发:http://localhost:5173/index.html(自动打开浏览器)
+npm run build      # 产出静态站点到 app/dist/
 npm run preview    # 预览生产构建
 ```
+
+**构建顺序(重要)**:`app/dist/` 里的内置课程是构建时从 `dist-courses/ic-packaging.pigeon` 拷入的。若该文件不存在,`npm run build` 仍会成功,但产物里**没有内置课程**(运行时 404)。所以首次构建前请先打包课程:
+
+```bash
+node tools/build-pigeon.mjs ic-packaging   # 在仓库根运行 → 产出 dist-courses/ic-packaging.pigeon
+cd app && npm run build
+```
+
+(`启动PigeonLib.bat` 已自动处理这一步。)
 
 部署:把 `app/dist/` 整个目录交给任意静态服务器(nginx 等)即可上线。
 

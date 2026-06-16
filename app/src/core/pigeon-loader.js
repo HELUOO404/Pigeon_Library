@@ -38,9 +38,68 @@ function mimeFor(path) {
   return MIME[ext] || 'application/octet-stream';
 }
 
+// 把字节转成 base64 data URL。与 Blob URL 不同,data URL 不依赖对象生命周期,
+// revoke() 后仍可用、可存入 IndexedDB,适合做首页课程卡封面缩略图。
+function bytesToDataUrl(bytes, mime) {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
 // zip 内路径统一为不带前导 ./ 的正斜杠形式,便于按相对路径查找。
 function normalize(path) {
   return path.replace(/\\/g, '/').replace(/^\.?\//, '');
+}
+
+// 课程 JSON 允许写成 JSONC:加载时剥离 `//` 行注释、`/* */` 块注释,并容忍尾随逗号。
+// 这样课程文件可以带中文注释、对人类友好,运行时仍按标准 JSON 解析。
+// 两个函数都"字符串感知"地逐字符扫描,绝不误删字符串内的 // 或 http:// 等内容。
+function stripJsonComments(text) {
+  let out = '';
+  let inStr = false, esc = false, inLine = false, inBlock = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (inLine) { if (c === '\n') { inLine = false; out += c; } continue; }
+    if (inBlock) { if (c === '*' && n === '/') { inBlock = false; i++; } continue; }
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === '/' && n === '/') { inLine = true; i++; continue; }
+    if (c === '/' && n === '*') { inBlock = true; i++; continue; }
+    out += c;
+  }
+  return out;
+}
+
+function stripTrailingCommas(text) {
+  let out = '';
+  let inStr = false, esc = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === ',') {
+      let j = i + 1;
+      while (j < text.length && /\s/.test(text[j])) j++;
+      if (text[j] === '}' || text[j] === ']') continue; // 丢弃 } / ] 前的尾随逗号
+    }
+    out += c;
+  }
+  return out;
 }
 
 function parseJSON(files, name, errCode) {
@@ -50,10 +109,65 @@ function parseJSON(files, name, errCode) {
     return null;
   }
   try {
-    return JSON.parse(strFromU8(entry));
+    return JSON.parse(stripTrailingCommas(stripJsonComments(strFromU8(entry))));
   } catch (e) {
     throw new PigeonError(errCode || 'bad-json', `${name} 不是合法 JSON:${e.message}`);
   }
+}
+
+// 题库引用模型归一。
+// 新版 quiz.json 用 `questionBank` 把每道题定义一次,再在 sectionQuizzes / examQuestions 里用 id 引用,
+// 避免"一题多处"重复。这里把引用解析回渲染器期望的内联结构:
+//   sectionQuizzes[kpId] -> [{ qid, type, q, options, ans, exp }]
+//   examQuestions        -> [{ id, chapter, type, question, options, answer, explain, items?, left?, right? }]
+// 没有 questionBank 时,视为旧版内联格式原样返回(向后兼容,旧课程包仍可加载)。
+function normalizeQuiz(quiz) {
+  if (!quiz || typeof quiz !== 'object') return { sectionQuizzes: {}, examQuestions: [] };
+  const bank = quiz.questionBank;
+  if (!bank || typeof bank !== 'object') {
+    return {
+      sectionQuizzes: quiz.sectionQuizzes || {},
+      examQuestions: Array.isArray(quiz.examQuestions) ? quiz.examQuestions : [],
+    };
+  }
+
+  const sectionQuizzes = {};
+  for (const [kpId, ids] of Object.entries(quiz.sectionQuizzes || {})) {
+    sectionQuizzes[kpId] = (Array.isArray(ids) ? ids : [])
+      .map((id) => {
+        const q = bank[id];
+        if (!q) return null;
+        return { qid: id, type: q.type, q: q.stem, options: q.options, ans: q.answer, exp: q.explain };
+      })
+      .filter(Boolean);
+  }
+
+  const toExam = (id, chapter) => {
+    const q = bank[id];
+    if (!q) return null;
+    return {
+      id, chapter: String(chapter ?? q.chapter ?? ''), type: q.type,
+      question: q.stem, options: q.options, answer: q.answer, explain: q.explain,
+      items: q.items, left: q.left, right: q.right,
+    };
+  };
+
+  let examQuestions = [];
+  const exam = quiz.examQuestions;
+  if (exam && !Array.isArray(exam) && typeof exam === 'object') {
+    // { 章: [题id] }
+    for (const [chapter, ids] of Object.entries(exam)) {
+      for (const id of (Array.isArray(ids) ? ids : [])) {
+        const item = toExam(id, chapter);
+        if (item) examQuestions.push(item);
+      }
+    }
+  } else if (Array.isArray(exam)) {
+    // 也接受扁平数组(题 id 字符串或已内联的对象)
+    examQuestions = exam.map((it) => (typeof it === 'string' ? toExam(it) : it)).filter(Boolean);
+  }
+
+  return { sectionQuizzes, examQuestions };
 }
 
 /**
@@ -99,7 +213,7 @@ export function parsePigeon(buffer) {
   }
 
   // 可选文件
-  const quiz = parseJSON(files, 'quiz.json') || { sectionQuizzes: {}, examQuestions: [] };
+  const quiz = normalizeQuiz(parseJSON(files, 'quiz.json'));
   const glossary = parseJSON(files, 'glossary.json') || [];
 
   // 图片转 Blob URL,建立 相对路径 -> objectURL 映射。
@@ -115,9 +229,14 @@ export function parsePigeon(buffer) {
   }
 
   // 封面单独取一份(可能也在 imageMap 里)。
+  // coverUrl 是 Blob URL(随 revoke 失效,供学习页等长期持有场景);
+  // coverDataUrl 是 base64(不随 revoke 失效,供首页卡片 / 本地存储)。
   let coverUrl = null;
+  let coverDataUrl = null;
   if (manifest.cover) {
-    coverUrl = imageMap[normalize(manifest.cover)] || null;
+    const coverPath = normalize(manifest.cover);
+    coverUrl = imageMap[coverPath] || null;
+    if (files[coverPath]) coverDataUrl = bytesToDataUrl(files[coverPath], mimeFor(coverPath));
   }
 
   /**
@@ -136,6 +255,7 @@ export function parsePigeon(buffer) {
     quiz,
     glossary,
     coverUrl,
+    coverDataUrl,
     imageCount,
     resolveAsset,
     /** 释放全部 Blob URL。卸载课程时必须调用。 */

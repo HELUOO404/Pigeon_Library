@@ -1,4 +1,13 @@
+// manifest.json — 课程元信息 + 章节索引树
+// schemaVersion 固定 1;id 课程唯一标识;title 课程名;subtitle 副标题
+// author/version 作者与版本
+// cover 封面图相对路径(如 cover.png);coverText 无封面图时显示在封面的文字(二选一)
+// stats 首页统计 {chapters 章数, knowledgePoints 知识点数, questions 题数}
+// chapters[] 章 → sections[] 节 → knowledgePoints[] 知识点
+//   章 id 如 "4";节 id 如 "4.1";知识点 id 如 "4-1-1";章可选 tabLabel(顶栏文案)
+
 {
+  "cover": "cover.png",
   "schemaVersion": 1,
   "id": "ic-packaging",
   "title": "IC封装技术",

@@ -1,3 +1,12 @@
+// content.json — 知识点正文(类型化块)
+// overviews:        { 节id:      { title, blocks[] } }   每节开头的概述卡
+// knowledgePoints:  { 知识点id:  { title, blocks[] } }   知识点正文
+// blocks[] 每块 { type, ... },type 取值:
+//   paragraph{spans[]}  numTitle{text}  boldCaption{text}  heading{text}
+//   image{src,alt}  paramsTable{headers[],rows[][]}  summaryBox{title,items[][]}
+//   compareBox{title,headers[],rows[{label,cells[]}]}  sectionQuiz{quizRef}  html{html}
+// spans[] 内联文本:{t} 普通 / {t,b:true} 加粗 / {t,sub:true} 子标题
+
 {
   "overviews": {
     "1.1": {

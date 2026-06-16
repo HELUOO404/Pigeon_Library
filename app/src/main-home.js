@@ -5,19 +5,23 @@ import { applyInitialTheme, toggleTheme } from './core/theme.js';
 
 applyInitialTheme();
 
-const AI_PROMPT = `请把我提供的教材整理成 PigeonLib schemaVersion 1 的 .pigeon 课程包源码。必须产出 manifest.json、content.json、quiz.json、glossary.json,以及必要的 assets/images。id 使用小写英文、数字和连字符;章节 id 用 "4",小节 id 用 "4.1",知识点 id 用 "4-1-1"。
+const AI_PROMPT_FALLBACK = '请把我提供的教材整理成 PigeonLib schemaVersion 1 的 .pigeon 课程包源码(manifest.json / content.json / quiz.json / glossary.json + assets/images)。完整制作规范见首页"格式说明"区或 docs/ai-course-authoring-prompt.md。';
 
-content.json 按知识点切分正文,使用 paragraph、heading、image、paramsTable、summaryBox、compareBox、sectionQuiz 等类型化块。图片放入 assets/images,正文只写相对路径。
-
-术语表 glossary.json 从教材自动抽取缩写和专有名词,生成 {t,full,cn,d};t 必须使用正文中的实际写法,包括 T/C 这类符号,保证悬浮提示能命中;d 用一句话解释,不要写长段。
-
-题库 quiz.json 如原资料只有题目没有解析,请为每题补充 exp 或 explain:说明为什么正确、其他选项为什么错、关联哪个知识点、记忆要点。single 侧重选项辨析,judge 说明判断依据,sort 说明步骤顺序,match 说明配对关系。解析必须基于课程正文,不确定处标注“需人工复核”,不要杜撰。
-
-最后检查 JSON 可解析、manifest.chapters 能索引所有知识点、题目答案存在且格式一致、图片路径存在。`;
+async function loadAuthoringPrompt() {
+  try {
+    const res = await fetch('/docs/ai-course-authoring-prompt.md', { cache: 'no-store' });
+    if (!res.ok) throw new Error(String(res.status));
+    const text = (await res.text()).trim();
+    return text || AI_PROMPT_FALLBACK;
+  } catch {
+    return AI_PROMPT_FALLBACK;
+  }
+}
 
 const state = {
   localCourses: [],
   builtinCourses: BUILTIN_COURSES.map((course) => ({ ...course, meta: course })),
+  builtinError: false,
 };
 
 const el = {
@@ -88,11 +92,13 @@ function renderCourseCard(course, kind) {
   const safeSubtitle = escapeHtml(subtitle);
   const stats = getStats(meta);
   const progress = getProgress(course.id, stats.knowledgePoints);
+  const coverImg = meta.coverDataUrl || '';        // 封面图(base64),优先
+  const coverText = text(meta.coverText);           // 无图时的自定义封面文字
   const card = document.createElement('article');
   card.className = `course-card ${kind === 'local' ? 'is-local' : 'is-builtin'}`;
   card.dataset.courseId = course.id;
   card.innerHTML = `
-    <div class="course-cover" aria-hidden="true">${meta.cover ? '' : `<span>${escapeHtml(title.slice(0, 1))}</span>`}</div>
+    <div class="course-cover" aria-hidden="true">${coverImg ? '' : `<span class="${coverText ? 'cover-text' : 'cover-letter'}">${escapeHtml(coverText || title.slice(0, 1))}</span>`}</div>
     <div class="course-topline">
       <span class="course-badge">${kind === 'builtin' ? '内置' : '本地'}</span>
       ${kind === 'local' ? '<button class="delete-course" type="button" data-action="delete-course" title="删除课程" aria-label="删除课程">🗑</button>' : ''}
@@ -104,7 +110,7 @@ function renderCourseCard(course, kind) {
     <a class="study-link" href="/learn.html?course=${encodeURIComponent(course.id)}">开始学习 ▸</a>
   `;
   const cover = card.querySelector('.course-cover');
-  if (meta.cover) cover.style.backgroundImage = `url("${meta.cover}")`;
+  if (coverImg) { cover.style.backgroundImage = `url("${coverImg}")`; cover.classList.add('has-image'); }
   return card;
 }
 
@@ -131,20 +137,40 @@ function renderCourses(highlightId) {
 
   el.builtinCount.textContent = String(BUILTIN_COURSES.length);
   el.localCount.textContent = String(state.localCourses.length);
+  renderBuiltinNotice();
+}
+
+function renderBuiltinNotice() {
+  const grid = el.builtinGrid;
+  let notice = document.getElementById('builtinNotice');
+  if (state.builtinError) {
+    if (!notice) {
+      notice = document.createElement('p');
+      notice.id = 'builtinNotice';
+      notice.style.cssText = 'margin:0 0 16px;padding:12px 16px;border-radius:10px;background:rgba(200,150,42,.12);color:var(--ink,#1b2330);font-size:14px;line-height:1.6;';
+      grid.parentElement.insertBefore(notice, grid);
+    }
+    notice.textContent = '内置课程未能加载,可能尚未打包。请双击「启动PigeonLib.bat」启动,或在仓库根运行:node tools/build-pigeon.mjs ic-packaging';
+  } else if (notice) {
+    notice.remove();
+  }
 }
 
 async function hydrateBuiltinStats() {
+  let failed = false;
   const courses = await Promise.all(BUILTIN_COURSES.map(async (course) => {
     try {
       const loaded = await loadPigeonFromUrl(`/${course.url}`);
-      const meta = { ...course, ...loaded.manifest };
+      const meta = { ...course, ...loaded.manifest, coverDataUrl: loaded.coverDataUrl || '' };
       loaded.revoke();
       return { ...course, meta };
     } catch {
+      failed = true;
       return { ...course, meta: course };
     }
   }));
   state.builtinCourses = courses;
+  state.builtinError = failed;
 }
 
 async function refreshLocalCourses(highlightId) {
@@ -171,6 +197,8 @@ async function handleUpload(file) {
       author: course.manifest.author || '',
       version: course.manifest.version || '',
       stats: getStats(course.manifest),
+      coverDataUrl: course.coverDataUrl || '',
+      coverText: course.manifest.coverText || '',
     };
     await saveLocalCourse({ id: course.id, bytes, meta });
     course.revoke();
@@ -255,7 +283,7 @@ function bindEvents() {
 }
 
 async function init() {
-  el.aiPrompt.value = AI_PROMPT;
+  el.aiPrompt.value = await loadAuthoringPrompt();
   bindEvents();
   renderCourses();
   await Promise.all([hydrateBuiltinStats(), refreshLocalCourses()]);
@@ -264,5 +292,7 @@ async function init() {
 
 init().catch((error) => {
   console.error(error);
+  state.builtinError = true;
   renderCourses();
 });
+

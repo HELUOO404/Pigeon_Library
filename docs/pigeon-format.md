@@ -16,6 +16,8 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 
 加载流程:`fflate.unzipSync` 解压 → 校验 manifest/content → `assets/` 下图片转 Blob URL → 渲染器按 manifest 索引树驱动,从 content/quiz/glossary 取数据渲染。
 
+> **JSON 可带注释(JSONC)**:四个 JSON 文件都可写 `//` 行注释、`/* */` 块注释(也容忍尾随逗号),平台加载时自动剥离。约定每个文件**开头放一段"字段图例"注释**讲清各字段,正文不逐条重复,只在结构不直观处点一句 —— 让课程文件对人类友好,运行时仍是标准 JSON。
+
 ---
 
 ## 1. manifest.json — 元信息 + 结构索引
@@ -28,7 +30,8 @@ cover.png         可选  课程封面(manifest.cover 指向它)
   "subtitle": "集创赛备考 · 微电子封装工艺",     // 可选。副标题(首页卡片)
   "author": "PigeonLib",                      // 可选
   "version": "1.0",                           // 可选。课程内容版本
-  "cover": "cover.png",                       // 可选。封面相对路径
+  "cover": "cover.png",                       // 可选。封面图相对路径(首页卡片封面)
+  "coverText": "IC",                          // 可选。无封面图时显示在卡片封面的文字(与 cover 二选一)
   "stats": { "chapters": 3, "knowledgePoints": 25, "questions": 120 }, // 可选。首页卡片元信息;缺省时由平台扫描计算
   "chapters": [                               // 必需。驱动顶栏 tab 与侧栏目录树
     {
@@ -51,10 +54,12 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 ```
 
 **ID 约定(强制)**:
-- 章 id:`"4"`(与原站一致,数字字符串)。
+- 章 id:`"4"`(数字字符串)。
 - 节 id:`"4.1"`(章.节)。
-- 知识点 id:`"4-1-1"`(章-节-序,连字符)。原站 DOM 用 `kp-4-1-1` / `dot-4-1-1` / `badge-4-1-1`,渲染器据知识点 id 拼接这些 DOM id,保持选择器一致。
-- 小测题 id:`"q-kp-4-1-1-1"`(原站格式),见 quiz.json。
+- 知识点 id:`"4-1-1"`(章-节-序,连字符)。渲染器据知识点 id 拼接 DOM id(`kp-4-1-1` / `dot-4-1-1` / `badge-4-1-1`)用于定位与高亮。
+- 题目 id:`"4-001"`(章号-三位流水)。在 quiz.json 的 `questionBank` 中定义,小测/考试用 id 引用,见 §3。
+
+> **封面**:`cover` 指向包内图片(如 `cover.png`),首页卡片显示该图;若无图,用 `coverText` 显示自定义文字;两者都无则用课程标题首字。建议封面图 ≤ 数百 KB。
 
 ---
 
@@ -62,13 +67,13 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 
 ```jsonc
 {
-  "overviews": {                  // 节概述卡(原 .overview-card),key = 节 id
+  "overviews": {                  // 节概述卡(每节开头的概述区块),key = 节 id
     "4.1": {
-      "title": "第4.1节 IC封装制程",  // 概述卡标题(原 <h2>)
+      "title": "第4.1节 IC封装制程",  // 概述卡标题
       "blocks": [ /* 块节点数组,见下 */ ]
     }
   },
-  "knowledgePoints": {            // 知识点正文(原 .knowledge-card .card-body),key = 知识点 id
+  "knowledgePoints": {            // 知识点正文(每个知识点卡片的正文区),key = 知识点 id
     "4-1-1": {
       "title": "晶圆减薄划片",
       "blocks": [ /* 块节点数组 */ ]
@@ -81,12 +86,12 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 
 每个 block 是 `{ "type": "...", ... }`。渲染器按 type 分派;**遇到未知 type 跳过并 console.warn**,保证向后兼容。
 
-| type | 字段 | 渲染为(原站对应) |
+| type | 字段 | 渲染为 |
 |------|------|------------------|
 | `paragraph` | `spans: Span[]` | `<p>` + 内联 span(见 2.2) |
 | `numTitle` | `text: string` | `<p><strong class="num-title">text</strong></p>`(编号高亮药丸) |
 | `boldCaption` | `text: string` | `<p><strong>text</strong></p>`(如"封胶工艺参数") |
-| `heading` | `text: string` | `<h4>text</h4>`(原 card-body h4,少见) |
+| `heading` | `text: string` | `<h4>text</h4>`(知识点内的小标题,较少用) |
 | `image` | `src: string, alt?: string` | `<img loading="lazy" onerror=hide src alt ...>`;src 是 `assets/images/...` 相对路径,运行时换 Blob URL |
 | `paramsTable` | `headers: string[], rows: string[][]` | `<table class="params-table">`(thead+tbody,居中) |
 | `summaryBox` | `title: string, items: Span[][]` | `<div class="summary-box"><h4>title</h4><ul><li>…</li></ul></div>` |
@@ -99,7 +104,7 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 
 ### 2.2 内联节点(Span) — paragraph / summaryBox.items 内使用
 
-原站 `<p>` 内只出现三种内联构造,因此 Span 模型完备:
+课程正文 `<p>` 内只使用三种内联构造,因此 Span 模型完备:
 
 ```jsonc
 { "t": "纯文本" }                  // 普通文本
@@ -110,47 +115,44 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 渲染规则:
 - `b:true` → `<strong>t</strong>`
 - `sub:true` → `<span class="sub-title">t</span>`
-- 否则 → 文本节点(术语提示在渲染后由 glossary 模块走 TreeWalker 注入,与原站一致)
+- 否则 → 文本节点(术语提示在渲染后由 glossary 模块走 TreeWalker 注入)
 
-> **拆包工具断言**:解析原站 `<p>` 时,若遇到上述三种以外的内联标签(如 `<a>`、`<img>` 内联),必须报错中止,提示人工处理 —— 确保 Span 模型对本课程 100% 完备。
+> **拆包工具断言**:解析课程正文 `<p>` 时,若遇到上述三种以外的内联标签(如 `<a>`、`<img>` 内联),必须报错中止,提示人工处理 —— 确保 Span 模型对本课程 100% 完备。
 
 ---
 
-## 3. quiz.json — 题库(小节小测 + 章节考试)
+## 3. quiz.json — 题库(引用模型)
+
+**一道题在 `questionBank` 里定义一次,小节小测与章节考试都用 id 引用** —— 同一道题出现在多处时不再重复抄写,错题本也能据同一 id 去重。
 
 ```jsonc
 {
-  "sectionQuizzes": {              // 小节小测,key = quizRef(= 知识点 id,如 "4-1-1")
-    "4-1-1": [
-      {
-        "qid": "q-kp-4-1-1-1",     // 原站题目 id(fb-/name 选择器据此)
-        "q": "芯片减薄技术主要有:",
-        "options": ["A. ...", "B. ..."],   // 每项以 "X. " 开头
-        "ans": "A",                // 正确选项字母
-        "exp": "解析文本"           // 解析(可空字符串;制作指南要求尽量补全)
-      }
-    ]
+  "questionBank": {                 // 题库:{ 题id: 题对象 };题id = 章号-三位流水,如 "4-001"
+    "4-001": {                       // 单选 single
+      "type": "single",
+      "stem": "芯片减薄技术主要有:",   // 题干
+      "options": ["A. ...", "B. ..."],// 每项以 "X. " 开头
+      "answer": "A",                 // 正确选项字母
+      "explain": "解析文本"
+    },
+    "4-002": { "type": "judge", "stem": "...", "answer": true, "explain": "..." },     // 判断:answer 为布尔
+    "4-003": { "type": "sort", "stem": "...", "items": ["切割","贴膜"], "answer": ["贴膜","切割"], "explain": "..." }, // 排序:items 乱序,answer 正确顺序
+    "4-004": { "type": "match", "stem": "...", "left": ["热压键合"], "right": ["压力高,300~500℃"],
+               "answer": { "热压键合": "压力高,300~500℃" }, "explain": "..." }          // 匹配:answer={左:右}
   },
-  "examQuestions": [               // 章节考试题库(原 ALL_QUESTIONS),4 题型
-    // 单选 single
-    { "id": "cw-4-1-20-1", "type": "single", "chapter": "4",
-      "question": "...", "options": ["A. ...","B. ..."], "answer": "A", "explain": "..." },
-    // 判断 judge
-    { "id": "4-j1", "type": "judge", "chapter": "4",
-      "question": "...", "answer": true, "explain": "..." },
-    // 排序 sort
-    { "id": "4-s1", "type": "sort", "chapter": "4",
-      "question": "...", "items": ["切割","贴膜",...], "answer": ["贴膜","减薄",...], "explain": "..." },
-    // 匹配 match
-    { "id": "m-4-1", "type": "match", "chapter": "4",
-      "question": "...", "left": ["热压键合",...], "right": ["键合压力高...",...],
-      "answer": { "热压键合": "键合压力高...", ... }, "explain": "..." }
-  ]
+  "sectionQuizzes": {               // 小节小测:{ 知识点id: [题id...] }
+    "4-1-1": ["4-001", "4-007"]
+  },
+  "examQuestions": {                // 章节考试:{ 章id: [题id...] }
+    "4": ["4-001", "4-002", "4-003"]
+  }
 }
 ```
 
+- 题型字段:`single` 用 `options`;`judge` 无 options(answer 为 `true`/`false`);`sort` 用 `items` + 数组 `answer`;`match` 用 `left`/`right` + 对象 `answer`。
 - `type` 是**开放枚举**:渲染器按 type 分派,未知题型显示"暂不支持的题型"占位而非崩溃。
-- 考试按 `chapter` 过滤出当前章题目(原 `openExam` 逻辑)。
+- 平台加载时把引用解析回内联题目交给渲染器,考试按章过滤。
+- **向后兼容**:旧版"内联格式"(`sectionQuizzes` 直接放题对象 `{qid,q,options,ans,exp}`、`examQuestions` 为带 `chapter` 的扁平数组)仍可加载,无需迁移。
 
 ---
 

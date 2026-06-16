@@ -1,3 +1,8 @@
+// glossary.json — 术语表(数组)
+// 每项 { t, full, cn, d }:
+//   t 术语(用正文里的实际写法,含符号如 T/C,保证悬浮提示能命中)
+//   full 英文全称 / cn 中文名 / d 一句话释义
+
 [
   { "t": "DBG", "full": "Dicing Before Grinding", "cn": "先划片后减薄", "d": "演示术语:用于验证术语悬浮提示能命中本课程自带的 glossary。" },
   { "t": "PigeonLib", "full": "Pigeon Library", "cn": "信鸽课程库", "d": "可加载 .pigeon 课程包的学习平台。" }
