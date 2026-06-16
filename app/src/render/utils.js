@@ -1,3 +1,4 @@
+// utils.js — 渲染层公用工具:HTML 转义、Span 内联渲染、章节展开、知识点计数与学习时长格式化。
 export function escapeHtml(value) {
   const div = document.createElement('div');
   div.appendChild(document.createTextNode(value == null ? '' : String(value)));

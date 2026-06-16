@@ -3,36 +3,8 @@
 /* ============================================================
    PigeonLib 首页 · 信鸽邮政编辑风(精修版)
    调性:暖纸 + 墨黑 + 邮政金(brass) + 火漆印章红;收敛科技蓝。
+   调色板与令牌统一在 tokens.css(本文件 @import),此处只写首页布局/组件样式。
    ============================================================ */
-:root{
-  --paper:#f4efe2;
-  --paper-edge:#ece3d1;
-  --ink:#23262e;
-  --ink-soft:#5f636d;
-  --gold:#b8842c;
-  --gold-deep:#946a1d;
-  --seal:#b23a2e;
-  --card:#fbf8f1;
-  --line:rgba(35,38,46,.13);
-  --line-2:rgba(35,38,46,.22);
-  --shadow:0 14px 34px -18px rgba(35,30,18,.5);
-  --serif:"Fraunces","Noto Serif SC",Georgia,serif;
-  --sans:"Noto Sans SC",-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
-  --mono:"Space Mono",ui-monospace,Consolas,monospace;
-}
-[data-theme="dark"]{
-  --paper:#16161d;
-  --paper-edge:#1e1e28;
-  --ink:#ece7da;
-  --ink-soft:#a39f91;
-  --gold:#d8b06a;
-  --gold-deep:#e6c486;
-  --seal:#e07a64;
-  --card:#1f1f29;
-  --line:rgba(236,231,218,.14);
-  --line-2:rgba(236,231,218,.26);
-  --shadow:0 16px 40px -20px rgba(0,0,0,.7);
-}
 
 html{scroll-behavior:smooth}
 body{
@@ -135,7 +107,9 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .dispatch-illustration{width:100%;height:100%}
 .flight-path{stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:9 12;animation:drawPath 1.8s ease forwards}
 .flight-dot{fill:var(--seal)}
-.paper-pigeon path{fill:color-mix(in srgb,var(--paper) 70%,white);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.paper-plane path{stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.paper-plane .facet-top{fill:color-mix(in srgb,var(--paper) 82%,#fff)}
+.paper-plane .facet-bottom{fill:color-mix(in srgb,var(--paper) 88%,var(--ink))} /* 略深的下翼,做出折纸立体感 */
 .parcel rect{fill:color-mix(in srgb,var(--card) 70%,var(--paper));stroke:var(--ink);stroke-width:2}
 .parcel path{fill:none;stroke:var(--gold);stroke-width:2}
 .seal circle{fill:var(--seal)}
@@ -231,7 +205,8 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .copy-status{margin-left:10px;color:var(--gold-deep);font-weight:700;font-size:13px}
 
 /* ---------- 关于 / 页脚 ---------- */
-.about-strip{margin-top:clamp(44px,7vw,72px);padding:22px 24px;border-left:3px solid var(--seal);background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:8px;color:var(--ink-soft);font-size:15px;line-height:1.7}
+/* 关于条:去竖线,改为居中的编辑式引言(暖底 + 衬线,无任何 accent 竖条) */
+.about-strip{margin-top:clamp(44px,7vw,72px);padding:30px 28px;background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:10px;color:var(--ink-soft);font-family:var(--serif);font-size:18px;line-height:1.75;text-align:center}
 .site-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1120px;margin:40px auto 0;padding:22px clamp(20px,5vw,44px);border-top:1px solid var(--line-2);color:var(--ink-soft);font-size:13px;font-family:var(--mono)}
 .site-footer a{color:var(--gold-deep)}
 

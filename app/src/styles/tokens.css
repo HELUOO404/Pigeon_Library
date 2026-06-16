@@ -1,5 +1,94 @@
-/* PigeonLib 设计令牌 + 基础重置 —— 从原站逐字提取,首页与学习页共享 */
-:root{--c1:#1a73e8;--c1l:#4a9af5;--c1d:#0d47a1;--cs:#34a853;--cw:#fbbc04;--cd:#ea4335;--ci:#4285f4;--cbg:#f8f9fa;--csf:#fff;--ctx:#202124;--ctx2:#5f6368;--cbd:#dadce0;--chv:#e8f0fe;--r:8px;--sh:0 2px 8px rgba(0,0,0,.12);--sidebar-w:280px;--header-h:56px;--footer-h:48px;--cCorrectBg:#e6f4ea;--cCorrectTx:#1e7e34;--cWrongBg:#fce8e6;--cWrongTx:#c62828}
-[data-theme="dark"]{--c1:#8ab4f8;--c1l:#aecbfa;--c1d:#669df6;--cs:#81c995;--cw:#fdd663;--cd:#f28b82;--ci:#669df6;--cbg:#1a1a2e;--csf:#252540;--ctx:#e8eaed;--ctx2:#9aa0a6;--cbd:#3c4043;--chv:#2d2d4a;--sh:0 2px 8px rgba(0,0,0,.4);--cCorrectBg:#1b3626;--cCorrectTx:#81c995;--cWrongBg:#3b1f1f;--cWrongTx:#f28b82}
+/* tokens.css — PigeonLib 设计令牌(单一来源)+ 基础重置。
+   邮政编辑风调色板 + 语义令牌 + 字体/布局 + 遗留别名;首页(home.css)与学习页(learn.css)均 @import 本文件。
+   设计系统与用法详见 docs/design-system.md。改色板/令牌只改这里,组件勿写死色值。 */
+
+:root{
+  /* ==== 品牌色板:暖纸 / 墨黑 / 邮政金(brass)/ 火漆印章红 ==== */
+  --paper:#f4efe2;        /* 页面纸底 */
+  --paper-edge:#ece3d1;   /* 纸边/分隔 */
+  --ink:#23262e;          /* 墨黑(正文)*/
+  --ink-soft:#5f636d;     /* 次要墨色 */
+  --gold:#b8842c;         /* 邮政金(主强调)*/
+  --gold-deep:#946a1d;    /* 深金(hover/链接)*/
+  --seal:#b23a2e;         /* 火漆印章红(危险/错误)*/
+  --card:#fbf8f1;         /* 卡片面(比纸略亮)*/
+  --line:rgba(35,38,46,.13);    /* 极淡分隔线 */
+  --line-2:rgba(35,38,46,.22);  /* 稍重分隔线 */
+  --shadow:0 14px 34px -18px rgba(35,30,18,.5); /* 暖投影 */
+
+  /* ==== 字体:展示衬线 / 正文无衬线 / 等宽点缀 ==== */
+  --serif:"Fraunces","Noto Serif SC",Georgia,serif;
+  --sans:"Noto Sans SC",-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  --mono:"Space Mono",ui-monospace,Consolas,monospace;
+
+  /* ==== 语义令牌(组件统一引用;勿在组件里写死色值)==== */
+  --bg:var(--paper);             /* 页面底色 */
+  --surface:var(--card);         /* 卡片/抬升面 */
+  --surface-sunken:color-mix(in srgb,var(--paper) 92%,var(--ink)); /* 内凹/recessed 面 */
+  --text:var(--ink);             /* 正文 */
+  --text-soft:var(--ink-soft);   /* 次要文字 */
+  --border:color-mix(in srgb,var(--ink) 16%,transparent); /* 可见描边 */
+  --hover:color-mix(in srgb,var(--gold) 13%,transparent); /* 悬浮/高亮底 */
+  --accent:var(--gold);          /* 主强调 */
+  --accent-deep:var(--gold-deep);
+  --danger:var(--seal);          /* 危险/错误 */
+  --radius:9px;
+  /* 反馈色:答对=暖橄榄绿;答错=印章红系(去蓝、去刺眼)*/
+  --correct-bg:color-mix(in srgb,#5c8a4a 16%,var(--card));
+  --correct-tx:#3f6a30;
+  --wrong-bg:color-mix(in srgb,var(--seal) 14%,var(--card));
+  --wrong-tx:var(--seal);
+
+  /* ==== 布局 ==== */
+  --sidebar-w:280px;
+  --header-h:56px;
+  --footer-h:48px;
+
+  /* ==== 遗留别名(legacy,勿在新代码使用)====
+     旧 Material 蓝色变量名映射到新调色板,作为兼容兜底:
+     即便学习页某条旧选择器未改写,也不会回退到蓝色或失效。 */
+  --c1:var(--accent);  --c1l:var(--accent);  --c1d:var(--accent-deep);
+  --ci:var(--accent);  --cs:#5c8a4a;  --cw:var(--gold);  --cd:var(--seal);
+  --cbg:var(--bg);  --csf:var(--surface);  --ctx:var(--text);  --ctx2:var(--text-soft);
+  --cbd:var(--border);  --chv:var(--hover);  --r:var(--radius);  --sh:var(--shadow);
+  --cCorrectBg:var(--correct-bg);  --cCorrectTx:var(--correct-tx);
+  --cWrongBg:var(--wrong-bg);  --cWrongTx:var(--wrong-tx);
+}
+
+/* 暗色主题:仅覆盖色板根值;由 var() 派生的语义令牌会自动跟随,
+   只有 color-mix 计算面与字面色(反馈、成功色别名)需在此重算。 */
+[data-theme="dark"]{
+  --paper:#16161d;
+  --paper-edge:#1e1e28;
+  --ink:#ece7da;
+  --ink-soft:#a39f91;
+  --gold:#d8b06a;
+  --gold-deep:#e6c486;
+  --seal:#e07a64;
+  --card:#1f1f29;
+  --line:rgba(236,231,218,.14);
+  --line-2:rgba(236,231,218,.26);
+  --shadow:0 16px 40px -20px rgba(0,0,0,.7);
+
+  --surface-sunken:color-mix(in srgb,var(--paper) 80%,#000);
+  --border:color-mix(in srgb,var(--ink) 22%,transparent);
+  --hover:color-mix(in srgb,var(--gold) 18%,transparent);
+  --correct-bg:color-mix(in srgb,#8fb87a 18%,var(--card));
+  --correct-tx:#9fce86;
+  --wrong-bg:color-mix(in srgb,var(--seal) 20%,var(--card));
+  --wrong-tx:var(--seal);
+  --cs:#8fb87a; /* 别名:暗色成功色 */
+}
+
+/* ==== 基础重置 ==== */
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC","Microsoft YaHei",sans-serif;background:var(--cbg);color:var(--ctx);line-height:1.7}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7}
+
+/* ==== 图标(SVG,见 core/icons.js)====
+   .icn 随上下文字号缩放并对齐文本基线;[data-icon] 占位预留行内盒避免水合前抖动。 */
+.icn{display:inline-flex;flex:none;vertical-align:-0.15em}
+[data-icon]{display:inline-flex;align-items:center;justify-content:center}
+/* 主题键:亮色显示"月"(点击转暗),暗色显示"日"(点击转亮) */
+.icn-sun{display:none}
+[data-theme="dark"] .icn-moon{display:none}
+[data-theme="dark"] .icn-sun{display:inline-flex}

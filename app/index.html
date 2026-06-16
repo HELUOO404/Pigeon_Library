@@ -13,7 +13,7 @@
 </head>
 <body>
   <header class="site-header">
-    <button class="menu-btn" type="button" data-action="toggle-menu" aria-label="打开导航">☰</button>
+    <button class="menu-btn" type="button" data-action="toggle-menu" aria-label="打开导航"><span class="icn" data-icon="menu" aria-hidden="true"></span></button>
     <a class="brand" href="#top" aria-label="PigeonLib 首页">
       <img src="/brand-logo.svg" alt="" class="brand-logo">
       <span>PigeonLib</span>
@@ -23,7 +23,7 @@
       <a href="#format">格式说明</a>
       <a href="#about">关于</a>
     </nav>
-    <button class="theme-btn" type="button" data-action="toggle-theme" title="切换主题" aria-label="切换主题">🌙</button>
+    <button class="theme-btn" type="button" data-action="toggle-theme" title="切换主题" aria-label="切换主题"><span data-icon="theme" aria-hidden="true"></span></button>
   </header>
 
   <main id="top" class="page-shell">
@@ -41,11 +41,11 @@
           <a class="btn btn-secondary" href="#format" data-action="open-format">了解 .pigeon 格式 →</a>
         </div>
         <div class="dispatch-ticket reveal" aria-live="polite">
-          <span>📦 <strong id="builtinCount">1</strong> 门内置</span>
+          <span><span class="icn" data-icon="package" data-size="14" aria-hidden="true"></span> <strong id="builtinCount">1</strong> 门内置</span>
           <span>·</span>
-          <span>🗂 本地 <strong id="localCount">0</strong> 门</span>
+          <span><span class="icn" data-icon="folder" data-size="14" aria-hidden="true"></span> 本地 <strong id="localCount">0</strong> 门</span>
           <span>·</span>
-          <span>🌓 双主题</span>
+          <span><span class="icn" data-icon="sun-moon" data-size="14" aria-hidden="true"></span> 双主题</span>
         </div>
       </div>
 
@@ -61,11 +61,10 @@
           <circle class="flight-dot dot-a" cx="76" cy="112" r="5"/>
           <circle class="flight-dot dot-b" cx="282" cy="154" r="5"/>
           <circle class="flight-dot dot-c" cx="494" cy="190" r="5"/>
-          <g class="paper-pigeon" filter="url(#paperShadow)">
-            <path d="M116 198 L258 124 L222 246 Z"/>
-            <path d="M258 124 L372 214 L222 246 Z"/>
-            <path d="M222 246 L250 318 L286 238 Z"/>
-            <path d="M258 124 L244 218 L372 214 Z"/>
+          <!-- 折纸纸飞机:上翼(亮)+ 下翼(略深),共享边即中缝折线 -->
+          <g class="paper-plane" filter="url(#paperShadow)">
+            <path class="facet-top" d="M372 168 L132 150 L238 232 Z"/>
+            <path class="facet-bottom" d="M372 168 L238 232 L150 300 Z"/>
           </g>
           <g class="parcel" filter="url(#paperShadow)">
             <rect x="330" y="250" width="136" height="92" rx="10"/>
@@ -95,7 +94,7 @@
       </div>
       <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="uploadHelp">
         <input id="courseFile" type="file" accept=".pigeon,application/zip" hidden>
-        <div class="drop-icon">⇧</div>
+        <div class="drop-icon"><span data-icon="upload" data-size="24" aria-hidden="true"></span></div>
         <div>
           <p class="drop-title" id="dropTitle">拖拽 .pigeon 到这里</p>
           <p class="drop-text" id="uploadHelp">或点击选择文件 · 单文件 ≤50MB · 全程本地解析</p>
@@ -142,7 +141,7 @@
           </div>
         </article>
         <article class="format-panel" data-panel="ai">
-          <button class="panel-trigger" type="button">🤖 给 AI 的课程制作指南<span>展开 ▾</span></button>
+          <button class="panel-trigger" type="button"><span class="icn" data-icon="sparkles" aria-hidden="true"></span> 给 AI 的课程制作指南<span>展开 ▾</span></button>
           <div class="panel-body">
             <p>下面是可直接复制给 AI 的课程制作提示词核心版。完整版本见 <a href="/docs/ai-course-authoring-prompt.md">docs/ai-course-authoring-prompt.md</a>。</p>
             <textarea id="aiPrompt" readonly></textarea>
@@ -166,7 +165,7 @@
 
   <footer class="site-footer">
     <span>PigeonLib · 开放课程学习平台</span>
-    <span><a href="/docs/pigeon-format.md">格式文档</a> · v1.0 · 🕊</span>
+    <span><a href="/docs/pigeon-format.md">格式文档</a> · v1.0 · <span class="icn" data-icon="send" data-size="14" aria-hidden="true"></span></span>
   </footer>
 
   <script type="module" src="/src/main-home.js"></script>

@@ -1,3 +1,5 @@
+// exam-engine.js — 章节考试引擎:单选/判断/排序/匹配的渲染、作答、计时、判分与错题汇总。
+import { icon } from '../core/icons.js';
 import { escapeHtml, shuffle } from './utils.js';
 
 let context;
@@ -79,7 +81,8 @@ function startExamTimer() {
     const left = Math.max(0, 30 * 60 - elapsed);
     const minutes = Math.floor(left / 60);
     const seconds = left % 60;
-    if (timer) timer.textContent = `⏱ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    // 计时图标在 learn.html 里固定为 #examTimer 同级的时钟图标,这里只更新时间文本
+    if (timer) timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     if (left === 0) finishExam();
   }, 1000);
 }
@@ -94,8 +97,8 @@ function renderSingle(q, ans) {
 
 function renderJudge(q, ans) {
   return `<div class="judge-options">
-    <div class="judge-option ${ans === true ? 'selected' : ''}" data-action="exam-option" data-qid="${escapeHtml(q.id)}" data-value="true">✓ 正确</div>
-    <div class="judge-option ${ans === false ? 'selected' : ''}" data-action="exam-option" data-qid="${escapeHtml(q.id)}" data-value="false">✗ 错误</div>
+    <div class="judge-option ${ans === true ? 'selected' : ''}" data-action="exam-option" data-qid="${escapeHtml(q.id)}" data-value="true">${icon('check')} 正确</div>
+    <div class="judge-option ${ans === false ? 'selected' : ''}" data-action="exam-option" data-qid="${escapeHtml(q.id)}" data-value="false">${icon('x')} 错误</div>
   </div>`;
 }
 
@@ -103,7 +106,7 @@ function renderSort(q, ans) {
   const order = ans || q.items || [];
   return `<div class="sort-list">${order.map((item, idx) => `
     <div class="sort-item" draggable="true" data-action="sort-item" data-qid="${escapeHtml(q.id)}" data-index="${idx}">
-      <span class="sort-handle">☰</span><span class="sort-num">${idx + 1}</span>${escapeHtml(item)}
+      <span class="sort-handle">${icon('grip-vertical')}</span><span class="sort-num">${idx + 1}</span>${escapeHtml(item)}
     </div>
   `).join('')}</div>`;
 }
@@ -271,8 +274,8 @@ export function finishExam() {
   document.getElementById('resultSort').textContent = stats.sort[1] ? `${stats.sort[0]}/${stats.sort[1]}` : '--';
   document.getElementById('resultMatch').textContent = stats.match[1] ? `${stats.match[0]}/${stats.match[1]}` : '--';
   document.getElementById('resultWrongList').innerHTML = wrong.length
-    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div><div class="wrong-answer">你的答案：<span class="user">${escapeHtml(w.yourAnswer)}</span></div><div class="wrong-answer">正确答案：<span class="correct">${escapeHtml(w.correctAnswer)}</span></div><div style="font-size:12px;color:var(--ctx2);margin-top:8px;">💡 ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
-    : '<div style="margin-top:24px;color:var(--cs);font-size:18px;">🎉 恭喜！全部答对！</div>';
+    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div><div class="wrong-answer">你的答案：<span class="user">${escapeHtml(w.yourAnswer)}</span></div><div class="wrong-answer">正确答案：<span class="correct">${escapeHtml(w.correctAnswer)}</span></div><div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
+    : `<div style="margin-top:24px;color:var(--correct-tx);font-size:18px;">${icon('party-popper')} 恭喜！全部答对！</div>`;
 }
 
 export function backToStudy() {

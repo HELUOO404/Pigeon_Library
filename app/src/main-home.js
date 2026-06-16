@@ -1,7 +1,9 @@
+// main-home.js — 首页脚本:课程卡渲染、.pigeon 上传解析与本地保存、格式说明手风琴、图标水合。
 import { BUILTIN_COURSES, deleteLocalCourse, listLocalCourses, saveLocalCourse } from './core/course-registry.js';
 import { loadPigeonFromFile, loadPigeonFromUrl, pigeonErrorText } from './core/pigeon-loader.js';
 import { createStore } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
+import { icon, hydrateIcons } from './core/icons.js';
 
 applyInitialTheme();
 
@@ -101,11 +103,11 @@ function renderCourseCard(course, kind) {
     <div class="course-cover" aria-hidden="true">${coverImg ? '' : `<span class="${coverText ? 'cover-text' : 'cover-letter'}">${escapeHtml(coverText || title.slice(0, 1))}</span>`}</div>
     <div class="course-topline">
       <span class="course-badge">${kind === 'builtin' ? '内置' : '本地'}</span>
-      ${kind === 'local' ? '<button class="delete-course" type="button" data-action="delete-course" title="删除课程" aria-label="删除课程">🗑</button>' : ''}
+      ${kind === 'local' ? `<button class="delete-course" type="button" data-action="delete-course" title="删除课程" aria-label="删除课程">${icon('trash-2', { size: 16 })}</button>` : ''}
     </div>
     <h3>${safeTitle}</h3>
     <p class="course-subtitle">${safeSubtitle}</p>
-    <p class="course-stats">📑 ${stats.chapters} 章 <span>🔖 ${stats.knowledgePoints} 知识点</span> <span>📝 ${stats.questions} 题</span></p>
+    <p class="course-stats"><span>${icon('book', { size: 13 })} ${stats.chapters} 章</span> <span>${icon('bookmark', { size: 13 })} ${stats.knowledgePoints} 知识点</span> <span>${icon('square-pen', { size: 13 })} ${stats.questions} 题</span></p>
     ${progress ? `<div class="course-progress" aria-label="学习进度 ${progress.pct}%"><span style="width:${progress.pct}%"></span></div><p class="progress-text">已掌握 ${progress.mastered}/${progress.total} · ${progress.pct}%</p>` : ''}
     <a class="study-link" href="/learn.html?course=${encodeURIComponent(course.id)}">开始学习 ▸</a>
   `;
@@ -283,6 +285,7 @@ function bindEvents() {
 }
 
 async function init() {
+  hydrateIcons();                       // 填充顶栏/页脚等静态 chrome 的 SVG 图标
   el.aiPrompt.value = await loadAuthoringPrompt();
   bindEvents();
   renderCourses();

@@ -1,3 +1,5 @@
+// wrongbook.js — 错题本:增删、按章筛选、渲染、重做(单题/全部);按题库 id 去重存储。
+import { icon } from '../core/icons.js';
 import { escapeHtml } from './utils.js';
 
 let storeRef;
@@ -45,7 +47,7 @@ function singleOptions(w) {
     const correct = label === w.correctAnswer;
     const wrong = label === w.yourAnswer && !correct;
     const cls = correct ? 'correct' : wrong ? 'wrong' : '';
-    const mark = correct ? '✓' : wrong ? '✗' : '';
+    const mark = correct ? icon('check') : wrong ? icon('x') : '';
     const tag = correct ? '<span class="answer-tag">← 正确答案</span>' : wrong ? '<span class="answer-tag">← 你的答案</span>' : '';
     return `<div class="result-option ${cls}"><span class="result-option-label">${mark} ${escapeHtml(label)}.</span><span class="result-option-text">${escapeHtml(text)}</span>${tag}</div>`;
   }).join('')}</div>`;
@@ -67,10 +69,10 @@ export function renderWrongList(filterChapter = 'all') {
       <div class="wrong-meta">第${escapeHtml(w.chapter || '?')}章 | ${escapeHtml(typeLabel(w.type))} | ${escapeHtml(new Date(w.date || Date.now()).toLocaleDateString())}</div>
       <div class="wrong-question">${idx + 1}. ${escapeHtml(w.question || '')}</div>
       ${w.type === 'single' ? singleOptions(w) : answerLine(w)}
-      <div style="font-size:12px;color:var(--ctx2);margin-top:8px;">💡 ${escapeHtml(w.explain || '暂无解析')}</div>
+      <div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '暂无解析')}</div>
       <div class="wrong-actions">
-        <button data-action="remove-wrong" data-id="${escapeHtml(w.id)}">✓ 已掌握，移除</button>
-        <button data-action="redo-wrong" data-id="${escapeHtml(w.id)}">🔄 重新练习</button>
+        <button data-action="remove-wrong" data-id="${escapeHtml(w.id)}">${icon('check')} 已掌握，移除</button>
+        <button data-action="redo-wrong" data-id="${escapeHtml(w.id)}">${icon('rotate-ccw')} 重新练习</button>
       </div>
     </div>
   `).join('');

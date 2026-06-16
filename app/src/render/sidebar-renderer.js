@@ -1,3 +1,5 @@
+// sidebar-renderer.js — 目录树、章节 tab、侧栏/页脚学习进度的渲染与更新。
+import { icon } from '../core/icons.js';
 import { escapeHtml, getDoneCount, getKnowledgePointCountByChapter, getKnowledgePointIds, sectionDomId } from './utils.js';
 
 export function renderTabs(container, manifest) {
@@ -9,7 +11,7 @@ export function renderTabs(container, manifest) {
 export function renderSidebar(container, manifest, store) {
   const progress = store.get('progress', {});
   container.innerHTML = `
-    <div class="sidebar-header">📖 目录导航</div>
+    <div class="sidebar-header">${icon('list-tree')} 目录导航</div>
     <div class="sidebar-progress">
       <div class="progress-title">学习进度</div>
       <div class="progress-bar"><div class="progress-fill" id="totalProgressFill" style="width:0%"></div></div>

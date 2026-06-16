@@ -5,19 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PigeonLib</title>
   <link rel="icon" type="image/svg+xml" href="/brand-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/src/styles/learn.css">
 </head>
 <body>
   <div class="header">
-    <button class="menu-btn" data-action="toggle-sidebar">☰</button>
+    <button class="menu-btn" data-action="toggle-sidebar" aria-label="目录"><span data-icon="menu" aria-hidden="true"></span></button>
     <img src="/brand-logo.svg" alt="Logo" style="height:32px;width:32px;margin-right:4px;display:block;">
     <div class="logo" id="courseLogo">PigeonLib</div>
     <div class="tabs" id="chapterTabs"></div>
     <div class="tools">
-      <button class="tool-btn" data-action="open-panel" data-panel="dashboard" title="学习仪表盘">📊</button>
-      <button class="tool-btn" data-action="open-panel" data-panel="wrongBook" title="错题本">❌</button>
-      <button class="tool-btn" data-action="open-panel" data-panel="glossary" title="术语速查">📇</button>
-      <button class="tool-btn" data-action="toggle-theme" title="切换主题">🌙</button>
+      <button class="tool-btn" data-action="open-panel" data-panel="dashboard" title="学习仪表盘" aria-label="学习仪表盘"><span data-icon="layout-dashboard" aria-hidden="true"></span></button>
+      <button class="tool-btn" data-action="open-panel" data-panel="wrongBook" title="错题本" aria-label="错题本"><span data-icon="circle-x" aria-hidden="true"></span></button>
+      <button class="tool-btn" data-action="open-panel" data-panel="glossary" title="术语速查" aria-label="术语速查"><span data-icon="book-open" aria-hidden="true"></span></button>
+      <button class="tool-btn" data-action="toggle-theme" title="切换主题" aria-label="切换主题"><span data-icon="theme" aria-hidden="true"></span></button>
     </div>
   </div>
   <div class="panel-overlay" id="panelOverlay" data-action="close-panel"></div>
@@ -44,7 +47,7 @@
         </div>
         <div class="exam-progress" id="examProgress" style="display:none">
           <div class="exam-header">
-            <span class="exam-timer" id="examTimer">⏱ 30:00</span>
+            <span class="exam-timer"><span class="icn" data-icon="clock" data-size="16" aria-hidden="true"></span> <span id="examTimer">30:00</span></span>
             <span class="exam-counter" id="examCounter">1/20</span>
           </div>
           <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgressFill" style="width:5%"></div></div>

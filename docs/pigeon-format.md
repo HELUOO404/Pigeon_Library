@@ -97,7 +97,7 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 | `summaryBox` | `title: string, items: Span[][]` | `<div class="summary-box"><h4>title</h4><ul><li>…</li></ul></div>` |
 | `compareBox` | `title: string, headers: string[], rows: CompareRow[]` | `<div class="compare-box"><h4>title</h4><table class="compare-table">…</table></div>` |
 | `sectionQuiz` | `quizRef: string` | `<div class="section-quiz">`,题目来自 quiz.json.sectionQuizzes[quizRef] |
-| `html` | `html: string` | **扩展位**:原样插入(未来 HTML 片段)。渲染前经白名单清洗 |
+| `html` | `html: string` | **扩展位/逃生舱**:原样插入的 HTML 片段,用于结构化块表达不了的内容(如含图片或 `rowspan`/`colspan` 合并单元格的复杂表格)。其中 `<img src="assets/...">` 等**相对资源路径会在加载时自动解析为运行时 URL**(与 `image` 块一致);`http/blob/data/` 与绝对路径原样保留 |
 
 - `CompareRow`:`{ "label": string, "cells": string[] }` — 首列是 `.compare-label`(行标题),其余是 `cells`。`headers[0]` 是对比项目列头,`headers[1..]` 是各方案列头。
 - `summaryBox.items`:每个 li 是一个 `Span[]`(支持其中的 `<strong>` 加粗,如"**塑料封装**占90%市场")。

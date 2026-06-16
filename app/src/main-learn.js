@@ -1,7 +1,9 @@
+// main-learn.js — 学习页脚本:加载课程、串联各渲染器、绑定交互事件、图标水合、进度持久化。
 import { findBuiltin, getLocalCourse } from './core/course-registry.js';
 import { loadPigeonFromUrl, parsePigeon, pigeonErrorText } from './core/pigeon-loader.js';
 import { createStore } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
+import { icon, hydrateIcons } from './core/icons.js';
 import { markMastered, markRead, renderCourseContent } from './render/content-renderer.js';
 import { initExamEngine, backToStudy, exitExam, nextExamQuestion, openExam, prevExamQuestion, selectExamOption, selectMatchLeft, selectMatchRight, setExamChapter, sortDragStart, sortDrop, startCustomExam, startExam } from './render/exam-engine.js';
 import { bindTooltipEvents, initGlossary, initTermTips, navigateToTerm, processTermTips } from './render/glossary.js';
@@ -49,10 +51,12 @@ function setFooterMode(mode) {
     progress.style.display = 'none';
     info.style.display = 'block';
     const count = (course.quiz.examQuestions || []).filter((q) => q.chapter === currentChapter).length;
-    let text = `📝 模拟考试 · 第${currentChapter}章 · ${count}题`;
-    if (document.getElementById('randomOrder')?.checked) text += ' · 随机顺序';
-    if (document.getElementById('randomOptions')?.checked) text += ' · 随机选项';
-    info.textContent = text;
+    let label = `模拟考试 · 第${currentChapter}章 · ${count}题`;
+    if (document.getElementById('randomOrder')?.checked) label += ' · 随机顺序';
+    if (document.getElementById('randomOptions')?.checked) label += ' · 随机选项';
+    // 图标用 innerHTML,动态文本走 textContent 防注入
+    info.innerHTML = `${icon('square-pen')} <span class="exam-info-text"></span>`;
+    info.querySelector('.exam-info-text').textContent = label;
   } else {
     left.style.display = 'flex';
     right.style.display = 'flex';
@@ -193,6 +197,7 @@ function bindEvents() {
 }
 
 async function main() {
+  hydrateIcons();                       // 顶栏/工具/计时等静态 chrome 的 SVG 图标
   const params = new URLSearchParams(location.search);
   const courseId = params.get('course') || 'ic-packaging';
   try {

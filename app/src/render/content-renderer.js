@@ -1,4 +1,21 @@
+// content-renderer.js — 知识点正文渲染:类型化块(段落/表格/小结/对比/小测/图片/html)→ HTML;
+// 知识点的"已阅读/已掌握"状态与徽章更新也在此。html 块的相对资源路径在此解析为 Blob URL。
+import { icon } from '../core/icons.js';
 import { escapeHtml, getSections, renderSpans, sectionDomId } from './utils.js';
+
+/**
+ * html 块里的相对资源路径(assets/...)在运行时并不存在 —— 课程图片是解压后的 Blob URL。
+ * 故把 html 块内 <img src="assets/..."> 一类相对 src 解析成 course.resolveAsset 的 Blob URL,
+ * 与 image 块行为一致;已是 http/blob/data/绝对路径的 src 原样保留。
+ * 这让 html 块可承载复杂表格(含图、合并单元格)等结构化块表达不了的内容。
+ */
+function resolveHtmlAssets(html, course) {
+  if (!html || !course?.resolveAsset) return html || '';
+  return html.replace(/\bsrc="([^"]*)"/g, (whole, src) => {
+    if (!src || /^(https?:|blob:|data:|\/)/i.test(src)) return whole;
+    return `src="${escapeHtml(course.resolveAsset(src))}"`;
+  });
+}
 
 function renderTable(block) {
   return `<table class="params-table"><thead><tr>${(block.headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${(block.rows || []).map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
@@ -17,7 +34,7 @@ function renderCompare(block) {
 function renderQuizBlock(block, quiz) {
   const questions = quiz.sectionQuizzes?.[block.quizRef] || [];
   if (!questions.length) return '';
-  return `<div class="section-quiz"><h4>✏️ 小测试</h4>${questions.map((q, idx) => `
+  return `<div class="section-quiz"><h4>${icon('square-pen')} 小测试</h4>${questions.map((q, idx) => `
     <div class="quiz-item" data-qid="${escapeHtml(q.qid)}">
       <p class="quiz-q">${idx + 1}. ${escapeHtml(q.q)}</p>
       <div class="quiz-opts">${(q.options || []).map((opt) => {
@@ -53,7 +70,7 @@ function renderBlock(block, course) {
     case 'sectionQuiz':
       return renderQuizBlock(block, course.quiz);
     case 'html':
-      return block.html || '';
+      return resolveHtmlAssets(block.html || '', course);
     default:
       console.warn('Unknown content block type:', block.type);
       return '';
@@ -84,7 +101,7 @@ function renderKnowledgePoint(kp, course, progress) {
     </div>
     <div class="card-body hidden">
       ${renderBlocks(content.blocks, course)}
-      <button class="mastery-btn" data-action="mark-mastered" data-kp-id="${escapeHtml(kp.id)}" ${mastered ? 'style="background:var(--cs);color:#fff;border-color:var(--cs)"' : ''}>${mastered ? '✓ 已掌握（点击取消）' : '✓ 标记为已掌握'}</button>
+      <button class="mastery-btn" data-action="mark-mastered" data-kp-id="${escapeHtml(kp.id)}" ${mastered ? 'style="background:var(--cs);color:#fff;border-color:var(--cs)"' : ''}>${icon('check')} ${mastered ? '已掌握（点击取消）' : '标记为已掌握'}</button>
     </div>
   </div>`;
 }
@@ -128,7 +145,8 @@ export function markMastered(kpId, button, store, onChange) {
   progress[kpId] = mastered ? 'read' : 'mastered';
   store.set('progress', progress);
   if (button) {
-    button.textContent = mastered ? '✓ 标记为已掌握' : '✓ 已掌握（点击取消）';
+    // 文案为静态内容,可安全用 innerHTML 嵌入图标
+    button.innerHTML = `${icon('check')} ${mastered ? '标记为已掌握' : '已掌握（点击取消）'}`;
     button.style.background = mastered ? '' : 'var(--cs)';
     button.style.color = mastered ? '' : '#fff';
     button.style.borderColor = mastered ? '' : 'var(--cs)';

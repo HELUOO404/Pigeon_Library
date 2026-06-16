@@ -1,3 +1,4 @@
+// glossary.js — 术语表渲染 + 正文术语提示(TreeWalker 扫描文本节点注入 .term-tip 悬浮卡)。
 import { escapeHtml } from './utils.js';
 
 let glossary = [];

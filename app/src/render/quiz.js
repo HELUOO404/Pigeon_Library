@@ -1,4 +1,6 @@
-import { getCleanText } from './utils.js';
+// quiz.js — 小节小测:渲染判分、结果恢复;答错时按题库 id 记入错题本(跨小测/考试去重)。
+import { icon } from '../core/icons.js';
+import { escapeHtml, getCleanText } from './utils.js';
 
 let quizRef;
 let storeRef;
@@ -35,7 +37,10 @@ export function submitQuiz(qid) {
   }
   const correct = selected.value === q.ans;
   fb.className = `quiz-fb show ${correct ? 'correct' : 'wrong'}`;
-  fb.textContent = correct ? `✓ 正确！${q.exp || ''}` : `✗ 错误。正确答案：${q.ans}。${q.exp || ''}`;
+  // 用 innerHTML 以嵌入图标;动态文本(解析/答案)经 escapeHtml,行为等价于原 textContent
+  fb.innerHTML = correct
+    ? `${icon('check')} 正确！${escapeHtml(q.exp || '')}`
+    : `${icon('x')} 错误。正确答案：${escapeHtml(q.ans)}。${escapeHtml(q.exp || '')}`;
   const item = selected.closest('.quiz-item');
   item?.querySelectorAll('.quiz-opt').forEach((opt) => opt.classList.remove('correct', 'wrong'));
   selected.closest('.quiz-opt')?.classList.add(correct ? 'correct' : 'wrong');
@@ -78,7 +83,9 @@ export function restoreQuizResults() {
       }
     });
     fb.className = `quiz-fb show ${result.correct ? 'correct' : 'wrong'}`;
-    fb.textContent = result.correct ? `✓ 已正确回答 💡 ${q.exp || ''}` : `✗ 错误。上次答案：${result.ans} 💡 ${q.exp || ''}`;
+    fb.innerHTML = result.correct
+      ? `${icon('check')} 已正确回答 ${icon('lightbulb')} ${escapeHtml(q.exp || '')}`
+      : `${icon('x')} 错误。上次答案：${escapeHtml(result.ans)} ${icon('lightbulb')} ${escapeHtml(q.exp || '')}`;
   });
 }
 

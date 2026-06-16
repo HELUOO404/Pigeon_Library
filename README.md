@@ -1,69 +1,90 @@
 # PigeonLib · 信鸽课程库
 
-可加载 `.pigeon` 课程包的学习平台。内容与网站**完全解耦**:网站本身不含任何课程,课程打包成独立的 `.pigeon` 文件(本质是 zip),由网站加载后渲染。换一门课无需改一行网站代码。
+> 内容与平台解耦的课程学习平台。课程打包成独立的 `.pigeon` 文件(本质是 zip),由网站在浏览器本地解压渲染 —— **换一门课无需改一行网站代码**。纯静态、无后端、可离线。
 
-- **首页**(`index.html`):浏览内置课程、上传 `.pigeon`、查看课程包格式说明。
-- **学习页**(`learn.html?course=<id>`):单页学习界面 —— 目录树、知识卡片、小节小测、章节考试(单选/判断/排序/匹配)、错题本、术语速查、亮/暗主题。1:1 复刻自原硬编码网站。
+- **首页** `index.html`:浏览内置课程、上传 `.pigeon`、查看格式说明。
+- **学习页** `learn.html?course=<id>`:目录树、知识卡片、小节小测、章节考试(单选/判断/排序/匹配)、错题本、术语速查、亮/暗主题。
 
-## 目录结构
+## 特性
 
-```
-参考项目/            原始硬编码网站(只读基线,勿改)
-app/                 网站源码(Vite)
-  index.html         首页入口
-  learn.html         学习页入口
-  src/
-    core/            与内容无关的引擎:store(课程命名空间) / pigeon-loader(解压+Blob) / course-registry(IndexedDB) / theme
-    render/          内容渲染器:content/sidebar/quiz/exam-engine/glossary/wrongbook/panels
-    styles/          tokens.css(共享令牌) / learn.css(学习页) / home.css(首页)
-    main-home.js     首页脚本
-    main-learn.js    学习页脚本
-  public/            站点静态资源(logo)
-courses/<id>/        课程包源(解包形态:manifest/content/quiz/glossary.json + assets/images)
-tools/               extract-ic-course.mjs(从原站抽取) + build-pigeon.mjs(打包)
-dist-courses/        打包产物 *.pigeon
-docs/                pigeon-format.md(格式规范) / ai-course-authoring-prompt.md(给AI的制作提示词) / 首页布局参考.md
-```
+- **内容解耦**:课程即 `.pigeon` 数据包,平台只负责渲染;任何人或 AI 都能制作并分享课程。
+- **完全本地**:浏览器内解压(fflate),图片转 Blob URL,自包含、可离线;进度按课程隔离存于本地。
+- **邮政编辑风设计**:统一设计令牌、衬线标题、SVG 图标(无 emoji),亮/暗双主题。
+- **可扩展格式**:内容块与题型为开放枚举,`html` 块作逃生舱承载复杂表格/图片。
+
+## 截图
+
+> _(占位:可在此放首页与学习页截图)_
 
 ## 最快上手
 
-**双击仓库根目录的 `启动PigeonLib.bat`** —— 它会自动(首次)安装依赖、打包内置课程、启动本地服务器,并打开浏览器。
+**双击仓库根目录的 `启动PigeonLib.bat`** —— 自动(首次)安装依赖、打包内置课程、启动本地服务器并打开浏览器。
 
-> ⚠️ 不能直接双击 `app/index.html`(`file://`)打开:Chrome 在 `file://` 下禁止 ES 模块加载与本地 `fetch`,页面无法渲染。本站必须经由一个 HTTP 源访问 —— 启动器(或下面的 `npm run dev`)就是为此提供本地服务器。
+> 注意:不能直接双击 `app/index.html`(`file://`)打开 —— Chrome 在 `file://` 下禁止 ES 模块与本地 `fetch`,页面无法渲染。必须经 HTTP 源访问(启动器或 `npm run dev` 即提供本地服务器)。
 
 ## 开发 / 构建 / 部署
 
 ```bash
 cd app
 npm install
-npm run dev        # 本地开发:http://localhost:5173/index.html(自动打开浏览器)
+npm run dev        # http://localhost:5173/index.html(自动开浏览器)
 npm run build      # 产出静态站点到 app/dist/
 npm run preview    # 预览生产构建
 ```
 
-**构建顺序(重要)**:`app/dist/` 里的内置课程是构建时从 `dist-courses/ic-packaging.pigeon` 拷入的。若该文件不存在,`npm run build` 仍会成功,但产物里**没有内置课程**(运行时 404)。所以首次构建前请先打包课程:
+**构建顺序(重要)**:`app/dist/` 的内置课程在构建时从 `dist-courses/ic-packaging.pigeon` 拷入。若该文件不存在,`npm run build` 仍成功但产物**无内置课程**(运行时 404)。首次构建前先打包课程:
 
 ```bash
-node tools/build-pigeon.mjs ic-packaging   # 在仓库根运行 → 产出 dist-courses/ic-packaging.pigeon
+node tools/build-pigeon.mjs ic-packaging   # 仓库根运行 → dist-courses/ic-packaging.pigeon
 cd app && npm run build
 ```
 
-(`启动PigeonLib.bat` 已自动处理这一步。)
+(`启动PigeonLib.bat` 已自动处理。)部署:把 `app/dist/` 整目录交给任意静态服务器即可。
 
-部署:把 `app/dist/` 整个目录交给任意静态服务器(nginx 等)即可上线。
+## 目录结构
+
+<!-- 维护点:目录结构变化时同步更新此处与 CLAUDE.md 的导览 -->
+
+```
+app/                 网站源码(Vite):index.html / learn.html + src(core/render/styles) + public
+courses/<id>/        课程包源:manifest/content/quiz/glossary.json + cover.png + assets/images
+tools/               build-pigeon(打包) / extract-ic-course(抽取) / migrate-quiz(题库迁移)
+dist-courses/        打包产物 *.pigeon
+docs/                格式契约、设计系统、代码规范、agent 工作流、AI 提示词
+参考项目/             原始硬编码站点(只读基线)
+启动PigeonLib.bat    一键启动器
+```
+
+每个重要目录都有 `README.md` 说明其职责。
 
 ## 制作一个课程包
 
-1. 在 `courses/<你的课程id>/` 下按 `docs/pigeon-format.md` 写 `manifest.json` / `content.json` / `quiz.json` / `glossary.json`,图片放 `assets/images/`。
-2. 打包:`node tools/build-pigeon.mjs <你的课程id>` → 产出 `dist-courses/<id>.pigeon`。
-3. 在首页上传该 `.pigeon`(存浏览器 IndexedDB),或加入 `app/src/core/course-registry.js` 的 `BUILTIN_COURSES` 作为内置课程随站发布。
+1. 在 `courses/<你的课程id>/` 按 [`docs/pigeon-format.md`](./docs/pigeon-format.md) 写 `manifest/content/quiz/glossary.json`(可写注释),图片放 `assets/images/`,封面 `cover.png`。
+2. 打包:`node tools/build-pigeon.mjs <id>` → `dist-courses/<id>.pigeon`。
+3. 在首页上传该 `.pigeon`(存浏览器 IndexedDB),或加入 `app/src/core/course-registry.js` 的 `BUILTIN_COURSES` 随站发布。
 
-让 AI 把教材转成课程包:见 `docs/ai-course-authoring-prompt.md`(含术语表与题目解析的制作指南)。
+让 AI 把教材转成课程包:见 [`docs/ai-course-authoring-prompt.md`](./docs/ai-course-authoring-prompt.md)。`courses/demo-course/` 是最小示例模板。
 
-`courses/demo-course/` 是一个最小示例课程包,可作为制作模板与解耦验证用例。
+## 规范与文档
+
+项目总纲与**统一规范索引**:[`CLAUDE.md`](./CLAUDE.md)。
+
+| 文档 | 内容 |
+|---|---|
+| [docs/pigeon-format.md](./docs/pigeon-format.md) | `.pigeon` 格式契约(权威) |
+| [docs/design-system.md](./docs/design-system.md) | 设计系统:令牌 / 图标 / 禁用元素(emoji、竖线) |
+| [docs/code-style.md](./docs/code-style.md) | 代码风格与中文注释规范 |
+| [docs/agent-workflow.md](./docs/agent-workflow.md) | agent/codex 执行规范、构建/QA/提交 |
+| [docs/ai-course-authoring-prompt.md](./docs/ai-course-authoring-prompt.md) | 给 AI 的课程制作提示词 |
+
+> **文档动态更新**:结构或功能变更时,同步更新对应目录 README、本文件与 `CLAUDE.md` 索引,使文档始终反映现状(规则见 agent-workflow)。
 
 ## 技术要点
 
-- 纯静态(Vite 构建),无后端。课程在浏览器本地解压(fflate),图片转 Blob URL,完全自包含、可离线。
-- 学习进度/答题/错题/学习时长按 `pglib:<courseId>:<slot>` 命名空间隔离,课程之间互不串扰;主题为站点级共享。
-- `.pigeon` 格式可扩展:内容节点与题型均为开放枚举,预留 `html` 节点(HTML 片段)与未来题型。
+- 纯静态(Vite),无后端;课程本地解压、图片转 Blob URL、可离线。
+- 进度/答题/错题/时长按 `pglib:<courseId>:<slot>` 命名空间隔离;主题站点级共享。
+- `.pigeon` 可扩展:内容块与题型为开放枚举,预留 `html` 块(相对资源路径加载时解析为 Blob URL)。
+
+## 许可
+
+> _(占位:上线前补充 LICENSE,例如 MIT)_

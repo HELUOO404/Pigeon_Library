@@ -193,9 +193,9 @@ cover.png          可选  课程封面
 { "type": "sectionQuiz", "quizRef": "4-1-1" }
 ```
 
-**10) html** — 扩展位(普通块表达不了的复杂结构,如带 rowspan 的表格)。原样插入,**尽量少用**
+**10) html** — 扩展位/逃生舱(普通块表达不了的复杂结构,如带 `rowspan`/`colspan` 或**内嵌图片**的表格)。原样插入,**尽量少用**。其中 `<img src="assets/...">` 的相对路径会在加载时自动解析为运行时 URL(同 image 块),故复杂表格里的配图直接写相对路径即可。
 ```json
-{ "type": "html", "html": "<table class=\"params-table\"><tr><td rowspan=\"2\">…</td></tr></table>" }
+{ "type": "html", "html": "<table class=\"params-table\"><tr><td rowspan=\"2\">…</td><td><img src=\"assets/images/chapter5/sop_process_1.png\"></td></tr></table>" }
 ```
 
 ---
