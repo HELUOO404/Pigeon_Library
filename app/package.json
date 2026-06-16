@@ -5,9 +5,9 @@
   "type": "module",
   "description": "PigeonLib — 可加载 .pigeon 课程包的学习平台",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "vite --configLoader runner",
+    "build": "vite build --configLoader runner",
+    "preview": "vite preview --configLoader runner",
     "build:course": "node ../tools/build-pigeon.mjs ic-packaging"
   },
   "devDependencies": {

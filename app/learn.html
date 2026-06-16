@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PigeonLib</title>
+  <link rel="icon" href="/logo.png">
+  <link rel="stylesheet" href="/src/styles/learn.css">
+</head>
+<body>
+  <div class="header">
+    <button class="menu-btn" data-action="toggle-sidebar">☰</button>
+    <img src="/logo.png" alt="Logo" style="height:32px;width:32px;margin-right:4px;border-radius:50%;display:block;">
+    <div class="logo" id="courseLogo">PigeonLib</div>
+    <div class="tabs" id="chapterTabs"></div>
+    <div class="tools">
+      <button class="tool-btn" data-action="open-panel" data-panel="dashboard" title="学习仪表盘">📊</button>
+      <button class="tool-btn" data-action="open-panel" data-panel="wrongBook" title="错题本">❌</button>
+      <button class="tool-btn" data-action="open-panel" data-panel="glossary" title="术语速查">📇</button>
+      <button class="tool-btn" data-action="toggle-theme" title="切换主题">🌙</button>
+    </div>
+  </div>
+  <div class="panel-overlay" id="panelOverlay" data-action="close-panel"></div>
+  <div class="app">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main">
+      <div class="exam-view" id="examView">
+        <div class="exam-start" id="examStart">
+          <h2>章节测试</h2>
+          <div class="exam-info">
+            <div class="exam-info-item"><span>题目类型</span><span>单选/判断/排序/匹配</span></div>
+            <div class="exam-info-item"><span>题目来源</span><span>课程原题</span></div>
+            <div class="exam-info-item"><span>测试目的</span><span>巩固知识</span></div>
+          </div>
+          <p style="color:var(--ctx2);margin-bottom:24px;">本测试题目来自课程作业原题，包含单选、判断、排序和匹配题，用于巩固本章核心知识点。</p>
+          <div class="exam-random-opts">
+            <label class="exam-random-label"><input type="checkbox" id="randomOrder"> 随机题目顺序</label>
+            <label class="exam-random-label"><input type="checkbox" id="randomOptions"> 随机题目选项（选择题生效）</label>
+          </div>
+          <div class="exam-start-actions" style="display:flex;justify-content:center;gap:12px">
+            <button class="btn-secondary" data-action="exit-exam" style="color:var(--cd);">退出</button>
+            <button class="btn-primary" data-action="start-exam">开始测试</button>
+          </div>
+        </div>
+        <div class="exam-progress" id="examProgress" style="display:none">
+          <div class="exam-header">
+            <span class="exam-timer" id="examTimer">⏱ 30:00</span>
+            <span class="exam-counter" id="examCounter">1/20</span>
+          </div>
+          <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgressFill" style="width:5%"></div></div>
+          <div class="exam-question-area" id="examQuestionArea"></div>
+          <div class="exam-nav">
+            <button class="btn-secondary" data-action="prev-exam">上一题</button>
+            <button class="btn-secondary" data-action="exit-exam" style="color:var(--cd);">退出考试</button>
+            <button class="btn-primary" data-action="next-exam">下一题 →</button>
+          </div>
+        </div>
+        <div class="exam-result" id="examResult" style="display:none">
+          <h2>考试结果</h2>
+          <div class="result-score" id="resultScore">--</div>
+          <div class="result-stats">
+            <div class="result-stat"><div class="result-stat-label">正确率</div><div class="result-stat-value" id="resultAccuracy">--</div></div>
+            <div class="result-stat"><div class="result-stat-label">用时</div><div class="result-stat-value" id="resultTime">--</div></div>
+            <div class="result-stat"><div class="result-stat-label">单选正确率</div><div class="result-stat-value" id="resultSingle">--</div></div>
+            <div class="result-stat"><div class="result-stat-label">判断正确率</div><div class="result-stat-value" id="resultJudge">--</div></div>
+            <div class="result-stat"><div class="result-stat-label">排序正确率</div><div class="result-stat-value" id="resultSort">--</div></div>
+            <div class="result-stat"><div class="result-stat-label">匹配正确率</div><div class="result-stat-value" id="resultMatch">--</div></div>
+          </div>
+          <div class="result-wrong-list" id="resultWrongList"></div>
+          <button class="btn-primary" data-action="back-study" style="margin-top:24px;">返回学习</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="app-footer">
+    <div class="footer-nav" id="footerNavLeft"><button data-action="prev-section">← 上一节</button></div>
+    <div class="footer-progress" id="footerProgress">第4章 0%</div>
+    <div class="footer-exam-info" id="footerExamInfo" style="display:none"></div>
+    <div class="footer-nav" id="footerNavRight"><button class="footer-quiz" data-action="open-exam">章节测试</button><button data-action="next-section">下一节 →</button></div>
+  </footer>
+  <div class="panel" id="panel"></div>
+  <script type="module" src="/src/main-learn.js"></script>
+</body>
+</html>
+
