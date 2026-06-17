@@ -131,13 +131,20 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .dispatch-illustration{width:100%;height:100%}
 .flight-path{stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:9 12;animation:drawPath 1.8s ease forwards}
 .flight-dot{fill:var(--seal)}
+/* 折纸信鸽:同 logo 轮廓,白纸折面 + 墨色描边;三面不同明度做出折纸立体感 */
 .paper-plane path{stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.paper-plane .facet-top{fill:color-mix(in srgb,var(--paper) 82%,#fff)}
-.paper-plane .facet-bottom{fill:color-mix(in srgb,var(--paper) 88%,var(--ink))} /* 略深的下翼,做出折纸立体感 */
+.paper-plane .facet-1{fill:color-mix(in srgb,var(--paper) 82%,#fff)}        /* 主翼:亮白纸面 */
+.paper-plane .facet-2{fill:color-mix(in srgb,var(--paper) 86%,var(--ink))}  /* 背翼:浅阴影折面 */
+.paper-plane .facet-3{fill:color-mix(in srgb,var(--paper) 74%,var(--ink))}  /* 尾折:较深折面 */
 .parcel rect{fill:color-mix(in srgb,var(--card) 70%,var(--paper));stroke:var(--ink);stroke-width:2}
 .parcel path{fill:none;stroke:var(--gold);stroke-width:2}
-.seal circle{fill:var(--seal)}
-.seal text{fill:#fff;font-family:"Noto Serif SC",serif;font-size:24px;font-weight:700}
+/* 邮政圆戳:墨色描边、半透明,似盖在信封上的戳印(与右下 PIGEON POST 戳成系列) */
+.postmark{opacity:.82}
+.postmark .pm-ring{fill:none;stroke:var(--seal);stroke-width:2}
+.postmark .pm-ring-inner{stroke-width:1.2}
+.postmark .pm-arc{fill:var(--seal);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em}
+.postmark .pm-bar{stroke:var(--seal);stroke-width:1.4;opacity:.7}
+.postmark .pm-char{fill:var(--seal);font-family:"Noto Serif SC",serif;font-size:20px;font-weight:700}
 
 /* ---------- 区块 ---------- */
 .page-shell{counter-reset:sec}

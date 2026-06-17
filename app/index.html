@@ -62,19 +62,30 @@
           <circle class="flight-dot dot-a" cx="76" cy="112" r="5"/>
           <circle class="flight-dot dot-b" cx="282" cy="154" r="5"/>
           <circle class="flight-dot dot-c" cx="494" cy="190" r="5"/>
-          <!-- 折纸纸飞机:上翼(亮)+ 下翼(略深),共享边即中缝折线 -->
+          <!-- 折纸信鸽:与品牌 logo 同款折纸轮廓(三折面),放大置于英雄区;墨色折面,区别于 logo 的邮政金 -->
           <g class="paper-plane" filter="url(#paperShadow)">
-            <path class="facet-top" d="M372 168 L132 150 L238 232 Z"/>
-            <path class="facet-bottom" d="M372 168 L238 232 L150 300 Z"/>
+            <path class="facet-1" d="M172 225 L291 127 L259.5 232 Z"/>
+            <path class="facet-2" d="M291 127 L315.5 225 L259.5 232 Z"/>
+            <path class="facet-3" d="M259.5 232 L274.2 281 L295.2 227.8 Z"/>
           </g>
           <g class="parcel" filter="url(#paperShadow)">
             <rect x="330" y="250" width="136" height="92" rx="10"/>
             <path d="M330 276 L398 314 L466 276"/>
             <path d="M330 250 L398 304 L466 250"/>
           </g>
-          <g class="seal">
-            <circle cx="430" cy="246" r="38"/>
-            <text x="430" y="253" text-anchor="middle">鸽</text>
+          <!-- 邮政圆戳:双圈 + 上弧 PIGEON POST + 中心鸽 + 日戳横纹 + 年份;微倾、半透明,似盖戳 -->
+          <g class="postmark" transform="translate(22 -28) rotate(-13 430 246)">
+            <defs>
+              <path id="pmArcTop" d="M398 246 a32 32 0 0 1 64 0"/>
+              <path id="pmArcBottom" d="M400 246 a30 30 0 0 0 60 0"/>
+            </defs>
+            <circle class="pm-ring" cx="430" cy="246" r="39"/>
+            <circle class="pm-ring pm-ring-inner" cx="430" cy="246" r="33"/>
+            <text class="pm-arc"><textPath href="#pmArcTop" startOffset="50%" text-anchor="middle">PIGEON · POST</textPath></text>
+            <text class="pm-arc pm-arc-bottom"><textPath href="#pmArcBottom" startOffset="50%" text-anchor="middle">2026</textPath></text>
+            <line class="pm-bar" x1="404" y1="240" x2="456" y2="240"/>
+            <line class="pm-bar" x1="404" y1="252" x2="456" y2="252"/>
+            <text class="pm-char" x="430" y="238" text-anchor="middle">鸽</text>
           </g>
         </svg>
       </div>
