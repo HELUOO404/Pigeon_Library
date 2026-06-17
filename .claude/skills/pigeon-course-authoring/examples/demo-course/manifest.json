@@ -1,0 +1,35 @@
+// manifest.json — 课程元信息 + 章节索引树
+// schemaVersion 固定 1;id 课程唯一标识;title 课程名;subtitle 副标题
+// author/version 作者与版本
+// cover 封面图相对路径(如 cover.png);coverText 无封面图时显示在封面的文字(二选一)
+// stats 首页统计 {chapters 章数, knowledgePoints 知识点数, questions 题数}
+// chapters[] 章 → sections[] 节 → knowledgePoints[] 知识点
+//   章 id 如 "4";节 id 如 "4.1";知识点 id 如 "4-1-1";章可选 tabLabel(顶栏文案)
+
+{
+  "coverText": "示例课",
+  "schemaVersion": 1,
+  "id": "demo-course",
+  "title": "示例课程·解耦验证",
+  "subtitle": "证明 PigeonLib 可加载任意 .pigeon 内容",
+  "author": "PigeonLib",
+  "version": "1.0",
+  "stats": { "chapters": 1, "knowledgePoints": 2, "questions": 4 },
+  "chapters": [
+    {
+      "id": "1",
+      "title": "第1章 解耦验证",
+      "tabLabel": "第1章",
+      "sections": [
+        {
+          "id": "1.1",
+          "title": "第1.1节 内容渲染验证",
+          "knowledgePoints": [
+            { "id": "1-1-1", "title": "块类型渲染" },
+            { "id": "1-1-2", "title": "题型与术语" }
+          ]
+        }
+      ]
+    }
+  ]
+}

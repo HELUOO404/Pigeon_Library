@@ -1,5 +1,7 @@
 # PigeonLib · 信鸽课程库
 
+> 仓库:https://github.com/HELUOO404/Pigeon_Library
+>
 > 内容与平台解耦的课程学习平台。课程打包成独立的 `.pigeon` 文件(本质是 zip),由网站在浏览器本地解压渲染 —— **换一门课无需改一行网站代码**。**本地优先、可离线**;另带一个**可选**的轻量后端,登录后开启跨设备进度同步。
 
 - **首页** `index.html`:浏览内置课程、上传 `.pigeon`、查看格式说明。
@@ -68,7 +70,7 @@ tools/               build-pigeon(打包) / extract-ic-course(抽取) / migrate-
 dist-courses/        打包产物 *.pigeon
 docs/                格式契约、设计系统、代码规范、agent 工作流、AI 提示词、用户系统设计
 参考项目/             原始硬编码站点(只读基线)
-启动PigeonLib.bat    一键启动器(→ launch.ps1 双语)
+启动PigeonLib.bat    一键启动器(纯 ASCII 英文,自包含)
 ```
 
 每个重要目录都有 `README.md` 说明其职责。
@@ -89,6 +91,7 @@ docs/                格式契约、设计系统、代码规范、agent 工作�
 |---|---|
 | [docs/pigeon-format.md](./docs/pigeon-format.md) | `.pigeon` 格式契约(权威) |
 | [docs/user-system-design.md](./docs/user-system-design.md) | 用户系统/同步契约(架构·数据模型·API·安全) |
+| [docs/deployment-guide.md](./docs/deployment-guide.md) | 部署指南(本地 / 静态 / Node 后端 / Windows Server) |
 | [docs/design-system.md](./docs/design-system.md) | 设计系统:令牌 / 图标 / 禁用元素(emoji、竖线) |
 | [docs/code-style.md](./docs/code-style.md) | 代码风格与中文注释规范 |
 | [docs/agent-workflow.md](./docs/agent-workflow.md) | agent/codex 执行规范、构建/QA/提交 |

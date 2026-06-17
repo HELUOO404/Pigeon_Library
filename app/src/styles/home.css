@@ -240,6 +240,12 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .format-table th{color:var(--gold-deep);white-space:nowrap;font-family:var(--mono);font-size:13px}
 #aiPrompt{width:100%;min-height:220px;resize:vertical;margin:12px 0;padding:14px;border:1px solid var(--line-2);border-radius:9px;background:color-mix(in srgb,var(--ink) 5%,transparent);color:var(--ink);line-height:1.7;font-family:var(--mono);font-size:12.5px}
 .copy-status{margin-left:10px;color:var(--gold-deep);font-weight:700;font-size:13px}
+/* 课程包 Skill 提示块:横向 hairline 分隔(无竖线),暖底纸卡 */
+.ai-skill-note{margin-top:18px;padding:16px 18px;border:1px solid var(--line-2);border-radius:10px;background:color-mix(in srgb,var(--gold) 6%,var(--card))}
+.ai-skill-note .ai-skill-title{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-weight:700;font-size:15.5px;color:var(--ink);margin-bottom:8px}
+.ai-skill-note p{margin:8px 0 0;color:var(--ink-soft);font-size:13.5px;line-height:1.7}
+.ai-skill-note code{font-family:var(--mono);background:color-mix(in srgb,var(--ink) 8%,transparent);padding:1px 6px;border-radius:5px;font-size:.9em}
+.ai-skill-note a{color:var(--gold-deep);font-weight:700;word-break:break-all}
 
 /* ---------- Toast ---------- */
 .toast-stack{position:fixed;right:18px;bottom:18px;z-index:90;display:grid;gap:10px;width:min(360px,calc(100vw - 36px))}

@@ -1,0 +1,53 @@
+// content.json — 知识点正文(类型化块)
+// overviews:        { 节id:      { title, blocks[] } }   每节开头的概述卡
+// knowledgePoints:  { 知识点id:  { title, blocks[] } }   知识点正文
+// blocks[] 每块 { type, ... },type 取值:
+//   paragraph{spans[]}  numTitle{text}  boldCaption{text}  heading{text}
+//   image{src,alt}  paramsTable{headers[],rows[][]}  summaryBox{title,items[][]}
+//   compareBox{title,headers[],rows[{label,cells[]}]}  sectionQuiz{quizRef}  html{html}
+// spans[] 内联文本:{t} 普通 / {t,b:true} 加粗 / {t,sub:true} 子标题
+
+{
+  "overviews": {
+    "1.1": {
+      "title": "第1.1节 内容渲染验证",
+      "blocks": [
+        { "type": "paragraph", "spans": [
+          { "t": "本节用来验证 " },
+          { "t": "PigeonLib", "b": true },
+          { "t": " 能加载与内置课完全不同的内容。术语 DBG 应被自动识别为悬浮提示。" }
+        ] },
+        { "type": "image", "src": "assets/images/demo.png", "alt": "示例图片" }
+      ]
+    }
+  },
+  "knowledgePoints": {
+    "1-1-1": {
+      "title": "块类型渲染",
+      "blocks": [
+        { "type": "paragraph", "spans": [ { "t": "这是一个普通段落,用于验证 paragraph 块渲染。" } ] },
+        { "type": "numTitle", "text": "1. 编号小标题" },
+        { "type": "paragraph", "spans": [ { "t": "编号小标题(numTitle)下的说明文字。" }, { "t": "（含子标题）", "sub": true } ] },
+        { "type": "boldCaption", "text": "示例参数表" },
+        { "type": "paramsTable", "headers": ["参数", "值"], "rows": [["温度", "25℃"], ["压力", "1 atm"]] },
+        { "type": "image", "src": "assets/images/demo.png", "alt": "示例图片" },
+        { "type": "summaryBox", "title": "📝 知识点梳理", "items": [
+          [ { "t": "块类型", "b": true }, { "t": ":paragraph / numTitle / image / paramsTable" } ],
+          [ { "t": "全部由 content.json 驱动" } ]
+        ] },
+        { "type": "compareBox", "title": "🔍 对比记忆", "headers": ["对比项", "内置课", "本课"], "rows": [
+          { "label": "内容", "cells": ["IC封装", "解耦验证"] },
+          { "label": "状态", "cells": ["独立命名空间", "独立命名空间"] }
+        ] },
+        { "type": "sectionQuiz", "quizRef": "1-1-1" }
+      ]
+    },
+    "1-1-2": {
+      "title": "题型与术语",
+      "blocks": [
+        { "type": "paragraph", "spans": [ { "t": "本知识点的章节考试覆盖 single / judge / sort / match 四种题型。" } ] },
+        { "type": "sectionQuiz", "quizRef": "1-1-2" }
+      ]
+    }
+  }
+}

@@ -28,7 +28,8 @@ tools/               build-pigeon.mjs(打包) / extract-ic-course.mjs(从原站�
 dist-courses/        打包产物 *.pigeon
 docs/                格式契约、设计系统、代码规范、agent 工作流、AI 制作提示词、用户系统设计
 参考项目/             原始硬编码站点(只读基线)
-启动PigeonLib.bat / launch.ps1    一键启动器(ASCII .bat 包装 → PowerShell 双语脚本)
+.claude/skills/      Claude Code Skill:pigeon-course-authoring(课程包制作,渐进式披露 + 示例)
+启动PigeonLib.bat    一键启动器(纯 ASCII 英文,自包含;本机 cmd 解析中文 .bat 会乱码故用英文)
 ```
 每个重要目录都有自己的 `README.md`,说明该目录职责与关键文件。
 
@@ -74,7 +75,9 @@ docs/                格式契约、设计系统、代码规范、agent 工作�
 | [`docs/agent-workflow.md`](./docs/agent-workflow.md) | **agent/codex 执行规范**:**编程实现默认交 codex 执行、Claude 设计/复核**;构建/提交/QA、文档维护规则 |
 | [`docs/pigeon-format.md`](./docs/pigeon-format.md) | `.pigeon` 课程包格式**契约(权威)** |
 | [`docs/user-system-design.md`](./docs/user-system-design.md) | **用户系统/同步契约(权威)**:架构、数据模型、API、同步流程、角色权限、安全 |
+| [`docs/deployment-guide.md`](./docs/deployment-guide.md) | 部署指南:本地 / 静态托管 / Node 后端 / Windows Server(IIS 反代 + NSSM)/ CORS·cookie / 排错 |
 | [`docs/ai-course-authoring-prompt.md`](./docs/ai-course-authoring-prompt.md) | 给 AI 的课程制作提示词 |
+| [`.claude/skills/pigeon-course-authoring/`](./.claude/skills/pigeon-course-authoring/SKILL.md) | 课程包制作 Skill(Claude Code):工作流 + 格式速查 + 打包用法 + 示例课程 |
 | [`docs/首页布局参考.md`](./docs/首页布局参考.md) | 首页布局参考(历史记录) |
 | [`server/README.md`](./server/README.md) | 可选同步后端的起停、端点速查、安全要点 |
 | 各目录 `README.md` | `app/`、`app/src/core/`、`app/src/render/`、`app/src/styles/`、`app/public/`、`server/`、`courses/`、`tools/`、`dist-courses/`、`docs/` 各自的职责说明 |

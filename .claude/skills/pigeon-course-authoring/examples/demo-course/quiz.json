@@ -1,0 +1,103 @@
+// quiz.json — 题库与引用
+// 一道题在 questionBank 里定义一次,小测/考试用 id 引用,避免重复。
+// questionBank: { 题id: 题对象 }   题id = 章号-三位流水(如 4-001);题型见 type
+//   type     题型:single 单选 / judge 判断 / sort 排序 / match 匹配
+//   stem     题干
+//   options  选项数组(single;每项以 "A. " 开头)
+//   answer   答案:single=字母 / judge=true|false / sort=正确顺序数组 / match={左:右}
+//   explain  解析
+//   items    (sort)待排序项;  left / right  (match)左右两列
+// sectionQuizzes: { 知识点id: [题id...] }   小节小测:某知识点下要出的题
+// examQuestions:  { 章id:    [题id...] }    章节考试:某章要出的题
+{
+  "questionBank": {
+    "1-001": {
+      "type": "single",
+      "stem": "content.json 用什么描述正文?",
+      "options": [
+        "A. 类型化块节点",
+        "B. 整段 HTML"
+      ],
+      "answer": "A",
+      "explain": "PigeonLib 用类型化 block 节点描述正文,渲染器据 type 还原。"
+    },
+    "1-002": {
+      "type": "single",
+      "stem": "不同课程的学习状态如何隔离?",
+      "options": [
+        "A. 全局共用",
+        "B. 按课程 id 分命名空间"
+      ],
+      "answer": "B",
+      "explain": "store 按 courseId 分命名空间,课程之间状态互不串扰。"
+    },
+    "1-003": {
+      "type": "single",
+      "stem": ".pigeon 本质是什么文件?",
+      "options": [
+        "A. zip 压缩包",
+        "B. 纯文本",
+        "C. 数据库"
+      ],
+      "answer": "A",
+      "explain": "正确答案 A:.pigeon 本质是 zip,改了后缀。B/C 不涉及压缩归档。记忆要点:pigeon=zip。"
+    },
+    "1-004": {
+      "type": "judge",
+      "stem": "学习页保持单页形式,首页是新增的。",
+      "answer": true,
+      "explain": "正确。学习页 1:1 复刻原单页,首页为新增的选课/上传页。"
+    },
+    "1-005": {
+      "type": "sort",
+      "stem": "请按加载顺序排列:",
+      "items": [
+        "渲染页面",
+        "解压 .pigeon",
+        "校验 manifest"
+      ],
+      "answer": [
+        "解压 .pigeon",
+        "校验 manifest",
+        "渲染页面"
+      ],
+      "explain": "顺序:先解压,再校验 manifest,最后渲染。"
+    },
+    "1-006": {
+      "type": "match",
+      "stem": "把文件与作用配对:",
+      "left": [
+        "manifest.json",
+        "content.json",
+        "glossary.json"
+      ],
+      "right": [
+        "目录索引树",
+        "知识点正文",
+        "术语表"
+      ],
+      "answer": {
+        "manifest.json": "目录索引树",
+        "content.json": "知识点正文",
+        "glossary.json": "术语表"
+      },
+      "explain": "manifest=索引,content=正文,glossary=术语。"
+    }
+  },
+  "sectionQuizzes": {
+    "1-1-1": [
+      "1-001"
+    ],
+    "1-1-2": [
+      "1-002"
+    ]
+  },
+  "examQuestions": {
+    "1": [
+      "1-003",
+      "1-004",
+      "1-005",
+      "1-006"
+    ]
+  }
+}
