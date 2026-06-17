@@ -1,0 +1,19 @@
+{
+  "name": "pigeonlib-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PigeonLib 可选同步后端:账户 + 跨设备进度同步(本地优先的渐进增强层)。",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch index.js",
+    "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

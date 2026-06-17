@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./auth.css";
 
 /* ============================================================
    PigeonLib 首页 · 信鸽邮政编辑风(精修版)
@@ -77,6 +78,29 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
   background:color-mix(in srgb,var(--gold) 7%,transparent);font-size:12.5px;color:var(--ink-soft);letter-spacing:.02em;
 }
 .dispatch-ticket strong{color:var(--ink);font-weight:700}
+
+/* ---------- 续学 / 检索 ---------- */
+.resume-slot{margin:0 0 clamp(30px,5vw,46px)}
+.resume-card{
+  display:flex;align-items:center;justify-content:space-between;gap:22px;
+  background:var(--card);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow);
+  padding:18px 20px;transition:transform .18s,box-shadow .18s;
+}
+.resume-card:hover{transform:translateY(-2px);box-shadow:0 20px 38px -24px color-mix(in srgb,var(--ink) 55%,transparent)}
+.resume-eyebrow{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);text-transform:uppercase;margin-bottom:7px}
+.resume-card h2{font-family:var(--serif);font-size:22px;line-height:1.25;color:var(--ink);margin-bottom:6px}
+.resume-section{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.resume-link{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 17px;border-radius:8px;background:var(--ink);color:var(--paper);font-weight:700}
+.resume-link:hover{background:color-mix(in srgb,var(--ink) 86%,var(--gold))}
+.course-toolbar{margin:0 0 clamp(26px,4vw,38px)}
+.course-search{
+  display:flex;align-items:center;gap:10px;max-width:520px;
+  background:var(--card);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow);
+  padding:10px 13px;color:var(--ink-soft);
+}
+.course-search:focus-within{border-color:var(--gold);color:var(--gold-deep)}
+.course-search input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px}
+.course-search input::placeholder{color:var(--ink-soft)}
 
 /* 英雄区画面:做成一枚邮票(齿孔边 + 邮戳)*/
 .hero-media{
@@ -170,6 +194,19 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .study-link{display:inline-flex;align-items:center;gap:5px;margin-top:14px;color:var(--ink);font-weight:700;font-size:14px;border-bottom:1.5px solid var(--gold);padding-bottom:1px;width:max-content;transition:gap .15s,color .15s}
 .study-link:hover{gap:9px;color:var(--gold-deep)}
 .empty-card{display:flex;align-items:center;justify-content:center;min-height:184px;border-style:dashed;border-color:var(--line-2);color:var(--ink-soft);text-align:center;padding:16px;box-shadow:none;background:transparent}
+.empty-action{margin-left:12px;gap:7px;min-height:38px;padding:8px 14px}
+.course-card.skeleton{pointer-events:none}
+.skeleton-cover,.skeleton-line,.skeleton-pill,.skeleton-stats span{
+  background:linear-gradient(90deg,var(--line),color-mix(in srgb,var(--line-2) 72%,var(--card)),var(--line));
+  background-size:220% 100%;animation:skeletonPulse 1.2s ease-in-out infinite;border-radius:7px;
+}
+.skeleton-cover{height:128px;margin:6px 0 14px}
+.skeleton-pill{width:58px;height:19px;border-radius:999px;margin-bottom:12px}
+.skeleton-line{height:12px;margin-top:9px}
+.skeleton-title{width:72%;height:17px}
+.skeleton-short{width:48%}
+.skeleton-stats{display:flex;gap:10px;border-top:1px dashed var(--line);padding-top:11px;margin-top:13px}
+.skeleton-stats span{display:block;width:58px;height:11px}
 
 /* ---------- 上传 dropzone ---------- */
 .dropzone{
@@ -204,6 +241,23 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 #aiPrompt{width:100%;min-height:220px;resize:vertical;margin:12px 0;padding:14px;border:1px solid var(--line-2);border-radius:9px;background:color-mix(in srgb,var(--ink) 5%,transparent);color:var(--ink);line-height:1.7;font-family:var(--mono);font-size:12.5px}
 .copy-status{margin-left:10px;color:var(--gold-deep);font-weight:700;font-size:13px}
 
+/* ---------- Toast ---------- */
+.toast-stack{position:fixed;right:18px;bottom:18px;z-index:90;display:grid;gap:10px;width:min(360px,calc(100vw - 36px))}
+.toast{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:12px 12px 12px 14px;background:var(--card);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow);
+  color:var(--ink);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.hide{opacity:0;transform:translateY(8px)}
+.toast-icon{display:grid;place-items:center}
+.toast-success{background:color-mix(in srgb,var(--correct-bg) 86%,var(--card));color:var(--correct-tx)}
+.toast-error{background:color-mix(in srgb,var(--wrong-bg) 86%,var(--card));color:var(--wrong-tx)}
+.toast-info .toast-icon{color:var(--gold-deep)}
+.toast-text{font-family:var(--mono);font-size:12px;line-height:1.45;color:inherit}
+.toast-close{border:0;background:transparent;color:inherit;cursor:pointer;border-radius:7px;padding:4px;opacity:.75}
+.toast-close:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);opacity:1}
+
 /* ---------- 关于 / 页脚 ---------- */
 /* 关于条:去竖线,改为居中的编辑式引言(暖底 + 衬线,无任何 accent 竖条) */
 .about-strip{margin-top:clamp(44px,7vw,72px);padding:30px 28px;background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:10px;color:var(--ink-soft);font-family:var(--serif);font-size:18px;line-height:1.75;text-align:center}
@@ -215,6 +269,7 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .reveal:nth-child(2){animation-delay:.07s}.reveal:nth-child(3){animation-delay:.14s}.reveal:nth-child(4){animation-delay:.21s}.reveal:nth-child(5){animation-delay:.28s}.reveal:nth-child(6){animation-delay:.35s}
 @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes drawPath{from{stroke-dashoffset:180}to{stroke-dashoffset:0}}
+@keyframes skeletonPulse{from{background-position:120% 0}to{background-position:-120% 0}}
 
 /* ---------- 响应式 ---------- */
 @media(max-width:860px){
@@ -229,6 +284,9 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
   .hero h1{font-size:38px}
   .hero-actions{flex-direction:column}
   .btn{width:100%}
+  .resume-card{align-items:flex-start;flex-direction:column}
+  .resume-link{width:100%}
+  .course-search{max-width:none}
   .dropzone{grid-template-columns:1fr;text-align:center}
   .drop-icon{margin:0 auto}
   .site-footer{flex-direction:column;align-items:flex-start;gap:8px}

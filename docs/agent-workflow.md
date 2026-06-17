@@ -2,10 +2,18 @@
 
 > 面向在本仓库工作的 AI/agent(Claude、codex 等)。返回索引:[`../CLAUDE.md`](../CLAUDE.md)。
 
-## 一、分工
+## 一、分工(codex 为编程子代理,默认承担实现)
 
-- **Claude(主导)**:设计、架构、正确性关键逻辑(loader / 渲染器 / 题库 / 设计系统),以及对其他 agent 产出的复核。
-- **codex(辅助)**:机械、规格明确的批量活 —— 如给多文件批量加注释、数据迁移、重复性替换。**必须在 Claude 复核下进行**。
+- **Claude(设计 + 复核,主导)**:需求澄清、方案/架构设计、正确性关键决策、计划编排,以及**对 codex 产出的复核与 QA**。
+- **codex(实现,默认执行者)**:**规格明确的编码实现默认交 codex 执行** —— 组件/样式/脚本编写、数据迁移、批量改写或加注释、文件编码处理等。Claude 先给出清晰规格(目标文件、约束、验收点),codex 执行,Claude **review diff** 后采纳。
+- 例外(Claude 直接做):规格尚不明确、需边探索边定的;跨多文件的设计权衡;治理/规范类文档(如本文件)等以精确措辞为先的产出。
+
+### 调用方式
+
+- 非交互式,在仓库根运行:`codex exec --cd <仓库根> -s workspace-write "<自包含规格>"`;规格较长时用 `codex exec ... < spec.txt` 经 stdin 传入,避免 shell/中文转义问题。(`exec` 子命令默认即非交互、无审批,不要加 `-a`。)
+- 规格须**自包含**:codex 不知道本次对话上下文 —— 写明目标文件、不可触碰项、具体做法、验收点。
+- Claude 闭环:写规格 → 跑 codex → **review 改动 diff**(`git status` / `git diff`)→ 按 QA 清单验证 → 不达标补规格重跑。
+- 确定性的字节级操作(如按指定编码落盘)在规格里直接给出确切命令(如 PowerShell `[IO.File]::WriteAllText($p, $t, [Text.Encoding]::GetEncoding(936))`),让 codex 照做。
 
 ## 二、codex 执行边界与避坑
 

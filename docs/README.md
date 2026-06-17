@@ -5,6 +5,7 @@
 | 文件 | 职责 |
 |---|---|
 | [`pigeon-format.md`](./pigeon-format.md) | `.pigeon` 课程包格式**契约(唯一权威)**:文件结构、块类型、题库引用模型、校验规则。 |
+| [`user-system-design.md`](./user-system-design.md) | 用户系统/同步**契约(权威)**:渐进增强同步层架构、SQLite 数据模型、API 端点、同步流程、角色权限矩阵、安全模型。 |
 | [`design-system.md`](./design-system.md) | 设计系统:令牌 / 字体字阶 / 组件 / 图标体系 / **禁用元素(emoji、竖线)** / 无障碍 / 设计资源。 |
 | [`code-style.md`](./code-style.md) | 代码风格与**中文注释规范**(含 JSONC 课程注释约定)。 |
 | [`agent-workflow.md`](./agent-workflow.md) | **agent/codex 执行规范**、构建/QA/提交、文档维护规则。 |

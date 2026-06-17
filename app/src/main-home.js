@@ -1,9 +1,13 @@
 // main-home.js — 首页脚本:课程卡渲染、.pigeon 上传解析与本地保存、格式说明手风琴、图标水合。
 import { BUILTIN_COURSES, deleteLocalCourse, listLocalCourses, saveLocalCourse } from './core/course-registry.js';
 import { loadPigeonFromFile, loadPigeonFromUrl, pigeonErrorText } from './core/pigeon-loader.js';
-import { createStore } from './core/store.js';
+import { createStore, globalGet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
+import { toast } from './core/toast.js';
+import { initSession } from './core/session.js';
+import { initSync } from './core/sync.js';
+import { initAuthUI } from './core/auth-ui.js';
 
 applyInitialTheme();
 
@@ -24,6 +28,7 @@ const state = {
   localCourses: [],
   builtinCourses: BUILTIN_COURSES.map((course) => ({ ...course, meta: course })),
   builtinError: false,
+  query: '',
 };
 
 const el = {
@@ -32,11 +37,13 @@ const el = {
   localCount: document.getElementById('localCount'),
   builtinGrid: document.getElementById('builtinGrid'),
   localGrid: document.getElementById('localGrid'),
+  resumeSlot: document.getElementById('resumeSlot'),
+  courseToolbar: document.getElementById('courseToolbar'),
+  courseSearch: document.getElementById('courseSearch'),
   dropzone: document.getElementById('dropzone'),
   file: document.getElementById('courseFile'),
   dropTitle: document.getElementById('dropTitle'),
   aiPrompt: document.getElementById('aiPrompt'),
-  copyStatus: document.getElementById('copyStatus'),
 };
 
 function text(value, fallback = '') {
@@ -86,6 +93,74 @@ function courseMeta(course) {
   return course.meta || course;
 }
 
+// 课程检索:按 标题/副标题/作者 做大小写无关包含匹配;query 为空时全过。
+function matchesQuery(course) {
+  if (!state.query) return true;
+  const meta = courseMeta(course);
+  return [meta.title, meta.subtitle, meta.author]
+    .map((value) => text(value).toLowerCase())
+    .some((value) => value.includes(state.query));
+}
+
+// 空态卡(可带一个动作按钮,如重试)。message 走 escapeHtml,action 是受信 HTML。
+function renderEmptyCard(message, actionHtml = '') {
+  const empty = document.createElement('div');
+  empty.className = 'empty-card';
+  empty.innerHTML = `${escapeHtml(message)}${actionHtml}`;
+  return empty;
+}
+
+// 内置课程从 URL 异步加载,首屏放骨架占位,避免封面/统计「突现」。
+function renderBuiltinSkeleton() {
+  const cards = BUILTIN_COURSES.map(() => {
+    const card = document.createElement('article');
+    card.className = 'course-card skeleton';
+    card.setAttribute('aria-hidden', 'true');
+    card.innerHTML = `
+      <div class="skeleton-cover"></div>
+      <div class="skeleton-pill"></div>
+      <div class="skeleton-line skeleton-title"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line skeleton-short"></div>
+      <div class="skeleton-stats"><span></span><span></span><span></span></div>
+    `;
+    return card;
+  });
+  el.builtinGrid.replaceChildren(...cards);
+}
+
+// 续学卡:读站点级 lastCourse,仅当该课程仍存在时渲染,否则隐藏槽位。
+function renderResumeCard() {
+  const last = globalGet('lastCourse', null);
+  const courses = [...state.builtinCourses, ...state.localCourses];
+  const exists = last && courses.some((course) => course.id === last.id);
+  if (!exists) {
+    el.resumeSlot.hidden = true;
+    el.resumeSlot.replaceChildren();
+    return;
+  }
+  const href = `/learn.html?course=${encodeURIComponent(last.id)}&section=${encodeURIComponent(last.sectionId || '')}`;
+  el.resumeSlot.innerHTML = `
+    <article class="resume-card">
+      <div>
+        <p class="resume-eyebrow">继续学习 / RESUME</p>
+        <h2>${escapeHtml(last.title || last.id)}</h2>
+        <p class="resume-section">${icon('book-open', { size: 15 })}<span>${escapeHtml(last.sectionTitle || '上次进度')}</span></p>
+      </div>
+      <a class="resume-link" href="${href}">继续 ▸</a>
+    </article>
+  `;
+  el.resumeSlot.hidden = false;
+}
+
+// 首屏(数据未就绪)时的本地区与计数占位,顺带渲染续学卡。
+function renderInitialLocalEmpty() {
+  el.localGrid.replaceChildren(renderEmptyCard('暂无上传课程。投递一个 .pigeon 后会出现在这里。'));
+  el.builtinCount.textContent = String(BUILTIN_COURSES.length);
+  el.localCount.textContent = String(state.localCourses.length);
+  renderResumeCard();
+}
+
 function renderCourseCard(course, kind) {
   const meta = courseMeta(course);
   const title = text(meta.title, course.id);
@@ -117,45 +192,42 @@ function renderCourseCard(course, kind) {
 }
 
 function renderCourses(highlightId) {
-  el.builtinGrid.replaceChildren(...state.builtinCourses.map((course, index) => {
-    const card = renderCourseCard(course, 'builtin');
-    card.style.animationDelay = `${index * 70}ms`;
-    return card;
-  }));
+  const totalCourses = BUILTIN_COURSES.length + state.localCourses.length;
+  el.courseToolbar.hidden = totalCourses <= 4;
 
-  if (state.localCourses.length) {
-    el.localGrid.replaceChildren(...state.localCourses.map((course, index) => {
+  if (state.builtinError) {
+    const retry = `<button class="btn btn-secondary empty-action" type="button" data-action="retry-builtin">${icon('rotate-ccw', { size: 16 })} 重试</button>`;
+    el.builtinGrid.replaceChildren(renderEmptyCard('内置课程未能加载,可能尚未打包。可在仓库根运行 node tools/build-pigeon.mjs ic-packaging 后重试。', retry));
+  } else {
+    const builtinCourses = state.builtinCourses.filter(matchesQuery);
+    if (builtinCourses.length) {
+      el.builtinGrid.replaceChildren(...builtinCourses.map((course, index) => {
+        const card = renderCourseCard(course, 'builtin');
+        card.style.animationDelay = `${index * 70}ms`;
+        return card;
+      }));
+    } else {
+      el.builtinGrid.replaceChildren(renderEmptyCard('无匹配课程'));
+    }
+  }
+
+  const localCourses = state.localCourses.filter(matchesQuery);
+  if (localCourses.length) {
+    el.localGrid.replaceChildren(...localCourses.map((course, index) => {
       const card = renderCourseCard(course, 'local');
       card.style.animationDelay = `${index * 70}ms`;
       if (course.id === highlightId) card.classList.add('just-added');
       return card;
     }));
+  } else if (state.query) {
+    el.localGrid.replaceChildren(renderEmptyCard('无匹配课程'));
   } else {
-    const empty = document.createElement('div');
-    empty.className = 'empty-card';
-    empty.textContent = '暂无上传课程。投递一个 .pigeon 后会出现在这里。';
-    el.localGrid.replaceChildren(empty);
+    el.localGrid.replaceChildren(renderEmptyCard('暂无上传课程。投递一个 .pigeon 后会出现在这里。'));
   }
 
   el.builtinCount.textContent = String(BUILTIN_COURSES.length);
   el.localCount.textContent = String(state.localCourses.length);
-  renderBuiltinNotice();
-}
-
-function renderBuiltinNotice() {
-  const grid = el.builtinGrid;
-  let notice = document.getElementById('builtinNotice');
-  if (state.builtinError) {
-    if (!notice) {
-      notice = document.createElement('p');
-      notice.id = 'builtinNotice';
-      notice.style.cssText = 'margin:0 0 16px;padding:12px 16px;border-radius:10px;background:rgba(200,150,42,.12);color:var(--ink,#1b2330);font-size:14px;line-height:1.6;';
-      grid.parentElement.insertBefore(notice, grid);
-    }
-    notice.textContent = '内置课程未能加载,可能尚未打包。请双击「启动PigeonLib.bat」启动,或在仓库根运行:node tools/build-pigeon.mjs ic-packaging';
-  } else if (notice) {
-    notice.remove();
-  }
+  renderResumeCard();
 }
 
 async function hydrateBuiltinStats() {
@@ -175,9 +247,9 @@ async function hydrateBuiltinStats() {
   state.builtinError = failed;
 }
 
-async function refreshLocalCourses(highlightId) {
+async function refreshLocalCourses(highlightId, shouldRender = true) {
   state.localCourses = await listLocalCourses();
-  renderCourses(highlightId);
+  if (shouldRender) renderCourses(highlightId);
 }
 
 function setDropState(status, title, detail) {
@@ -205,9 +277,11 @@ async function handleUpload(file) {
     await saveLocalCourse({ id: course.id, bytes, meta });
     course.revoke();
     await refreshLocalCourses(course.id);
+    toast(`导入成功:《${meta.title}》`, { type: 'success' });
     setDropState('success', `导入成功:《${meta.title}》`, '课程已进入“我的课程”,可以立即开始学习');
     setTimeout(() => setDropState('idle', '拖拽 .pigeon 到这里', '或点击选择文件 · 单文件 ≤50MB · 全程本地解析'), 2000);
   } catch (error) {
+    toast(`导入失败:${pigeonErrorText(error)}`, { type: 'error' });
     setDropState('error', `无法导入:${pigeonErrorText(error)}`, '请检查课程包结构,或查看下方 .pigeon 格式说明');
     document.getElementById('format')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } finally {
@@ -219,6 +293,7 @@ async function deleteCourse(id) {
   if (!confirm('确定删除这门本地课程吗？学习进度不会自动清除。')) return;
   await deleteLocalCourse(id);
   await refreshLocalCourses();
+  toast('已删除该本地课程', { type: 'info' });
 }
 
 function togglePanel(trigger, forceOpen = false) {
@@ -253,10 +328,22 @@ function bindEvents() {
       const first = document.querySelector('.format-panel .panel-trigger');
       if (first) togglePanel(first, true);
     } else if (action === 'copy-prompt') {
-      await navigator.clipboard.writeText(el.aiPrompt.value);
-      el.copyStatus.textContent = '已复制';
-      setTimeout(() => { el.copyStatus.textContent = ''; }, 1600);
+      try {
+        await navigator.clipboard.writeText(el.aiPrompt.value);
+        toast('提示词已复制到剪贴板', { type: 'success' });
+      } catch {
+        toast('复制失败,请手动选择文本', { type: 'error' });
+      }
+    } else if (action === 'retry-builtin') {
+      renderBuiltinSkeleton();
+      await hydrateBuiltinStats();
+      renderCourses();
     }
+  });
+
+  el.courseSearch.addEventListener('input', (event) => {
+    state.query = event.target.value.trim().toLowerCase();
+    renderCourses();
   });
 
   el.file.addEventListener('change', () => handleUpload(el.file.files?.[0]));
@@ -286,11 +373,15 @@ function bindEvents() {
 
 async function init() {
   hydrateIcons();                       // 填充顶栏/页脚等静态 chrome 的 SVG 图标
+  await initSession();                  // 确认登录态(无后端则为访客,纯本地)
+  initAuthUI(document.getElementById('accountSlot'));
   el.aiPrompt.value = await loadAuthoringPrompt();
   bindEvents();
+  renderBuiltinSkeleton();
+  renderInitialLocalEmpty();
+  await Promise.all([hydrateBuiltinStats(), refreshLocalCourses(null, false)]);
   renderCourses();
-  await Promise.all([hydrateBuiltinStats(), refreshLocalCourses()]);
-  renderCourses();
+  initSync({ onApplied: () => renderCourses() });   // 登录则后台拉取/上行,落地后刷新进度
 }
 
 init().catch((error) => {

@@ -1,6 +1,7 @@
 // exam-engine.js — 章节考试引擎:单选/判断/排序/匹配的渲染、作答、计时、判分与错题汇总。
 import { icon } from '../core/icons.js';
 import { escapeHtml, shuffle } from './utils.js';
+import { renderAnswerDetail } from './wrongbook.js';
 
 let context;
 let currentChapter;
@@ -274,7 +275,7 @@ export function finishExam() {
   document.getElementById('resultSort').textContent = stats.sort[1] ? `${stats.sort[0]}/${stats.sort[1]}` : '--';
   document.getElementById('resultMatch').textContent = stats.match[1] ? `${stats.match[0]}/${stats.match[1]}` : '--';
   document.getElementById('resultWrongList').innerHTML = wrong.length
-    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div><div class="wrong-answer">你的答案：<span class="user">${escapeHtml(w.yourAnswer)}</span></div><div class="wrong-answer">正确答案：<span class="correct">${escapeHtml(w.correctAnswer)}</span></div><div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
+    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div>${renderAnswerDetail(w)}<div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
     : `<div style="margin-top:24px;color:var(--correct-tx);font-size:18px;">${icon('party-popper')} 恭喜！全部答对！</div>`;
 }
 

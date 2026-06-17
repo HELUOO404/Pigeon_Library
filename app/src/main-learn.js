@@ -1,9 +1,12 @@
 // main-learn.js — 学习页脚本:加载课程、串联各渲染器、绑定交互事件、图标水合、进度持久化。
 import { findBuiltin, getLocalCourse } from './core/course-registry.js';
 import { loadPigeonFromUrl, parsePigeon, pigeonErrorText } from './core/pigeon-loader.js';
-import { createStore } from './core/store.js';
+import { createStore, globalSet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
+import { initSession } from './core/session.js';
+import { initSync } from './core/sync.js';
+import { initAuthUI } from './core/auth-ui.js';
 import { markMastered, markRead, renderCourseContent } from './render/content-renderer.js';
 import { initExamEngine, backToStudy, exitExam, nextExamQuestion, openExam, prevExamQuestion, selectExamOption, selectMatchLeft, selectMatchRight, setExamChapter, sortDragStart, sortDrop, startCustomExam, startExam } from './render/exam-engine.js';
 import { bindTooltipEvents, initGlossary, initTermTips, navigateToTerm, processTermTips } from './render/glossary.js';
@@ -85,12 +88,24 @@ function switchChapter(chapterId) {
   setFooterMode('normal');
 }
 
+function recordLastCourse(sectionId) {
+  const sec = sections.find((s) => s.id === sectionId);
+  globalSet('lastCourse', {
+    id: course.id,
+    title: course.manifest.title,
+    sectionId,
+    sectionTitle: sec ? sec.title : '',
+    at: Date.now(),
+  });
+}
+
 function navigateTo(sectionId, cardId) {
   document.getElementById('examView')?.classList.remove('active');
   const chapter = sectionId.split('.')[0];
   if (chapter !== currentChapter) switchChapter(chapter);
   else document.getElementById(`ch-${chapter}`)?.style.setProperty('display', 'block');
   currentSection = sectionId;
+  recordLastCourse(sectionId);
   setFooterMode('normal');
   if (cardId) {
     const card = document.getElementById(cardId);
@@ -198,8 +213,10 @@ function bindEvents() {
 
 async function main() {
   hydrateIcons();                       // 顶栏/工具/计时等静态 chrome 的 SVG 图标
+  await initSession();                  // 确认登录态(无后端则访客);须在 createStore 之前确定命名空间
   const params = new URLSearchParams(location.search);
   const courseId = params.get('course') || 'ic-packaging';
+  const target = params.get('section');
   try {
     course = await loadCourse(courseId);
   } catch (err) {
@@ -232,6 +249,12 @@ async function main() {
   bindEvents();
   refreshProgress();
   restoreQuizResults();
+  recordLastCourse(currentSection);
+  if (target && sections.some((section) => section.id === target)) {
+    navigateTo(target);
+  }
+  initAuthUI(document.getElementById('accountSlot'));
+  initSync({ onApplied: () => { refreshProgress(); restoreQuizResults(); } });   // 登录则后台同步
 }
 
 document.addEventListener('DOMContentLoaded', main);

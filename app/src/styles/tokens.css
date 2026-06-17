@@ -24,7 +24,7 @@
   /* ==== 语义令牌(组件统一引用;勿在组件里写死色值)==== */
   --bg:var(--paper);             /* 页面底色 */
   --surface:var(--card);         /* 卡片/抬升面 */
-  --surface-sunken:color-mix(in srgb,var(--paper) 92%,var(--ink)); /* 内凹/recessed 面 */
+  --surface-sunken:color-mix(in srgb,var(--paper) 96%,var(--ink)); /* 内凹/recessed 面(亮色调亮去闷)*/
   --text:var(--ink);             /* 正文 */
   --text-soft:var(--ink-soft);   /* 次要文字 */
   --border:color-mix(in srgb,var(--ink) 16%,transparent); /* 可见描边 */

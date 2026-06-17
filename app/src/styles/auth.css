@@ -1,0 +1,73 @@
+/* auth.css — 账户菜单 + 登录/注册/改密码弹窗(首页与学习页共用)。
+   令牌驱动、无 emoji、无竖向装饰线、亮暗双主题。由 home.css / learn.css @import。 */
+
+/* ---- 顶栏账户控件 ---- */
+.account-slot{display:inline-flex;align-items:center}
+.account{position:relative}
+.account-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--line-2);background:transparent;color:var(--text,var(--ink));
+  border-radius:999px;padding:7px 13px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:700;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.account-btn:hover{border-color:var(--accent,var(--gold));color:var(--accent-deep,var(--gold-deep))}
+.account-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.account-menu{
+  position:absolute;right:0;top:calc(100% + 8px);min-width:210px;z-index:80;
+  background:var(--surface,var(--card));border:1px solid var(--line-2);border-radius:11px;
+  box-shadow:var(--shadow);padding:7px;
+}
+.account-head{padding:9px 11px 11px;border-bottom:1px solid var(--line);margin-bottom:6px;display:flex;flex-direction:column;gap:3px}
+.account-head-name{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--text,var(--ink))}
+.account-role{font-family:var(--mono);font-size:11px;color:var(--accent-deep,var(--gold-deep));letter-spacing:.04em}
+.account-item{
+  width:100%;display:flex;align-items:center;gap:9px;
+  border:0;background:transparent;color:var(--text,var(--ink));cursor:pointer;
+  font:inherit;font-size:13.5px;text-align:left;padding:9px 11px;border-radius:8px;text-decoration:none;
+}
+.account-item:hover{background:color-mix(in srgb,var(--accent,var(--gold)) 12%,transparent)}
+.account-item-danger:hover{background:color-mix(in srgb,var(--danger,var(--seal)) 13%,transparent);color:var(--danger,var(--seal))}
+
+/* ---- 弹窗 ---- */
+.auth-overlay{
+  position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;
+  background:color-mix(in srgb,var(--ink,#000) 52%,transparent);backdrop-filter:blur(3px);
+}
+.auth-overlay[hidden]{display:none}
+.auth-modal{
+  position:relative;width:min(380px,100%);
+  background:var(--surface,var(--card));border:1px solid var(--line-2);border-radius:14px;
+  box-shadow:var(--shadow);padding:26px 24px 22px;animation:authIn .18s ease both;
+}
+@keyframes authIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.auth-close{position:absolute;right:12px;top:12px;border:0;background:transparent;color:var(--text-soft,var(--ink-soft));cursor:pointer;padding:6px;border-radius:8px}
+.auth-close:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--text,var(--ink))}
+.auth-eyebrow{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--accent-deep,var(--gold-deep));text-transform:uppercase}
+.auth-title{font-family:var(--serif);font-size:23px;font-weight:700;color:var(--text,var(--ink));margin:6px 0 18px}
+.auth-form{display:flex;flex-direction:column;gap:13px}
+.auth-form label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-family:var(--mono);color:var(--text-soft,var(--ink-soft))}
+.auth-form input{
+  border:1px solid var(--line-2);border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);
+  color:var(--text,var(--ink));font:inherit;font-size:14.5px;padding:10px 12px;outline:0;
+}
+.auth-form input:focus{border-color:var(--accent,var(--gold))}
+.auth-msg{font-size:12.5px;color:var(--danger,var(--seal));margin:2px 0 0;font-family:var(--mono)}
+.auth-msg.ok{color:var(--correct-tx,#3f6a30)}
+.auth-submit{
+  margin-top:4px;min-height:44px;border:0;border-radius:9px;cursor:pointer;
+  background:var(--ink);color:var(--paper);font:inherit;font-weight:700;font-size:15px;
+  transition:transform .15s,background .15s;
+}
+.auth-submit:hover{transform:translateY(-1px)}
+.auth-submit:disabled{opacity:.6;cursor:default;transform:none}
+[data-theme="dark"] .auth-submit{background:var(--gold);color:#1a1a1f}
+.auth-switch{margin-top:14px;font-size:13px;color:var(--text-soft,var(--ink-soft))}
+.auth-switch button{border:0;background:transparent;color:var(--accent-deep,var(--gold-deep));font:inherit;font-weight:700;cursor:pointer;padding:0}
+.auth-switch button:hover{text-decoration:underline}
+.auth-hint{margin-top:12px;font-size:12px;line-height:1.6;color:var(--text-soft,var(--ink-soft))}
+
+@media(prefers-reduced-motion:reduce){
+  .auth-modal{animation:none}
+  .auth-submit:hover{transform:none}
+}

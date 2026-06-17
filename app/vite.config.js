@@ -61,6 +61,7 @@ export default defineConfig({
       input: {
         home: 'index.html',
         learn: 'learn.html',
+        admin: 'admin.html',
       },
     },
   },

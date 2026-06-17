@@ -1,16 +1,30 @@
-// store.js — 按课程 ID 分命名空间的 localStorage 封装。
+// store.js — 按「用户 × 课程」分命名空间的 localStorage 封装。
 //
-// 原站把进度/答题/错题/学习时长都写在全局 key(ic_progress 等),
-// 多课程会互相串号。这里改成 pglib:<courseId>:<slot>,课程之间彻底隔离。
-// 主题(theme)是站点级偏好,不分课程,见 theme.js。
+// 历史:原站把进度/答题/错题/时长写在全局 key,多课程互相串号。
+// 第一版改成 pglib:<courseId>:<slot> 按课程隔离。
+// 本版再加一层「用户」维度,支持可选的跨设备同步(见 docs/user-system-design.md):
+//   课程级:pglib:u:<uid|local>:<courseId>:<slot>
+//   未登录 = 字面量 'local'(本地/访客档案,等同旧行为,可离线)。
+//   登录后 = 用户 id。登录/登出会重载页面,故 store 创建时即反映当前用户。
 //
-// 同时修复原站 safeSet 的配额回收 bug:原代码无论写哪个 key,
-// 配额溢出时都只删 ic_reviews 的第一条,删复习模块后这段逻辑彻底失效。
-// 这里改为回收「当前课程命名空间」里最不重要的数据(先错题、再答题记录)。
+// 站点级偏好(theme / lastCourse 等)仍走 globalGet/globalSet,不分用户、不分课程。
+//
+// 为支持同步,set() 会为该 (course,slot) 记一个 updated_at(存在用户级 __meta),
+// 并派发 'pglib:store-set' 事件;sync.js 监听后去抖上行(本地优先,永不阻塞 UI)。
 
 const PREFIX = 'pglib';
 
-/** 站点级(不分课程)读写,用于主题等全局偏好。 */
+let activeUserId = 'local';
+
+/** 设置当前活跃用户命名空间('local' = 访客)。由 session.js 在 store 创建前调用。 */
+export function setActiveUser(id) {
+  activeUserId = id == null ? 'local' : String(id);
+}
+export function getActiveUser() {
+  return activeUserId;
+}
+
+/** 站点级(不分用户/课程)读写,用于主题、续学记录等全局偏好。 */
 export function globalGet(key, fallback) {
   try {
     const v = localStorage.getItem(`${PREFIX}:${key}`);
@@ -28,15 +42,67 @@ export function globalSet(key, val) {
   }
 }
 
+// ---- 用户级 __meta(记录每 (course,slot) 的 updated_at,供同步 LWW)----
+function metaKey() {
+  return `${PREFIX}:u:${activeUserId}:__meta`;
+}
+function readMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(metaKey()) || '{}');
+  } catch {
+    return {};
+  }
+}
+function writeMeta(meta) {
+  try {
+    localStorage.setItem(metaKey(), JSON.stringify(meta));
+  } catch {
+    /* ignore */
+  }
+}
+/** 当前活跃用户的全部 (course:slot)→updated_at 映射(供 sync 枚举本地变更)。 */
+export function getUserMeta() {
+  return readMeta();
+}
+
+// ---- 一次性迁移:旧的 pglib:<courseId>:<slot> → pglib:u:local:<courseId>:<slot> ----
+function migrateLegacyKeys() {
+  try {
+    if (localStorage.getItem(`${PREFIX}:migrated`)) return;
+    const legacy = /^pglib:([^:]+):(progress|quiz|wrong|studyTime)$/;
+    const moves = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      const m = key && key.match(legacy);
+      if (m && m[1] !== 'u') moves.push({ key, courseId: m[1], slot: m[2] });
+    }
+    const meta = {};
+    for (const { key, courseId, slot } of moves) {
+      const val = localStorage.getItem(key);
+      localStorage.setItem(`${PREFIX}:u:local:${courseId}:${slot}`, val);
+      localStorage.removeItem(key);
+      meta[`${courseId}:${slot}`] = Date.now(); // 标记为新,登录后可上行
+    }
+    if (moves.length) {
+      const cur = (() => { try { return JSON.parse(localStorage.getItem(`${PREFIX}:u:local:__meta`) || '{}'); } catch { return {}; } })();
+      localStorage.setItem(`${PREFIX}:u:local:__meta`, JSON.stringify({ ...cur, ...meta }));
+    }
+    localStorage.setItem(`${PREFIX}:migrated`, '1');
+  } catch {
+    /* 迁移失败不致命:大不了按未迁移处理 */
+  }
+}
+migrateLegacyKeys();
+
 /**
- * 创建某门课程的命名空间存储。slot 为逻辑分区:
+ * 创建某门课程在当前用户命名空间下的存储。slot 逻辑分区:
  *   progress  知识点掌握状态 {kpId: 'mastered'|'read'|''}
  *   quiz      小节小测结果 {qid: {ans, correct, t}}
- *   wrong     错题本 [{id, type, chapter, question, options, answer, yourAnswer, explain, ...}]
+ *   wrong     错题本 [...]
  *   studyTime 累计学习时长(ms)
  */
 export function createStore(courseId) {
-  const ns = `${PREFIX}:${courseId}`;
+  const ns = `${PREFIX}:u:${activeUserId}:${courseId}`;
   const keyOf = (slot) => `${ns}:${slot}`;
 
   // 配额溢出时,按重要性从低到高回收当前课程的数据,腾出空间后重试。
@@ -57,6 +123,24 @@ export function createStore(courseId) {
     return false;
   }
 
+  function stamp(slot, ts) {
+    const meta = readMeta();
+    meta[`${courseId}:${slot}`] = ts;
+    writeMeta(meta);
+  }
+
+  function writeRaw(slot, raw) {
+    try {
+      localStorage.setItem(keyOf(slot), raw);
+      return true;
+    } catch (e) {
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+        return reclaimAndRetry(slot, raw);
+      }
+      return false;
+    }
+  }
+
   return {
     courseId,
     get(slot, fallback) {
@@ -67,24 +151,34 @@ export function createStore(courseId) {
         return fallback;
       }
     },
+    // 用户发起的写:本地写 + 记 updated_at=now + 派发事件(供 sync 上行)。
     set(slot, val) {
-      const raw = JSON.stringify(val);
-      try {
-        localStorage.setItem(keyOf(slot), raw);
-      } catch (e) {
-        if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
-          reclaimAndRetry(slot, raw);
-        }
+      const at = Date.now();
+      if (writeRaw(slot, JSON.stringify(val))) {
+        stamp(slot, at);
+        try {
+          window.dispatchEvent(new CustomEvent('pglib:store-set', { detail: { courseId, slot, updatedAt: at } }));
+        } catch { /* 非浏览器环境忽略 */ }
       }
+    },
+    // 来自远端同步的写:本地写 + 记给定 ts,但不派发事件(避免回声上行)。
+    setRemote(slot, val, ts) {
+      if (writeRaw(slot, JSON.stringify(val))) stamp(slot, ts);
+    },
+    getMetaTs(slot) {
+      return readMeta()[`${courseId}:${slot}`] || 0;
     },
     remove(slot) {
       try {
         localStorage.removeItem(keyOf(slot));
+        const meta = readMeta();
+        delete meta[`${courseId}:${slot}`];
+        writeMeta(meta);
       } catch {
         /* ignore */
       }
     },
-    /** 清空本课程全部数据(对应原 resetProgress,但只清当前课程)。 */
+    /** 清空本课程全部数据(只清当前用户命名空间)。 */
     clear() {
       ['progress', 'quiz', 'wrong', 'studyTime'].forEach((s) => this.remove(s));
     },

@@ -13,13 +13,16 @@
 <body>
   <div class="header">
     <button class="menu-btn" data-action="toggle-sidebar" aria-label="目录"><span data-icon="menu" aria-hidden="true"></span></button>
-    <img src="/brand-logo.svg" alt="Logo" style="height:32px;width:32px;margin-right:4px;display:block;">
-    <div class="logo" id="courseLogo">PigeonLib</div>
+    <a href="index.html" class="brand-home" title="返回首页 / Back to home" aria-label="返回首页">
+      <img src="/brand-logo.svg" alt="Logo" style="height:32px;width:32px;margin-right:4px;display:block;">
+      <div class="logo" id="courseLogo">PigeonLib</div>
+    </a>
     <div class="tabs" id="chapterTabs"></div>
     <div class="tools">
       <button class="tool-btn" data-action="open-panel" data-panel="dashboard" title="学习仪表盘" aria-label="学习仪表盘"><span data-icon="layout-dashboard" aria-hidden="true"></span></button>
       <button class="tool-btn" data-action="open-panel" data-panel="wrongBook" title="错题本" aria-label="错题本"><span data-icon="circle-x" aria-hidden="true"></span></button>
       <button class="tool-btn" data-action="open-panel" data-panel="glossary" title="术语速查" aria-label="术语速查"><span data-icon="book-open" aria-hidden="true"></span></button>
+      <div class="account-slot" id="accountSlot"></div>
       <button class="tool-btn" data-action="toggle-theme" title="切换主题" aria-label="切换主题"><span data-icon="theme" aria-hidden="true"></span></button>
     </div>
   </div>

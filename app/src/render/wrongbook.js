@@ -53,6 +53,11 @@ function singleOptions(w) {
   }).join('')}</div>`;
 }
 
+// 错题答案详情:单选→列出全部选项并标"对/错";其它题型→你的/正确答案行。错题本与考试结果共用。
+export function renderAnswerDetail(w) {
+  return w.type === 'single' ? singleOptions(w) : answerLine(w);
+}
+
 export function renderWrongList(filterChapter = 'all') {
   const container = document.getElementById('wrongList');
   if (!container) return;
@@ -68,7 +73,7 @@ export function renderWrongList(filterChapter = 'all') {
     <div class="wrong-item">
       <div class="wrong-meta">第${escapeHtml(w.chapter || '?')}章 | ${escapeHtml(typeLabel(w.type))} | ${escapeHtml(new Date(w.date || Date.now()).toLocaleDateString())}</div>
       <div class="wrong-question">${idx + 1}. ${escapeHtml(w.question || '')}</div>
-      ${w.type === 'single' ? singleOptions(w) : answerLine(w)}
+      ${renderAnswerDetail(w)}
       <div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '暂无解析')}</div>
       <div class="wrong-actions">
         <button data-action="remove-wrong" data-id="${escapeHtml(w.id)}">${icon('check')} 已掌握，移除</button>
