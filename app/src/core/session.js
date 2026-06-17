@@ -2,11 +2,12 @@
 // 连不上(未部署/宕机)时一切照常本地运行,这里的调用静默失败回退访客。
 import { setActiveUser } from './store.js';
 
-// API 基址:开发态(Vite 5173)跨源指向后端 8787;生产同源走 /api。可用全局覆盖。
+// API 基址:本地开发(任意 localhost 端口,如 Vite 5173/5174…,但后端自身 8787 除外)
+// 一律跨源指向后端 8787;生产(真实域名)走同源 /api(反向代理转发)。可用 window.PIGEONLIB_API 覆盖。
+const isLocalDev = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  && location.port !== '8787';
 const API_BASE = (typeof window !== 'undefined' && window.PIGEONLIB_API)
-  || ((location.hostname === 'localhost' && location.port === '5173')
-    ? 'http://localhost:8787/api'
-    : '/api');
+  || (isLocalDev ? 'http://localhost:8787/api' : '/api');
 
 let currentUser = null;
 
