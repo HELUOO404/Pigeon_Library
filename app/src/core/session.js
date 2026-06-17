@@ -46,7 +46,7 @@ export async function initSession() {
 }
 
 function errorMessage(r, fallback) {
-  if (r.networkError) return '无法连接同步服务,请确认后端已启动';
+  if (r.networkError) return '连不上同步服务器。双击「启动PigeonLib.bat」会自动启动后端(或在 server/ 运行 npm start)。';
   return r.json?.error?.message || fallback;
 }
 

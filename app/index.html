@@ -58,34 +58,32 @@
               <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1b2330" flood-opacity=".14"/>
             </filter>
           </defs>
-          <path class="flight-path" d="M76 112 C168 26 266 58 282 154 S424 298 494 190" fill="none"/>
-          <circle class="flight-dot dot-a" cx="76" cy="112" r="5"/>
-          <circle class="flight-dot dot-b" cx="282" cy="154" r="5"/>
-          <circle class="flight-dot dot-c" cx="494" cy="190" r="5"/>
-          <!-- 折纸信鸽:与品牌 logo 同款折纸轮廓(三折面),放大置于英雄区;墨色折面,区别于 logo 的邮政金 -->
+          <!-- 飞行轨迹:自左下升至信鸽 -->
+          <path class="flight-path" d="M104 300 C150 226 196 208 244 198" fill="none"/>
+          <circle class="flight-dot dot-a" cx="104" cy="300" r="5"/>
+          <!-- 折纸信鸽:与品牌 logo 同款折纸轮廓(三折面),白纸折面 + 墨色描边;置于左上、向右上飞 -->
           <g class="paper-plane" filter="url(#paperShadow)">
-            <path class="facet-1" d="M172 225 L291 127 L259.5 232 Z"/>
-            <path class="facet-2" d="M291 127 L315.5 225 L259.5 232 Z"/>
-            <path class="facet-3" d="M259.5 232 L274.2 281 L295.2 227.8 Z"/>
+            <path class="facet-1" d="M176.5 186 L278.5 102 L251.5 192 Z"/>
+            <path class="facet-2" d="M278.5 102 L299.5 186 L251.5 192 Z"/>
+            <path class="facet-3" d="M251.5 192 L264.1 234 L282.1 188.4 Z"/>
           </g>
+          <!-- 信封:居中偏下,作为画面锚点 -->
           <g class="parcel" filter="url(#paperShadow)">
-            <rect x="330" y="250" width="136" height="92" rx="10"/>
-            <path d="M330 276 L398 314 L466 276"/>
-            <path d="M330 250 L398 304 L466 250"/>
+            <rect x="228" y="244" width="168" height="104" rx="11"/>
+            <path d="M228 272 L312 320 L396 272"/>
+            <path d="M228 244 L312 304 L396 244"/>
           </g>
-          <!-- 邮政圆戳:双圈 + 上弧 PIGEON POST + 中心鸽 + 日戳横纹 + 年份;微倾、半透明,似盖戳 -->
-          <g class="postmark" transform="translate(22 -28) rotate(-13 430 246)">
+          <!-- 邮政圆戳:双圈 + 上弧 PIGEON POST + 中心鸽 + 年份;微倾、半透明,盖在信封右上角 -->
+          <g class="postmark" transform="translate(-58 -16) rotate(-13 430 246)">
             <defs>
-              <path id="pmArcTop" d="M398 246 a32 32 0 0 1 64 0"/>
-              <path id="pmArcBottom" d="M400 246 a30 30 0 0 0 60 0"/>
+              <path id="pmArcTop" d="M400 246 a30 30 0 0 1 60 0"/>
+              <path id="pmArcBottom" d="M402 246 a28 28 0 0 0 56 0"/>
             </defs>
             <circle class="pm-ring" cx="430" cy="246" r="39"/>
             <circle class="pm-ring pm-ring-inner" cx="430" cy="246" r="33"/>
             <text class="pm-arc"><textPath href="#pmArcTop" startOffset="50%" text-anchor="middle">PIGEON · POST</textPath></text>
-            <text class="pm-arc pm-arc-bottom"><textPath href="#pmArcBottom" startOffset="50%" text-anchor="middle">2026</textPath></text>
-            <line class="pm-bar" x1="404" y1="240" x2="456" y2="240"/>
-            <line class="pm-bar" x1="404" y1="252" x2="456" y2="252"/>
-            <text class="pm-char" x="430" y="238" text-anchor="middle">鸽</text>
+            <text class="pm-arc pm-arc-small"><textPath href="#pmArcBottom" startOffset="50%" text-anchor="middle">· 2026 ·</textPath></text>
+            <text class="pm-char" x="430" y="254" text-anchor="middle">鸽</text>
           </g>
         </svg>
       </div>

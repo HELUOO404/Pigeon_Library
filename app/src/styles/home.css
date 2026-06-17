@@ -143,8 +143,8 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .postmark .pm-ring{fill:none;stroke:var(--seal);stroke-width:2}
 .postmark .pm-ring-inner{stroke-width:1.2}
 .postmark .pm-arc{fill:var(--seal);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em}
-.postmark .pm-bar{stroke:var(--seal);stroke-width:1.4;opacity:.7}
-.postmark .pm-char{fill:var(--seal);font-family:"Noto Serif SC",serif;font-size:20px;font-weight:700}
+.postmark .pm-arc-small{font-size:7.5px;letter-spacing:.22em}
+.postmark .pm-char{fill:var(--seal);font-family:"Noto Serif SC",serif;font-size:19px;font-weight:700}
 
 /* ---------- 区块 ---------- */
 .page-shell{counter-reset:sec}

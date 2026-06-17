@@ -61,7 +61,8 @@ if not exist "server\.env" (
   if exist "server\.env.example" copy /Y "server\.env.example" "server\.env" >nul
 )
 rem Launch backend in its own window so it keeps running alongside the frontend.
-start "PigeonLib Backend" cmd /k "cd /d "%~dp0server" && node --disable-warning=ExperimentalWarning index.js"
+rem Use start /D to set the working dir (avoids fragile nested quotes).
+start "PigeonLib Backend" /D "%~dp0server" cmd /k node --disable-warning=ExperimentalWarning index.js
 echo   [OK] backend starting in a separate window  http://localhost:8787
 echo.
 
