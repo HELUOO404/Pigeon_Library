@@ -19,7 +19,7 @@
       <span>PigeonLib</span>
     </a>
     <nav class="site-nav" id="siteNav" aria-label="首页导航">
-      <a href="#builtin">课程</a>
+      <a href="#courses">课程</a>
       <a href="#format">格式说明</a>
       <a href="#about">关于</a>
     </nav>
@@ -38,13 +38,13 @@
         <h1 id="heroTitle" class="reveal">把知识装进信鸽<br><span>可打包、可分享的课程</span></h1>
         <p class="hero-intro reveal">PigeonLib 是一个开放的课程学习平台。课程以 <code>.pigeon</code> 文件独立投递,与平台解耦:你可以学习内置课程,也能上传任何人或 AI 制作的课程包,即开即学。</p>
         <div class="hero-actions reveal">
-          <a class="btn btn-primary" href="#builtin">浏览内置课程</a>
+          <a class="btn btn-primary" href="#courses">浏览课程广场</a>
           <a class="btn btn-secondary" href="#format" data-action="open-format">了解 .pigeon 格式 →</a>
         </div>
         <div class="dispatch-ticket reveal" aria-live="polite">
-          <span><span class="icn" data-icon="package" data-size="14" aria-hidden="true"></span> <strong id="builtinCount">1</strong> 门内置</span>
+          <span><span class="icn" data-icon="package" data-size="14" aria-hidden="true"></span> 广场 <strong id="squareCount">0</strong> 门</span>
           <span>·</span>
-          <span><span class="icn" data-icon="folder" data-size="14" aria-hidden="true"></span> 本地 <strong id="localCount">0</strong> 门</span>
+          <span><span class="icn" data-icon="folder" data-size="14" aria-hidden="true"></span> 我的 <strong id="mineCount">0</strong> 门</span>
           <span>·</span>
           <span><span class="icn" data-icon="sun-moon" data-size="14" aria-hidden="true"></span> 双主题</span>
         </div>
@@ -93,36 +93,56 @@
 
     <section id="resumeSlot" class="resume-slot" hidden aria-label="继续学习"></section>
 
-    <section id="courseToolbar" class="course-toolbar" hidden aria-label="课程检索">
-      <label class="course-search">
-        <span class="icn" data-icon="search" data-size="16" aria-hidden="true"></span>
-        <input id="courseSearch" type="search" placeholder="检索全部课程(标题 / 副标题 / 作者)" autocomplete="off">
-      </label>
-    </section>
-
-    <section id="builtin" class="section-block" aria-labelledby="builtinTitle">
+    <section id="courses" class="section-block" aria-labelledby="coursesTitle">
       <div class="section-heading">
-        <p class="section-kicker">内置课程</p>
-        <h2 id="builtinTitle">平台官方投递,无需安装</h2>
+        <p class="section-kicker">课程</p>
+        <h2 id="coursesTitle">课程广场 · 我的课程</h2>
       </div>
-      <div class="course-grid" id="builtinGrid"></div>
-    </section>
 
-    <section id="mine" class="section-block" aria-labelledby="mineTitle">
-      <div class="section-heading">
-        <p class="section-kicker">我的课程</p>
-        <h2 id="mineTitle">你上传的课程,保存在本机浏览器</h2>
+      <div class="course-tabs" role="tablist" aria-label="课程分区">
+        <button class="course-tab is-active" type="button" role="tab" aria-selected="true" data-tab="square">课程广场</button>
+        <button class="course-tab" type="button" role="tab" aria-selected="false" data-tab="mine">我的课程</button>
       </div>
-      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="uploadHelp">
-        <input id="courseFile" type="file" accept=".pigeon,application/zip" hidden>
-        <div class="drop-icon"><span data-icon="upload" data-size="24" aria-hidden="true"></span></div>
-        <div>
-          <p class="drop-title" id="dropTitle">拖拽 .pigeon 到这里</p>
-          <p class="drop-text" id="uploadHelp">或点击选择文件 · 单文件 ≤50MB · 全程本地解析</p>
+
+      <!-- 课程广场:内置预置课 ∪ 已发布课,支持搜索 / 分类 / 发布人筛选 -->
+      <div class="course-panel" id="panelSquare" role="tabpanel" aria-label="课程广场">
+        <div class="course-toolbar">
+          <label class="course-search">
+            <span class="icn" data-icon="search" data-size="16" aria-hidden="true"></span>
+            <input id="squareSearch" type="search" placeholder="检索广场(标题 / 副标题 / 发布人)" autocomplete="off">
+          </label>
+          <select id="squareCategory" class="course-filter" aria-label="按分类筛选"></select>
+          <select id="squarePublisher" class="course-filter" aria-label="按发布人筛选"></select>
         </div>
-        <button class="btn btn-secondary" type="button" data-action="choose-file">选择文件</button>
+        <div class="course-grid" id="squareGrid"></div>
       </div>
-      <div class="course-grid" id="localGrid"></div>
+
+      <!-- 我的课程:服务端私人课(需登录),可发布到广场 / 撤回 / 删除 -->
+      <div class="course-panel" id="panelMine" role="tabpanel" aria-label="我的课程" hidden>
+        <div class="course-toolbar">
+          <label class="course-search">
+            <span class="icn" data-icon="search" data-size="16" aria-hidden="true"></span>
+            <input id="mineSearch" type="search" placeholder="检索我的课程" autocomplete="off">
+          </label>
+          <select id="mineStatus" class="course-filter" aria-label="按状态筛选">
+            <option value="">全部状态</option>
+            <option value="private">私有</option>
+            <option value="pending">审核中</option>
+            <option value="published">已发布</option>
+            <option value="rejected">被拒</option>
+          </select>
+        </div>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-describedby="uploadHelp">
+          <input id="courseFile" type="file" accept=".pigeon,application/zip" hidden>
+          <div class="drop-icon"><span data-icon="upload" data-size="24" aria-hidden="true"></span></div>
+          <div>
+            <p class="drop-title" id="dropTitle">拖拽 .pigeon 到这里</p>
+            <p class="drop-text" id="uploadHelp">或点击选择文件 · 单文件 ≤50MB · 登录后上传到「我的课程」(跨设备)</p>
+          </div>
+          <button class="btn btn-secondary" type="button" data-action="choose-file">选择文件</button>
+        </div>
+        <div class="course-grid" id="mineGrid"></div>
+      </div>
     </section>
 
     <section id="format" class="section-block" aria-labelledby="formatTitle">

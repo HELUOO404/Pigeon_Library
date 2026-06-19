@@ -50,8 +50,27 @@ npm run smoke    # 终端 2:注册→登录→state(LWW)→sync→admin 守卫�
 | `GET  /api/admin/users` | admin | 用户列表 |
 | `PATCH /api/admin/users/:id` | admin | 禁用/角色/重置密码(防呆:不可移除最后一个 admin) |
 | `GET  /api/admin/stats` | admin | 全局统计 |
+| `POST /api/courses` (multipart) | 用户 | 上传私人课(服务端解析 manifest 提取权威元数据) |
+| `GET  /api/courses/mine` | 用户 | 我的课程(含状态) |
+| `GET  /api/courses/square` | 公开 | 已发布课程(搜索/分类/发布人筛选) |
+| `GET  /api/courses/:id/file` | owner/admin/已发布 | 下载课程包字节(记一次去重下载) |
+| `GET  /api/courses/:id/analytics` | owner | **聚合**学习数据(只回数字,无个体) |
+| `POST /api/courses/:id/publish` · `/unpublish` | owner | 申请发布(选分类)/ 撤回 |
+| `POST /api/courses/:id/versions` (multipart) | owner | 上传新版本(多版本保留) |
+| `PUT/GET /api/social/:key/rating` · `comments` | 公开读 / 用户写 | 评分(1–5)/ 评论(先发后审,作者·admin 可删) |
+| `GET/PUT/DELETE /api/bookshelf[/:key]` | 用户 | 书架(收藏)增删查 |
+| `GET /api/admin/courses/pending` · `/` | admin | 待审版本队列 / 全部课程 |
+| `POST /api/admin/courses/:id/versions/:vid/approve`·`reject` | admin | 通过(发布)/ 拒绝(写原因);均记审计 |
+| `POST /api/admin/courses/:id/takedown` | admin | 已发布下架 |
 
 slot 枚举:`progress | quiz | wrong | studyTime | theme | localCourses`。
+
+### 课程广场相关文件
+
+- `lib/pigeon-server.js` —— 服务端 `.pigeon`(zip)解析:校验 manifest、提取权威 `stats`/`cover`/`hash`(**不信任前端元数据**)。
+- `db-courses.js` —— `courses` + `course_versions` 增删查 + **聚合-only** 学习数据(绝不外泄个体)。
+- `db-social.js` / `db-bookshelf.js` —— 评分/评论/下载去重、书架,均按 `course_key`。
+- `routes/courses.js` · `social.js` · `bookshelf.js` · `admin-courses.js` —— 对应路由;课程文件落 `data/courses/<courseId>/<hash>.pigeon`。
 
 ## 安全要点
 

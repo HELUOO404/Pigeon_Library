@@ -6,7 +6,7 @@ import { setActiveUser } from './store.js';
 // 一律跨源指向后端 8787;生产(真实域名)走同源 /api(反向代理转发)。可用 window.PIGEONLIB_API 覆盖。
 const isLocalDev = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   && location.port !== '8787';
-const API_BASE = (typeof window !== 'undefined' && window.PIGEONLIB_API)
+export const API_BASE = (typeof window !== 'undefined' && window.PIGEONLIB_API)
   || (isLocalDev ? 'http://localhost:8787/api' : '/api');
 
 let currentUser = null;
@@ -38,6 +38,29 @@ export async function api(method, path, body) {
   }
 }
 
+// multipart 上传(FormData,如 .pigeon 文件):始终带 cookie。返回 {ok,status,json}。
+export async function apiUpload(path, formData) {
+  try {
+    const res = await fetch(API_BASE + path, { method: 'POST', credentials: 'include', body: formData });
+    let json = null;
+    try { json = await res.json(); } catch { /* 空体 */ }
+    return { ok: res.ok, status: res.status, json };
+  } catch {
+    return { ok: false, status: 0, json: null, networkError: true };
+  }
+}
+
+// 二进制下载(课程包字节):返回 {ok,status,bytes};bytes 为 Uint8Array,失败为 null。
+export async function apiBytes(path) {
+  try {
+    const res = await fetch(API_BASE + path, { credentials: 'include' });
+    if (!res.ok) return { ok: false, status: res.status, bytes: null };
+    return { ok: true, status: res.status, bytes: new Uint8Array(await res.arrayBuffer()) };
+  } catch {
+    return { ok: false, status: 0, bytes: null, networkError: true };
+  }
+}
+
 // 启动时确认登录态。无后端/未登录都返回 null,并把命名空间设为访客。
 export async function initSession() {
   const r = await api('GET', '/me');
@@ -65,6 +88,16 @@ export async function register(username, password) {
 
 export async function logout() {
   await api('POST', '/auth/logout');
+  // 清除访客命名空间:避免退出后仍显示旧数据,也防止下一个账户通过 seedFromGuest 继承本地档案。
+  try {
+    const prefix = 'pglib:u:local:';
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
   currentUser = null;
 }
 

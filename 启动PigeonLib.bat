@@ -10,7 +10,7 @@ echo   PigeonLib Launcher
 echo ============================================
 echo.
 
-echo [1/5] Checking Node.js / npm ...
+echo [1/6] Checking Node.js / npm ...
 where node >nul 2>&1
 if errorlevel 1 (
   echo   [X] node not found. Install Node.js and add it to PATH.
@@ -25,7 +25,7 @@ if errorlevel 1 (
 for /f "delims=" %%v in ('node -v') do echo   [OK] node %%v
 echo.
 
-echo [2/5] Checking built-in course package ...
+echo [2/6] Checking built-in course package ...
 if not exist "dist-courses\ic-packaging.pigeon" (
   echo   Not found, building ic-packaging ...
   call node tools\build-pigeon.mjs ic-packaging
@@ -37,7 +37,7 @@ if not exist "dist-courses\ic-packaging.pigeon" (
 echo   [OK] dist-courses\ic-packaging.pigeon
 echo.
 
-echo [3/5] Checking frontend dependencies ...
+echo [3/6] Checking frontend dependencies ...
 if not exist "app\node_modules" (
   echo   First run, installing frontend dependencies ^(~1-2 min^) ...
   call npm --prefix app install
@@ -49,7 +49,13 @@ if not exist "app\node_modules" (
 echo   [OK] frontend dependencies ready
 echo.
 
-echo [4/5] Starting sync backend ^(port 8787^) ...
+echo [4/6] Freeing ports 8787 and 5173 ^(killing any stale PigeonLib processes^) ...
+call :freeport 8787
+call :freeport 5173
+echo   [OK] ports cleared, will reuse the same ports
+echo.
+
+echo [5/6] Starting sync backend ^(port 8787^) ...
 if not exist "server\node_modules" (
   echo   First run, installing backend dependencies ...
   call npm --prefix server install
@@ -66,7 +72,7 @@ start "PigeonLib Backend" /D "%~dp0server" cmd /k node --disable-warning=Experim
 echo   [OK] backend starting in a separate window  http://localhost:8787
 echo.
 
-echo [5/5] Starting frontend  http://localhost:5173  ...
+echo [6/6] Starting frontend  http://localhost:5173  ...
 echo       Browser opens automatically; keep this window open to keep serving.
 echo       Close BOTH windows to stop everything.
 echo.
@@ -84,3 +90,14 @@ echo Launch failed. Read the message above.
 echo.
 pause
 endlocal
+goto :eof
+
+rem ---- subroutine: free one TCP port by killing the PID that LISTENs on it ----
+rem %1 = port number. Matches the local-address ":<port> " then the LISTENING state,
+rem so ":5173 " never matches ":51730" and foreign-address ports are ignored.
+:freeport
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr /C:":%~1 " ^| findstr /C:"LISTENING"') do (
+  echo   freeing port %~1 ^(stopping PID %%P^)
+  taskkill /F /PID %%P >nul 2>&1
+)
+goto :eof

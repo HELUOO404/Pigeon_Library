@@ -94,6 +94,20 @@ function migrateLegacyKeys() {
 }
 migrateLegacyKeys();
 
+// 清除浏览器中可能遗留的访客缓存(pglib:u:local:*)。访客进度不持久化,旧版可能写过数据。
+function purgeGuestData() {
+  try {
+    const prefix = `${PREFIX}:u:local:`;
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
+purgeGuestData();
+
 /**
  * 创建某门课程在当前用户命名空间下的存储。slot 逻辑分区:
  *   progress  知识点掌握状态 {kpId: 'mastered'|'read'|''}
@@ -144,6 +158,8 @@ export function createStore(courseId) {
   return {
     courseId,
     get(slot, fallback) {
+      // 访客:不持久化,始终返回 fallback。
+      if (activeUserId === 'local') return fallback;
       try {
         const v = localStorage.getItem(keyOf(slot));
         return v ? JSON.parse(v) : fallback;
@@ -151,8 +167,9 @@ export function createStore(courseId) {
         return fallback;
       }
     },
-    // 用户发起的写:本地写 + 记 updated_at=now + 派发事件(供 sync 上行)。
+    // 用户发起的写:本地写 + 记 updated_at=now + 派发事件(供 sync 上行)。访客不持久化。
     set(slot, val) {
+      if (activeUserId === 'local') return;
       const at = Date.now();
       if (writeRaw(slot, JSON.stringify(val))) {
         stamp(slot, at);

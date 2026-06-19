@@ -36,12 +36,17 @@ export const config = {
   seedAdminPass: process.env.SEED_ADMIN_PASS || '',
   dataDir: DATA_DIR,
   dbPath: path.join(DATA_DIR, 'pglib.db'),
+  coursesDir: path.join(DATA_DIR, 'courses'),  // 课程包文件存储根目录
   cookieName: 'pglib_sess',
   bcryptRounds: 10,
   maxStateBytes: 256 * 1024,        // 单 slot data_json 上限
+  maxPigeonBytes: 50 * 1024 * 1024, // 单个 .pigeon 上传上限(与格式上限一致)
   authRateWindowMs: 60 * 1000,
   authRateMax: 20,                  // 每 IP 每窗口的认证请求上限
 };
 
 // 合法 slot 枚举(与前端 store 对齐)。
 export const SLOTS = ['progress', 'quiz', 'wrong', 'studyTime', 'theme', 'localCourses'];
+
+// 课程广场预设分类(发布时选其一;非法值回退「其他」)。前端另有一份对齐副本。
+export const COURSE_CATEGORIES = ['电子/集成电路', '材料/工艺', '计算机/软件', '数理基础', '通用/综合', '其他'];

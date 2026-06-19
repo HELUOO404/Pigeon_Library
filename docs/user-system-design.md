@@ -289,3 +289,260 @@ UI 刷新(若当前在学习页,重渲染进度/错题)
 4. **收尾** —— 启动器可选双进程拉起后端;回填 `deployment-guide.md`;更新 `CLAUDE.md` 不变量为「静态前端 + 可选后端」。
 
 验收(端到端):两套 localStorage / 两浏览器登录同账户 → 进度/错题/时长接续;游客与离线仍可用;`admin` 能管理用户;无后端时前端零报错退化为本地档案。
+
+---
+
+## 12. 管理后台增强(v1.1 · 本轮)
+
+> 在 v1 的「用户列表 / 禁用 / 重置密码 / 4 项统计」基础上,把管理面板做成可用的**运营控制台**。
+> 原则不变:后端只读写用户态聚合,**不暴露明文密码、不暴露学习者具体答案**,只新增 admin 可见数据。
+
+### 12.1 数据模型增量
+
+```sql
+-- sessions 增列(为「会话 / 安全」面板提供最近登录来源;旧库用 ALTER 幂等补列)
+ALTER TABLE sessions ADD COLUMN ip          TEXT;   -- 登录时的 req.ip(生产经反代需 trust proxy)
+ALTER TABLE sessions ADD COLUMN user_agent  TEXT;   -- 登录时 UA(截断存储)
+
+-- 审计日志:每次管理员的变更操作留痕(问责)
+CREATE TABLE IF NOT EXISTS audit_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  actor_id    INTEGER NOT NULL,          -- 执行操作的管理员 user id
+  actor_name  TEXT    NOT NULL,          -- 冗余存用户名(被删用户后仍可读)
+  action      TEXT    NOT NULL,          -- disable|enable|set_role|reset_pw|rename|delete|create|force_logout|reset_state
+  target_id   INTEGER,                   -- 受影响用户 id(可空)
+  target_name TEXT,                      -- 受影响用户名(冗余)
+  detail      TEXT,                      -- 简短补充(如「角色 user→admin」)
+  created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at);
+```
+
+> `user_state.data_json` 仍是不透明块:服务端不知课程总节数,**完成率% 无法在服务端算**;课程分析只给「学习者数 / 最近活动 / 占用字节 / 同步行数」等可聚合量。深度指标(进度%、考分)留前端(持有课程结构时)或后续升级。
+> 活跃趋势同理:`last_seen` 只存最近一次,**无法重建历史每日活跃**;故趋势图给「每日新增 + 累计用户」(均由 `created_at` 真实可算),不伪造每日活跃序列。
+
+### 12.2 新增 / 扩展 API(均 admin 守卫,变更类一律写 audit_log)
+
+| 方法 & 路径 | 请求 | 响应 | 说明 |
+|---|---|---|---|
+| `GET /api/admin/stats` | — | 扩展统计对象 | 总数 / 今日·7·30 日新增 / 活跃(今·7·30,按 last_seen 快照)/ 管理员 / 禁用 / 从未登录 / 有效会话 / DB 字节 / 同步行 / 课程数 |
+| `GET /api/admin/users` | `?q&role&status&sort&dir&page&pageSize` | `{users,total,page,pageSize}` | 搜索 / 筛选(角色·状态)/ 排序 / 分页 |
+| `GET /api/admin/users/:id` | — | `{user,sessionCount,courses[]}` | 单用户下钻:账户 + 会话数 + 涉及课程(各课最近活动 / 字节) |
+| `PATCH /api/admin/users/:id` | `{disabled?,role?,resetPassword?,username?}` | `{user}` | 增 `username` 改名;最后管理员防呆 |
+| `POST /api/admin/users` | `{username,password,role}` | `{user}` | 管理员建号 |
+| `DELETE /api/admin/users/:id` | — | `{deleted}` | 删除(CASCADE 清会话 + 状态);禁删自己 / 最后管理员 |
+| `POST /api/admin/users/:id/logout` | — | `{revoked}` | 强制下线(吊销该用户全部会话) |
+| `DELETE /api/admin/users/:id/state` | `?course=<id|all>` | `{removed}` | 清空该用户某课 / 全部同步数据 |
+| `GET /api/admin/courses` | — | `{courses[]}` | 每课:学习者数 / 最近活动 / 字节 / 行数 |
+| `GET /api/admin/sessions` | — | `{sessions[]}` | 当前有效会话(用户名 + 创建 + 过期 + IP + UA) |
+| `DELETE /api/admin/sessions/:token` | — | `{revoked}` | 吊销单个会话 |
+| `GET /api/admin/trends` | `?days=14` | `{registrations[],cumulative[]}` | 按天:新增数 / 累计用户(供 sparkline) |
+| `GET /api/admin/audit` | `?limit=50` | `{entries[]}` | 审计日志(倒序) |
+
+### 12.3 前端(`admin.html` / `main-admin.js` / `admin.css`)
+
+- 布局:**KPI 条 → 趋势(双 sparkline)→ 两栏(课程分析 | 有效会话)→ 用户控制台(搜索·筛选·排序·分页 + 表)→ 单用户下钻抽屉 → 审计日志**;建号弹窗;CSV 导出。
+- 守设计系统:令牌配色 + 动效令牌、无 emoji(`icon()`)、无竖向装饰线、serif 标题 / mono 数据、亮暗双主题、`:focus-visible`、`prefers-reduced-motion`。
+- 破坏性操作(删除 / 禁用 / 强制下线 / 清空进度 / 降级)均**二次确认** + 提交中禁用按钮防重复。
+
+### 12.4 本轮不做(标注,后续单独一轮)
+
+- 失败登录次数 / 自动锁定(需 `login_attempts` 表 + 撞库逻辑)。
+- 历史留存 cohort / DAU-WAU-MAU 时序(需每日活跃打点表;现仅能用 `last_seen` 快照近似)。
+- 站点维护横幅 / 公告广播(需全局 `settings` + 公开端点 + 注入 home/learn)。
+
+---
+
+## 13. 课程广场 + 私人课程(v1.2 · 本轮 · 权威)
+
+> 把首页从「内置 / 本地」二分,升级为 **课程广场(公开·审核发布)+ 我的课程(私人·登录态)**。
+> 服务端首次承载**课程文件**(`.pigeon`),并引入**审核发布、版本管理、评分/评论/下载量、书架、创作者数据**。
+> **本地优先不破(不变量 5)**:不接后端时,首页仍显示**内置预置课**(随站打包),仅「上传 / 发布 / 广场扩展课 / 社交 / 书架」等需后端的能力退化禁用。
+
+### 13.0 关键决策(已确认)
+
+| 维度 | 决策 |
+|---|---|
+| 私人课存储 | **必须登录** → 服务端权威 + 跨设备;IndexedDB 仅作已下载课的离线缓存 |
+| 未登录上传 | **不允许**:点上传入口直接弹登录框,不写本地 |
+| 分类 | 平台预设枚举,**发布时选**,存 DB,**不写入 `.pigeon`** |
+| 内置课 | 作为**广场预置课**,发布人 = `manifest.author`(PigeonLib) |
+| 评论 | **显示用户名 + 先发后审**(作者删己评、管理员删任意,软删) |
+| 版本 | **多版本保留 + 新版重审**,历史版可下载,学习默认走当前版 |
+| 下载量 | **去重学习人数**(distinct) |
+
+### 13.1 三类课程与存储分层
+
+| 来源 | 存储 | 关联键 | 无后端时 |
+|---|---|---|---|
+| 内置课 | 随站打包 `app/dist/courses/*.pigeon` + 前端常量保底 | `course_key` | ✅ 可见可学 |
+| 私人课(用户上传) | 登录 → 服务端权威;IndexedDB 离线缓存 | `courses.id` / `course_key` | 仅内置可见,不能上传 |
+| 广场课(审核发布) | 服务端 `current_version.status=published` | `course_key`(去重展示单位) | 仅内置预置课 |
+
+- 广场展示 = 内置保底课 ∪ 服务端 published 课,按 `course_key` 去重(服务端优先)。
+
+### 13.2 数据模型(SQLite,沿用 `CREATE IF NOT EXISTS` 幂等风格)
+
+```sql
+-- 课级元数据 + 版本指针
+CREATE TABLE IF NOT EXISTS courses (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_key        TEXT    NOT NULL,         -- manifest.id(展示/进度/社交/书架关联键,可重复)
+  title             TEXT    NOT NULL,
+  subtitle          TEXT,
+  author            TEXT,                     -- manifest.author(原始创作者)
+  publisher_name    TEXT    NOT NULL,         -- 发布人(卡片 tag):用户课=上传者 username,内置=author
+  category          TEXT,                     -- 预设分类枚举之一(非法回退「其他」)
+  status            TEXT    NOT NULL DEFAULT 'private', -- private|pending|published|rejected(由版本推导维护)
+  current_version_id INTEGER,                 -- 广场展示的「当前已发布版」
+  latest_version_id  INTEGER,                 -- 最新上传版(可能 pending)
+  created_at        INTEGER NOT NULL,
+  updated_at        INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_courses_owner  ON courses(owner_id);
+CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
+CREATE INDEX IF NOT EXISTS idx_courses_key    ON courses(course_key);
+
+-- 版本级文件(多版本核心)
+CREATE TABLE IF NOT EXISTS course_versions (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  course_id    INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  version      TEXT,                          -- manifest.version
+  status       TEXT    NOT NULL DEFAULT 'private', -- private|pending|published|rejected(本版自己的审核态)
+  file_path    TEXT    NOT NULL,              -- server/data/courses/<courseId>/<versionId>.pigeon
+  file_size    INTEGER NOT NULL,
+  file_hash    TEXT,                          -- sha256
+  stats_json   TEXT,                          -- {chapters,knowledgePoints,questions}(服务端解析,权威)
+  cover_data   TEXT,                          -- base64 缩略(卡片用,无图为空)
+  review_note  TEXT,                          -- 拒绝原因
+  reviewer_id  INTEGER,
+  created_at   INTEGER NOT NULL,
+  published_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_versions_course ON course_versions(course_id);
+
+-- 评分:每用户每课一条(可改)
+CREATE TABLE IF NOT EXISTS course_ratings (
+  course_key  TEXT    NOT NULL,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  score       INTEGER NOT NULL,               -- 1..5
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  PRIMARY KEY (course_key, user_id)
+);
+
+-- 评论:先发后审,软删
+CREATE TABLE IF NOT EXISTS course_comments (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  course_key  TEXT    NOT NULL,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  username    TEXT    NOT NULL,               -- 冗余存名(删号后可显示「已注销」)
+  body        TEXT    NOT NULL,
+  status      TEXT    NOT NULL DEFAULT 'visible', -- visible|hidden(作者/管理员软删)
+  created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_comments_course ON course_comments(course_key, created_at);
+
+-- 下载去重(distinct 学习人数)
+CREATE TABLE IF NOT EXISTS course_downloads (
+  course_key  TEXT    NOT NULL,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  first_at    INTEGER NOT NULL,
+  PRIMARY KEY (course_key, user_id)
+);
+
+-- 书架(收藏)
+CREATE TABLE IF NOT EXISTS bookshelf (
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_key  TEXT    NOT NULL,
+  added_at    INTEGER NOT NULL,
+  PRIMARY KEY (user_id, course_key)
+);
+```
+
+文件存储:`server/data/courses/<courseId>/<versionId>.pigeon`;上限沿用 `.pigeon` 格式上限 **50MB**(multer limits)。multipart 用 `multer`(纯 JS);服务端用 `fflate` 解包**校验并提取权威元数据**(不信任前端传入)。
+
+### 13.3 课程标识与进度命名空间
+
+- `courses.id`(自增)= 课程主键;`course_key = manifest.id`(展示/进度/社交/书架的关联键,可重复)。
+- **进度命名空间仍用 `course_key`**(`pglib:u:<uid>:<course_key>:<slot>`),换设备 / 重新下载进度不丢。
+- 学习页 URL:内置 `learn.html?course=<course_key>`;服务端课 `learn.html?course=<course_key>&src=<courseId>`(带 `src` 走服务端下载);审核预览 `&preview=1`。
+
+### 13.4 审核状态机(作用于**版本**)
+
+```
+作者首传 → courses(private) + course_versions v1(private)
+作者发布某版 → 该版 pending
+管理员 approve → 该版 published;courses.current_version_id ← 该版;courses.status=published;记 published_at + audit
+管理员 reject  → 该版 rejected + review_note;courses.status 回退(若无已发布版则 private);audit
+作者再传新版 → 新增 course_versions 行(private);latest_version_id ← 新版
+作者发布新版 → pending → approve → current_version_id 切到新版(旧版保留)
+管理员 takedown → 已发布课下架 → current 版回 private,广场移除;audit
+```
+- 历史版本文件与记录**保留**:课程详情 / 个人主页可查看版本列表、下载历史版。
+
+### 13.5 API 契约
+
+**用户端 `/api/courses`**
+| 方法 路径 | 请求 | 守卫 | 说明 |
+|---|---|---|---|
+| `POST /` | multipart(file, category?) | requireUser | 上传私人课(建 courses+v1) |
+| `GET /mine` | — | requireUser | 我的课程(含状态 / 版本指针) |
+| `GET /square` | `?q&category&publisher&page` | 公开 | 广场已发布课(筛选 / 分页) |
+| `GET /:id/file` | — | owner \| admin \| published | 下载 .pigeon;成功 upsert `course_downloads` |
+| `GET /:id/analytics` | — | **仅 owner** | 聚合学习数据(只回数字,见 13.6) |
+| `POST /:id/publish` | `{category}` | owner | 发布当前最新版 → pending |
+| `POST /:id/unpublish` | — | owner | 撤回 → private |
+| `PATCH /:id` | `{category?...}` | owner | 改元数据 |
+| `DELETE /:id` | — | owner | 删课(连同版本文件) |
+| `POST /:id/versions` | multipart | owner | 上传新版本 |
+| `GET /:id/versions` | — | owner \| admin | 版本列表 |
+| `POST /:id/versions/:vid/publish` | — | owner | 发布指定版 → pending |
+
+**社交 `/api/courses/c/:key`(以 `course_key` 为单位)**
+| 方法 路径 | 守卫 | 说明 |
+|---|---|---|
+| `GET /social` | 公开 | `{avgRating,ratingCount,myRating,downloadCount,commentCount}` |
+| `PUT /rating` `{score}` | requireUser | 打分 / 改分(1..5) |
+| `GET /comments` `?before=` | 公开 | 评论分页(倒序,仅 visible) |
+| `POST /comments` `{body}` | requireUser | 发评论(先发后审,即时可见) |
+| `DELETE /api/courses/comments/:cid` | requireUser | 删评论(作者本人 / admin,软删) |
+
+**书架 `/api/bookshelf`**
+| 方法 路径 | 守卫 | 说明 |
+|---|---|---|
+| `GET /` | requireUser | 我的书架(course_key 列表 + 课程摘要) |
+| `PUT /:key` | requireUser | 加入书架 |
+| `DELETE /:key` | requireUser | 移出书架 |
+
+**管理端 `/api/admin/courses`(requireAdmin,变更写 audit_log)**
+| 方法 路径 | 说明 |
+|---|---|
+| `GET /pending` | 待审版本队列(课 + 版本 + 发布人 + 分类 + 大小 + 提交时间) |
+| `GET /` | 全部课程总览(可按 status 筛) |
+| `POST /:id/versions/:vid/approve` | 通过 → published + 切 current_version_id |
+| `POST /:id/versions/:vid/reject` `{note}` | 拒绝 → rejected + review_note |
+| `POST /:id/takedown` | 已发布下架 → private |
+
+错误格式沿用 `authError(res,status,code,message)`;新增码:`not_owner`、`course_not_found`、`bad_pigeon`、`payload_too_large`、`already_published`。
+
+### 13.6 个人主页 + 创作者数据 + 隐私铁律
+
+- **个人主页 `profile.html`**(仅登录):分区「我创作的」(我的课 + 版本列表 + 聚合学习数据)/「我的书架」(收藏课 + **本人**学习情况)。账户下拉新增「个人主页」「我的书架」入口。
+- **聚合学习数据**(`GET /:id/analytics`,仅 owner):按 `course_key` 聚合 `user_state`:
+  - `learners` = `COUNT(DISTINCT user_id)`
+  - `totalStudyMs` / `avgStudyMs` = 解析各学习者 `studyTime` slot 求和 / 均值
+  - `active7d` = 近 7 天 `updated_at` 有更新的学习者数
+- **隐私铁律(不可违反)**:学习数据 / 下载人数 / 书架等**被学习者非自愿**的行为数据,任何接口**只返回聚合数字**,**绝不**返回 user_id / username / IP / 任何可定位个体的字段;非 owner 调 analytics → `403 not_owner`。
+- **唯一露名例外**:评论区显示发言人 username —— 那是发言人**自愿公开**的言论,与上面不矛盾。
+
+### 13.7 前端页面与降级
+
+- **首页**:两区 tab(课程广场 / 我的课程),各自工具栏(搜索 + 分类下拉 + 广场发布人下拉 / 我的状态下拉);卡片 tag=`publisher_name`,加 ★均分·⬇人数 轻量徽(mono);课程详情弹层承载评分 / 评论 / 下载量 / 版本 / 开始学习 / 加入书架。
+- **守设计系统**:令牌配色 + 动效令牌、无 UI emoji、无竖向装饰线、serif 标题 / mono 数据、亮暗双主题、`:focus-visible`、`prefers-reduced-motion`、破坏性操作二次确认 + 在途禁用。
+- **本地优先降级**:无后端 / 未登录 → 广场仅内置课;上传 / 发布 / 评分 / 评论 / 书架按钮禁用并提示「登录并启动同步后端后可用」。
+
+### 13.8 本轮不做(划界)
+
+- ❌ 课程独立详情路由页(用弹层);❌ 评论嵌套 / 点赞 / @;❌ 评分理由文本;❌ 按学习者锁定旧版本;❌ 书架分组 / 标签;❌ 课程评分 / 评论的服务端审核前置(本轮先发后审);❌ 私人课逐字段 LWW(服务端为权威 + 离线缓存)。

@@ -39,6 +39,16 @@
   --wrong-bg:color-mix(in srgb,var(--seal) 14%,var(--card));
   --wrong-tx:var(--seal);
 
+  /* ==== 动效令牌(缓动曲线 + 标准时长;组件统一引用,勿写死)====
+     ease-out = 入场/展开(纸张落定的减速感);ease-soft = hover/状态(平滑标准)。
+     时长三档:fast 微反馈(图标/小按钮)/ base 标准(卡片/按钮/输入)/ slow 大位移(侧栏/进度)。 */
+  --ease-out:cubic-bezier(.22,.61,.36,1);
+  --ease-soft:cubic-bezier(.4,0,.2,1);
+  --dur-fast:130ms;
+  --dur-base:190ms;
+  --dur-slow:260ms;
+  --focus-ring:0 0 0 3px color-mix(in srgb,var(--gold) 42%,transparent);
+
   /* ==== 布局 ==== */
   --sidebar-w:280px;
   --header-h:56px;
@@ -83,6 +93,12 @@
 /* ==== 基础重置 ==== */
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.7}
+
+/* ==== 全站键盘焦点环 + 禁用态(令牌驱动)====
+   仅 :focus-visible(键盘导航)显示描边,鼠标点击不出现;
+   自绘焦点的输入框(auth/检索)在各自样式里单独给环。 */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled,button[disabled]{opacity:.55;cursor:not-allowed}
 
 /* ==== 图标(SVG,见 core/icons.js)====
    .icn 随上下文字号缩放并对齐文本基线;[data-icon] 占位预留行内盒避免水合前抖动。 */

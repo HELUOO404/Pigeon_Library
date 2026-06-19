@@ -1,0 +1,48 @@
+/* profile.css — 个人主页样式。复用 home.css 的令牌 / 顶栏 / 卡片 / 徽标 / 进度条等基础组件,
+   仅追加个人主页专有的头部、Tab、创作者卡片与书架样式。 */
+@import "./home.css";
+
+/* ---------- 头部 ---------- */
+.profile-head{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:clamp(18px,4vw,28px) 0;border-bottom:1px solid var(--line-2)}
+.profile-avatar{flex:0 0 auto;width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-family:var(--serif);font-size:30px;font-weight:900;color:var(--paper);background:linear-gradient(150deg,var(--ink),var(--gold-deep))}
+[data-theme="dark"] .profile-avatar{color:#1a1a1f;background:linear-gradient(150deg,var(--gold),var(--gold-deep))}
+.profile-id h1{font-family:var(--serif);font-size:28px;font-weight:800;color:var(--ink);line-height:1.1;margin-bottom:6px}
+.account-role{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--gold-deep);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);border-radius:999px;padding:2px 9px}
+.profile-sub{flex-basis:100%;color:var(--ink-soft);font-size:12px;font-family:var(--mono);margin-top:4px}
+
+/* ---------- Tab ---------- */
+.profile-tabs{display:inline-flex;gap:4px;margin:22px 0 20px;padding:4px;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:10px}
+.profile-tab{border:0;background:transparent;cursor:pointer;font-weight:700;font-size:14px;color:var(--ink-soft);padding:8px 18px;border-radius:7px;transition:background var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft)}
+.profile-tab:hover{color:var(--ink)}
+.profile-tab.is-active{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+[data-theme="dark"] .profile-tab.is-active{background:color-mix(in srgb,var(--gold) 22%,var(--card))}
+
+/* ---------- 卡片网格 ---------- */
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:22px}
+.profile-card{background:var(--card);border:1px solid var(--line-2);border-radius:12px;box-shadow:var(--shadow);padding:18px;animation:riseIn .5s var(--ease-out) both}
+.profile-card-top{display:flex;gap:14px;align-items:flex-start}
+.profile-cover{flex:0 0 72px;width:72px;height:72px;border-radius:9px;display:grid;place-items:center;color:var(--paper);background:linear-gradient(150deg,var(--ink),color-mix(in srgb,var(--ink) 60%,var(--gold-deep)));background-size:cover;background-position:center;border:1px solid var(--line)}
+.profile-cover span{font-family:var(--serif);font-size:30px;font-weight:900;opacity:.9}
+.profile-card-id{min-width:0}
+.profile-card-id h3{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--ink);margin:8px 0 3px;line-height:1.3}
+.profile-card-sub{font-size:13px;color:var(--ink-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------- 聚合学习数据 ---------- */
+.analytics-title{display:flex;align-items:center;gap:6px;margin:16px 0 8px;font-family:var(--serif);font-weight:700;font-size:14px;color:var(--ink);border-top:1px solid var(--line);padding-top:14px}
+.analytics-row{display:flex;flex-wrap:wrap;gap:8px 16px}
+.metric{font-family:var(--mono);font-size:12px;color:var(--ink-soft);display:inline-flex;align-items:baseline;gap:4px}
+.metric-num{font-size:16px;font-weight:700;color:var(--ink)}
+.analytics-empty{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+
+/* ---------- 版本记录 ---------- */
+.version-box{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+.version-box summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--gold-deep);font-weight:700}
+.version-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.version-row{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+.version-tag{font-weight:700;color:var(--ink)}
+.version-date{margin-left:auto}
+
+/* ---------- 书架 ---------- */
+.shelf-added{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:6px}
+.shelf-progress{margin:14px 0 4px}
+.profile-card .course-stats{margin-top:10px}

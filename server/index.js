@@ -9,6 +9,10 @@ import { db, users, sessions } from './db.js';
 import { authRouter, meRouter } from './routes/auth.js';
 import { stateRouter, syncRouter } from './routes/state.js';
 import { adminRouter } from './routes/admin.js';
+import { coursesRouter } from './routes/courses.js';
+import { socialRouter } from './routes/social.js';
+import { bookshelfRouter } from './routes/bookshelf.js';
+import { adminCoursesRouter } from './routes/admin-courses.js';
 
 // 启动清理:删过期会话;按需播种管理员。
 sessions.deleteExpired(Date.now());
@@ -58,6 +62,11 @@ app.use('/api/auth', authRouter);
 app.use('/api/me', meRouter);
 app.use('/api/state', stateRouter);
 app.use('/api/sync', syncRouter);
+app.use('/api/courses', coursesRouter);
+app.use('/api/social', socialRouter);
+app.use('/api/bookshelf', bookshelfRouter);
+// 课程审核挂在 /api/admin/courses,须排在 /api/admin 之前,让更具体的前缀先匹配。
+app.use('/api/admin/courses', adminCoursesRouter);
 app.use('/api/admin', adminRouter);
 
 // 统一错误体。

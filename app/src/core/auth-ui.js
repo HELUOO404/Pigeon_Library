@@ -16,6 +16,11 @@ export function initAuthUI(el) {
   document.addEventListener('click', onDocClick);
 }
 
+// 供其他页面在「需要登录」时主动弹出登录框(如未登录点击上传课程)。
+export function promptLogin() {
+  openModal('login');
+}
+
 function renderControl() {
   const user = getUser();
   if (!user) {
@@ -35,6 +40,8 @@ function renderControl() {
           <span class="account-head-name">${escape(user.username)}</span>
           <span class="account-role">${ROLE_LABEL[user.role] || user.role}</span>
         </div>
+        <a class="account-item" href="/profile.html">${icon('layout-dashboard', { size: 15 })} 个人主页</a>
+        <a class="account-item" href="/profile.html?tab=shelf">${icon('bookmark', { size: 15 })} 我的书架</a>
         <button class="account-item" type="button" data-auth="change-pw">${icon('user', { size: 15 })} 修改密码</button>
         ${adminItem}
         <button class="account-item account-item-danger" type="button" data-auth="logout">${icon('log-out', { size: 15 })} 退出登录</button>

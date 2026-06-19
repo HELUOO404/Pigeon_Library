@@ -8,7 +8,7 @@
   display:inline-flex;align-items:center;gap:7px;
   border:1px solid var(--line-2);background:transparent;color:var(--text,var(--ink));
   border-radius:999px;padding:7px 13px;cursor:pointer;font:inherit;font-size:13.5px;font-weight:700;
-  transition:border-color .15s,color .15s,background .15s;
+  transition:border-color var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);
 }
 .account-btn:hover{border-color:var(--accent,var(--gold));color:var(--accent-deep,var(--gold-deep))}
 .account-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -25,6 +25,7 @@
   width:100%;display:flex;align-items:center;gap:9px;
   border:0;background:transparent;color:var(--text,var(--ink));cursor:pointer;
   font:inherit;font-size:13.5px;text-align:left;padding:9px 11px;border-radius:8px;text-decoration:none;
+  transition:background var(--dur-fast) var(--ease-soft),color var(--dur-fast) var(--ease-soft);
 }
 .account-item:hover{background:color-mix(in srgb,var(--accent,var(--gold)) 12%,transparent)}
 .account-item-danger:hover{background:color-mix(in srgb,var(--danger,var(--seal)) 13%,transparent);color:var(--danger,var(--seal))}
@@ -38,10 +39,10 @@
 .auth-modal{
   position:relative;width:min(380px,100%);
   background:var(--surface,var(--card));border:1px solid var(--line-2);border-radius:14px;
-  box-shadow:var(--shadow);padding:26px 24px 22px;animation:authIn .18s ease both;
+  box-shadow:var(--shadow);padding:26px 24px 22px;animation:authIn var(--dur-base) var(--ease-out) both;
 }
 @keyframes authIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.auth-close{position:absolute;right:12px;top:12px;border:0;background:transparent;color:var(--text-soft,var(--ink-soft));cursor:pointer;padding:6px;border-radius:8px}
+.auth-close{position:absolute;right:12px;top:12px;border:0;background:transparent;color:var(--text-soft,var(--ink-soft));cursor:pointer;padding:6px;border-radius:8px;transition:background var(--dur-fast) var(--ease-soft),color var(--dur-fast) var(--ease-soft)}
 .auth-close:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--text,var(--ink))}
 .auth-eyebrow{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--accent-deep,var(--gold-deep));text-transform:uppercase}
 .auth-title{font-family:var(--serif);font-size:23px;font-weight:700;color:var(--text,var(--ink));margin:6px 0 18px}
@@ -51,13 +52,13 @@
   border:1px solid var(--line-2);border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);
   color:var(--text,var(--ink));font:inherit;font-size:14.5px;padding:10px 12px;outline:0;
 }
-.auth-form input:focus{border-color:var(--accent,var(--gold))}
+.auth-form input:focus{border-color:var(--accent,var(--gold));box-shadow:var(--focus-ring)}
 .auth-msg{font-size:12.5px;color:var(--danger,var(--seal));margin:2px 0 0;font-family:var(--mono)}
 .auth-msg.ok{color:var(--correct-tx,#3f6a30)}
 .auth-submit{
   margin-top:4px;min-height:44px;border:0;border-radius:9px;cursor:pointer;
   background:var(--ink);color:var(--paper);font:inherit;font-weight:700;font-size:15px;
-  transition:transform .15s,background .15s;
+  transition:transform var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);
 }
 .auth-submit:hover{transform:translateY(-1px)}
 .auth-submit:disabled{opacity:.6;cursor:default;transform:none}

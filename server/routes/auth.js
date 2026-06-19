@@ -12,11 +12,12 @@ export const meRouter = Router();
 const USERNAME_RE = /^\S{3,32}$/;        // 3–32 个非空白字符
 const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role });
 
-function issueSession(res, userId) {
+function issueSession(req, res, userId) {
   const token = randomBytes(32).toString('hex');
   const now = Date.now();
   const expiresAt = now + config.sessionTtlMs;
-  sessions.create({ token, userId, createdAt: now, expiresAt });
+  const ua = String(req.headers['user-agent'] || '').slice(0, 300);
+  sessions.create({ token, userId, createdAt: now, expiresAt, ip: req.ip || null, userAgent: ua || null });
   res.cookie(config.cookieName, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -47,7 +48,7 @@ authRouter.post('/register', (req, res) => {
   const passHash = bcrypt.hashSync(password, config.bcryptRounds);
   const info = users.create({ username, passHash, role, createdAt: Date.now() });
   const id = Number(info.lastInsertRowid);
-  issueSession(res, id);
+  issueSession(req, res, id);
   res.json({ user: { id, username, role } });
 });
 
@@ -63,7 +64,7 @@ authRouter.post('/login', (req, res) => {
   }
   if (user.disabled) return authError(res, 403, 'forbidden', '该账户已被禁用');
   users.touch(user.id, Date.now());
-  issueSession(res, user.id);
+  issueSession(req, res, user.id);
   res.json({ user: publicUser(user) });
 });
 

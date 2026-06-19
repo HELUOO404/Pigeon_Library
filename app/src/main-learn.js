@@ -1,6 +1,7 @@
 // main-learn.js — 学习页脚本:加载课程、串联各渲染器、绑定交互事件、图标水合、进度持久化。
 import { findBuiltin, getLocalCourse } from './core/course-registry.js';
 import { loadPigeonFromUrl, parsePigeon, pigeonErrorText } from './core/pigeon-loader.js';
+import { downloadCourse } from './core/course-source.js';
 import { createStore, globalSet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
@@ -25,12 +26,27 @@ let currentChapter = '';
 let currentSection = '';
 let studyStartTime = Date.now();
 
-async function loadCourse(courseId) {
+async function loadCourse(courseId, srcId, versionId) {
+  // 带 src(服务端课程 id)时优先从服务端下载课程包字节(广场课 / 私人课 / 审核预览)。
+  // versionId 用于审核预览指定的待审版本(默认取当前发布版)。
+  if (srcId) {
+    const bytes = await downloadCourse(srcId, versionId ? { version: versionId } : {});
+    if (bytes) return parsePigeon(bytes);
+    // 下载失败(未登录 / 网络 / 已删除):继续尝试同 key 的内置或本地课程,保证本地优先不破。
+  }
   const builtin = findBuiltin(courseId);
   if (builtin) return loadPigeonFromUrl(`/${builtin.url}`);
   const local = await getLocalCourse(courseId);
   if (local) return parsePigeon(local.bytes);
   throw new Error(`找不到课程: ${courseId}`);
+}
+
+// 审核预览横幅:固定浮条,标明只读、不记录进度。
+function showPreviewBanner() {
+  const banner = document.createElement('div');
+  banner.className = 'preview-banner';
+  banner.innerHTML = `${icon('shield', { size: 16 })} <span>审核预览模式 · 仅查看课程内容,学习进度不会被记录</span>`;
+  document.body.appendChild(banner);
 }
 
 function getStudyTime() {
@@ -216,14 +232,19 @@ async function main() {
   await initSession();                  // 确认登录态(无后端则访客);须在 createStore 之前确定命名空间
   const params = new URLSearchParams(location.search);
   const courseId = params.get('course') || 'ic-packaging';
+  const srcId = params.get('src');
+  const versionId = params.get('v');
+  const isPreview = params.get('preview') === '1';
   const target = params.get('section');
   try {
-    course = await loadCourse(courseId);
+    course = await loadCourse(courseId, srcId, versionId);
   } catch (err) {
     document.getElementById('main').innerHTML = `<div class="overview-card"><h2>课程加载失败</h2><p>${pigeonErrorText(err)}</p></div>`;
     throw err;
   }
   store = createStore(course.id);
+  // 审核预览态:屏蔽所有写入(进度/计时/错题),避免污染管理员档案,也不让管理员被计入课程学习人数。
+  if (isPreview) { store.set = () => {}; showPreviewBanner(); }
   sections = getSections(course.manifest);
   currentChapter = course.manifest.chapters[0]?.id || '';
   currentSection = sections[0]?.id || '';
@@ -249,7 +270,7 @@ async function main() {
   bindEvents();
   refreshProgress();
   restoreQuizResults();
-  recordLastCourse(currentSection);
+  if (!isPreview) recordLastCourse(currentSection);
   if (target && sections.some((section) => section.id === target)) {
     navigateTo(target);
   }

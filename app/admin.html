@@ -30,15 +30,84 @@
         <p class="section-kicker">管理面板</p>
         <h2 id="adminTitle">用户与同步管理</h2>
       </div>
+
       <div id="adminGate" class="admin-gate"></div>
+
       <div id="adminBody" hidden>
+        <!-- KPI 概览条 -->
         <div class="admin-stats" id="adminStats"></div>
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="adminUsers"></table>
+
+        <!-- 趋势:双 sparkline -->
+        <div class="admin-trends" id="adminTrends"></div>
+
+        <!-- 两栏:课程分析 | 有效会话 -->
+        <div class="admin-cols">
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <h3>课程分析</h3>
+              <span class="admin-card-sub" id="adminCoursesSub"></span>
+            </div>
+            <div class="admin-card-body" id="adminCourses"></div>
+          </section>
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <h3>有效会话</h3>
+              <span class="admin-card-sub" id="adminSessionsSub"></span>
+            </div>
+            <div class="admin-card-body" id="adminSessions"></div>
+          </section>
         </div>
+
+        <!-- 课程审核:待审队列 -->
+        <section class="admin-card">
+          <div class="admin-card-head">
+            <h3>课程审核 · 待审队列</h3>
+            <span class="admin-card-sub" id="adminPendingSub"></span>
+          </div>
+          <div class="admin-card-body" id="adminPending"></div>
+        </section>
+
+        <!-- 全部课程(可预览 / 下架) -->
+        <section class="admin-card">
+          <div class="admin-card-head">
+            <h3>全部课程</h3>
+            <span class="admin-card-sub" id="adminAllCoursesSub"></span>
+          </div>
+          <div class="admin-card-body" id="adminAllCourses"></div>
+        </section>
+
+        <!-- 用户控制台 -->
+        <section class="admin-card admin-console">
+          <div class="admin-card-head admin-console-head">
+            <h3>用户</h3>
+            <div class="admin-toolbar" id="adminToolbar"></div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminUsers"></table>
+          </div>
+          <div class="admin-pager" id="adminPager"></div>
+        </section>
+
+        <!-- 审计日志 -->
+        <section class="admin-card">
+          <div class="admin-card-head">
+            <h3>审计日志</h3>
+            <span class="admin-card-sub" id="adminAuditSub"></span>
+          </div>
+          <div class="admin-card-body" id="adminAudit"></div>
+        </section>
       </div>
     </section>
   </main>
+
+  <!-- 单用户下钻抽屉 -->
+  <div class="admin-overlay" id="drawerOverlay" hidden></div>
+  <aside class="admin-drawer" id="adminDrawer" hidden aria-label="用户详情" tabindex="-1"></aside>
+
+  <!-- 建号弹窗 -->
+  <div class="admin-overlay" id="modalOverlay" hidden>
+    <div class="admin-modal" id="adminModal" role="dialog" aria-modal="true" aria-label="新建用户"></div>
+  </div>
 
   <script type="module" src="/src/main-admin.js"></script>
 </body>

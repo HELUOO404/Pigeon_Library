@@ -15,6 +15,12 @@ db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA foreign_keys = ON;');
 db.exec(fs.readFileSync(path.join(here, 'schema.sql'), 'utf8'));
 
+// 旧库迁移:sessions 若缺 ip/user_agent 列则补
+// (schema.sql 的 CREATE IF NOT EXISTS 不会给既有表加列;ALTER 幂等,见 user-system-design §12.1)。
+const sessionCols = db.prepare('PRAGMA table_info(sessions)').all().map((c) => c.name);
+if (!sessionCols.includes('ip')) db.exec('ALTER TABLE sessions ADD COLUMN ip TEXT');
+if (!sessionCols.includes('user_agent')) db.exec('ALTER TABLE sessions ADD COLUMN user_agent TEXT');
+
 // ---- users ----
 export const users = {
   count: () => db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
@@ -33,9 +39,9 @@ export const users = {
 
 // ---- sessions ----
 export const sessions = {
-  create: ({ token, userId, createdAt, expiresAt }) =>
-    db.prepare('INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
-      .run(token, userId, createdAt, expiresAt),
+  create: ({ token, userId, createdAt, expiresAt, ip, userAgent }) =>
+    db.prepare('INSERT INTO sessions (token, user_id, created_at, expires_at, ip, user_agent) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(token, userId, createdAt, expiresAt, ip ?? null, userAgent ?? null),
   byToken: (token) => db.prepare('SELECT * FROM sessions WHERE token = ?').get(token),
   delete: (token) => db.prepare('DELETE FROM sessions WHERE token = ?').run(token),
   deleteExpired: (now) => db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now),

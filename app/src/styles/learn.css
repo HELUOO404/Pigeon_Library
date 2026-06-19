@@ -11,30 +11,30 @@
 .header .brand-home:hover .logo{color:var(--gold-deep)}
 .header .logo{font-family:var(--serif);font-weight:900;font-size:19px;color:var(--ink);white-space:nowrap}
 .header .tabs{display:flex;gap:6px}
-.header .tab{padding:6px 16px;border-radius:999px;border:1px solid var(--line-2);background:transparent;cursor:pointer;font-size:13px;color:var(--text-soft);transition:color .15s,background .15s,border-color .15s}
+.header .tab{padding:6px 16px;border-radius:999px;border:1px solid var(--line-2);background:transparent;cursor:pointer;font-size:13px;color:var(--text-soft);transition:color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft),border-color var(--dur-base) var(--ease-soft)}
 .header .tab:hover{border-color:var(--gold);color:var(--ink)}
 .header .tab.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 [data-theme="dark"] .header .tab.active{background:var(--gold);color:#1a1a1f;border-color:var(--gold)}
 .header .tools{margin-left:auto;display:flex;gap:4px}
-.header .tool-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:7px;border-radius:9px;color:var(--text-soft);display:inline-flex;transition:background .15s,color .15s}
+.header .tool-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:7px;border-radius:9px;color:var(--text-soft);display:inline-flex;transition:background var(--dur-fast) var(--ease-soft),color var(--dur-fast) var(--ease-soft)}
 .header .tool-btn:hover{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--ink)}
-.menu-btn{display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:6px;border-radius:9px;color:var(--text-soft)}
+.menu-btn{display:none;background:none;border:none;font-size:20px;cursor:pointer;padding:6px;border-radius:9px;color:var(--text-soft);transition:background var(--dur-fast) var(--ease-soft),color var(--dur-fast) var(--ease-soft)}
 .menu-btn:hover{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--ink)}
 
 /* ============ 布局骨架 ============ */
 .app{display:flex;height:calc(100vh - var(--header-h));overflow:hidden}
 /* 全局不用竖向装饰线:sidebar 与 main 的分隔改用背景色差(暖纸面)实现,不画竖线 */
-.sidebar{width:var(--sidebar-w);background:color-mix(in srgb,var(--surface) 75%,var(--paper));overflow-y:auto;flex-shrink:0;transition:transform .25s}
+.sidebar{width:var(--sidebar-w);background:color-mix(in srgb,var(--surface) 75%,var(--paper));overflow-y:auto;flex-shrink:0;transition:transform var(--dur-slow) var(--ease-out)}
 .sidebar-header{padding:16px;font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
 .sidebar-progress{padding:12px 16px;border-bottom:1px solid var(--line)}
 .progress-title{font-size:13px;font-weight:600;margin-bottom:6px}
 .progress-bar{height:6px;background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));border-radius:3px;transition:width .3s}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));border-radius:3px;transition:width var(--dur-slow) var(--ease-out)}
 .progress-text{font-family:var(--mono);font-size:11px;color:var(--text-soft);margin-top:4px}
 .tree-section{border-bottom:1px solid var(--line)}
 .tree-title{padding:10px 16px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px}
 .tree-title:hover{background:var(--hover)}
-.tree-title .arrow{transition:transform .15s;font-size:12px;color:var(--text-soft)}
+.tree-title .arrow{transition:transform var(--dur-fast) var(--ease-soft);font-size:12px;color:var(--text-soft)}
 .tree-title.collapsed .arrow{transform:rotate(-90deg)}
 .tree-items{padding:0 16px 8px 32px}
 .tree-items.hidden{display:none}
@@ -52,9 +52,9 @@
 .overview-card p{color:var(--text-soft);margin-bottom:12px}
 .knowledge-card{background:var(--card);border:1px solid var(--line-2);border-radius:12px;margin-bottom:16px;box-shadow:var(--shadow);overflow:hidden}
 /* 去竖线:卡头不再用 border-left accent,改纯净标题 + 悬浮暖底 */
-.card-header{padding:16px 22px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s}
+.card-header{padding:16px 22px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background var(--dur-base) var(--ease-soft)}
 .card-header:hover{background:var(--hover)}
-.card-toggle{font-size:12px;color:var(--gold-deep);transition:transform .15s;transform:rotate(90deg)}
+.card-toggle{font-size:12px;color:var(--gold-deep);transition:transform var(--dur-fast) var(--ease-soft);transform:rotate(90deg)}
 .card-header.collapsed .card-toggle{transform:rotate(0deg)}
 .card-title{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink);flex:1}
 .mastery-badge{font-family:var(--mono);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;flex-shrink:0}
@@ -89,25 +89,25 @@
 .quiz-item{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .quiz-item:last-child{border-bottom:none}
 .quiz-q{font-weight:600;margin-bottom:8px}
-.quiz-opt{display:block;padding:7px 12px;margin:5px 0;border-radius:var(--radius);cursor:pointer;border:1px solid var(--line-2);transition:background .15s,border-color .15s}
+.quiz-opt{display:block;padding:7px 12px;margin:5px 0;border-radius:var(--radius);cursor:pointer;border:1px solid var(--line-2);transition:background var(--dur-base) var(--ease-soft),border-color var(--dur-base) var(--ease-soft)}
 .quiz-opt:hover{background:var(--hover)}
 .quiz-opt.selected{border-color:var(--gold);background:var(--hover)}
 .quiz-opt.correct{border-color:var(--correct-tx);background:var(--correct-bg);color:var(--correct-tx)}
 .quiz-opt.wrong{border-color:var(--seal);background:var(--wrong-bg);color:var(--wrong-tx)}
-.quiz-submit-btn{margin-top:8px;padding:7px 18px;border-radius:var(--radius);border:none;background:var(--ink);color:var(--paper);cursor:pointer;font-size:13px;font-weight:600;transition:background .15s}
+.quiz-submit-btn{margin-top:8px;padding:7px 18px;border-radius:var(--radius);border:none;background:var(--ink);color:var(--paper);cursor:pointer;font-size:13px;font-weight:600;transition:background var(--dur-base) var(--ease-soft)}
 .quiz-submit-btn:hover{background:#000}
 [data-theme="dark"] .quiz-submit-btn{background:var(--gold);color:#1a1a1f}
 .quiz-fb{margin-top:8px;padding:8px 12px;border-radius:var(--radius);font-size:13px;display:none;align-items:center;gap:6px}
 .quiz-fb.show{display:flex}
 .quiz-fb.correct{background:var(--correct-bg);color:var(--correct-tx)}
 .quiz-fb.wrong{background:var(--wrong-bg);color:var(--wrong-tx)}
-.mastery-btn{margin-top:12px;padding:7px 16px;border-radius:var(--radius);border:1px solid var(--gold);background:transparent;color:var(--gold-deep);cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:background .15s,color .15s}
+.mastery-btn{margin-top:12px;padding:7px 16px;border-radius:var(--radius);border:1px solid var(--gold);background:transparent;color:var(--gold-deep);cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:background var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft)}
 .mastery-btn:hover{background:var(--gold);color:#fff}
 
 /* ============ 页脚 ============ */
 .app-footer{position:fixed;bottom:0;left:var(--sidebar-w);right:0;height:var(--footer-h);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100}
 .footer-nav{display:flex;gap:12px;align-items:center}
-.footer-nav button{padding:6px 16px;border-radius:7px;background:var(--hover);color:var(--ink);font-size:14px;border:none;cursor:pointer;transition:all .15s}
+.footer-nav button{padding:6px 16px;border-radius:7px;background:var(--hover);color:var(--ink);font-size:14px;border:none;cursor:pointer;transition:background var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft)}
 .footer-nav button:hover{background:var(--gold);color:#fff}
 .footer-progress{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold-deep)}
 .footer-quiz{padding:6px 16px;border-radius:7px;background:var(--ink);color:var(--paper);font-size:14px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -122,7 +122,7 @@
 .panel-close{position:absolute;top:12px;right:12px;background:none;border:none;cursor:pointer;color:var(--text-soft);display:inline-flex;padding:4px;border-radius:8px}
 .panel-close:hover{background:var(--hover);color:var(--ink)}
 .glossary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.glossary-card{background:var(--surface-sunken);padding:16px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:all .15s}
+.glossary-card{background:var(--surface-sunken);padding:16px;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;transition:border-color var(--dur-base) var(--ease-soft),box-shadow var(--dur-base) var(--ease-soft)}
 .glossary-card:hover{border-color:var(--gold);box-shadow:var(--shadow)}
 .glossary-abbr{font-family:var(--serif);font-size:23px;font-weight:700;color:var(--gold-deep)}
 .glossary-full{font-family:var(--mono);font-size:11px;color:var(--text-soft);margin-top:4px}
@@ -138,10 +138,10 @@
 .exam-info-item{text-align:center}
 .exam-info-item span:first-child{display:block;font-size:14px;color:var(--text-soft);margin-bottom:4px}
 .exam-info-item span:last-child{font-size:20px;font-weight:700}
-.btn-primary{padding:10px 28px;border-radius:9px;background:var(--ink);color:var(--paper);font-size:16px;border:none;cursor:pointer;font-weight:700;transition:all .15s}
+.btn-primary{padding:10px 28px;border-radius:9px;background:var(--ink);color:var(--paper);font-size:16px;border:none;cursor:pointer;font-weight:700;transition:background var(--dur-base) var(--ease-soft),transform var(--dur-base) var(--ease-soft)}
 .btn-primary:hover{background:#000}
 [data-theme="dark"] .btn-primary{background:var(--gold);color:#1a1a1f}
-.btn-secondary{padding:10px 28px;border-radius:9px;background:transparent;color:var(--ink);font-size:16px;border:1px solid var(--line-2);cursor:pointer;transition:all .15s}
+.btn-secondary{padding:10px 28px;border-radius:9px;background:transparent;color:var(--ink);font-size:16px;border:1px solid var(--line-2);cursor:pointer;transition:border-color var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft)}
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold-deep)}
 .exam-random-opts{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px}
 .exam-random-label{font-size:14px;color:var(--ink);cursor:pointer;user-select:none}
@@ -151,7 +151,7 @@
 .exam-timer{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--seal);display:inline-flex;align-items:center;gap:6px}
 .exam-counter{font-family:var(--mono);font-size:15px;color:var(--text-soft)}
 .exam-progress-bar{height:6px;background:color-mix(in srgb,var(--ink) 12%,transparent);border-radius:3px;margin-bottom:24px}
-.exam-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));border-radius:3px;transition:width .3s}
+.exam-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));border-radius:3px;transition:width var(--dur-slow) var(--ease-out)}
 .exam-question-area{min-height:300px}
 .exam-nav{display:flex;justify-content:space-between;margin-top:24px}
 .question-card{background:var(--card);border:1px solid var(--line-2);border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:var(--shadow)}
@@ -162,23 +162,23 @@
 .question-type-badge.match{background:var(--gold)}
 [data-theme="dark"] .question-type-badge.single{background:var(--gold);color:#1a1a1f}
 .question-number{font-family:var(--mono);font-size:13px;color:var(--text-soft);margin-bottom:8px}
-.question-text{font-size:16px;font-weight:500;margin-bottom:16px;line-height:1.6}
+.question-text{font-size:16px;font-weight:500;margin-bottom:16px;line-height:1.7}
 .exam-options{display:flex;flex-direction:column;gap:10px}
-.exam-option{display:flex;align-items:center;padding:12px 16px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;transition:all .15s;background:var(--card)}
+.exam-option{display:flex;align-items:center;padding:12px 16px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;transition:border-color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);background:var(--card)}
 .exam-option:hover{border-color:var(--gold);background:var(--hover)}
 .exam-option.selected{border-color:var(--gold);background:var(--hover)}
 .exam-option.correct{border-color:var(--correct-tx);background:var(--correct-bg)}
 .exam-option.wrong{border-color:var(--seal);background:var(--wrong-bg)}
-.exam-option span{word-break:break-word;overflow-wrap:break-word;line-height:1.5}
+.exam-option span{word-break:break-word;overflow-wrap:break-word;line-height:1.7}
 .exam-option-label{font-family:var(--mono);font-weight:700;margin-right:8px;min-width:24px;flex-shrink:0}
 .judge-options{display:flex;gap:16px}
-.judge-option{flex:1;text-align:center;padding:16px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;transition:all .15s;font-size:18px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.judge-option{flex:1;text-align:center;padding:16px;border:1px solid var(--line-2);border-radius:var(--radius);cursor:pointer;transition:border-color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);font-size:18px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
 .judge-option:hover{border-color:var(--gold);background:var(--hover)}
 .judge-option.selected{border-color:var(--gold);background:var(--hover)}
 .judge-option.correct{border-color:var(--correct-tx);background:var(--correct-bg)}
 .judge-option.wrong{border-color:var(--seal);background:var(--wrong-bg)}
 .sort-list{display:flex;flex-direction:column;gap:8px}
-.sort-item{display:flex;align-items:center;padding:12px 16px;background:var(--surface-sunken);border:1px solid var(--line-2);border-radius:var(--radius);cursor:move;transition:all .15s}
+.sort-item{display:flex;align-items:center;padding:12px 16px;background:var(--surface-sunken);border:1px solid var(--line-2);border-radius:var(--radius);cursor:move;transition:border-color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft),opacity var(--dur-base) var(--ease-soft)}
 .sort-item:hover{border-color:var(--gold)}
 .sort-item.dragging{opacity:.5}
 .sort-item .sort-handle{margin-right:12px;color:var(--text-soft);cursor:grab;display:inline-flex}
@@ -188,7 +188,7 @@
 .match-container{display:flex;gap:24px}
 .match-column{flex:1}
 .match-column-title{font-size:14px;font-weight:600;color:var(--text-soft);margin-bottom:12px;text-align:center}
-.match-item{padding:12px 16px;background:var(--surface-sunken);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:all .15s;text-align:center}
+.match-item{padding:12px 16px;background:var(--surface-sunken);border:1px solid var(--line-2);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:border-color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);text-align:center}
 .match-item:hover{border-color:var(--gold)}
 .match-item.selected{border-color:var(--gold);background:var(--hover)}
 .match-item.matched{border-color:var(--correct-tx);background:var(--correct-bg)}
@@ -275,6 +275,15 @@
   .exam-view{left:0}
 }
 @media(max-width:480px){.header .logo{font-size:15px}}
+
+/* 审核预览浮条:固定在顶栏下方居中,邮政金虚线描边强调「只读」 */
+.preview-banner{
+  position:fixed;top:calc(var(--header-h) + 10px);left:50%;transform:translateX(-50%);z-index:55;
+  display:inline-flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);
+  padding:9px 16px;border-radius:999px;border:1px dashed var(--gold);
+  background:color-mix(in srgb,var(--gold) 14%,var(--card));color:var(--gold-deep);
+  font-family:var(--mono);font-size:12.5px;font-weight:700;box-shadow:var(--shadow);
+}
 
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人主页 · PigeonLib</title>
+  <link rel="icon" type="image/svg+xml" href="/brand-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/profile.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/index.html" aria-label="PigeonLib 首页">
+      <img src="/brand-logo.svg" alt="" class="brand-logo">
+      <span>PigeonLib</span>
+    </a>
+    <nav class="site-nav" aria-label="导航">
+      <a href="/index.html">课程广场</a>
+    </nav>
+    <div class="account-slot" id="accountSlot"></div>
+    <button class="theme-btn" type="button" data-action="toggle-theme" title="切换主题" aria-label="切换主题"><span data-icon="theme" aria-hidden="true"></span></button>
+  </header>
+
+  <main class="page-shell">
+    <section class="profile-head" id="profileHead" aria-label="个人信息"></section>
+
+    <div class="profile-tabs" role="tablist" aria-label="个人主页分区">
+      <button class="profile-tab is-active" type="button" role="tab" aria-selected="true" data-tab="creator">我创作的</button>
+      <button class="profile-tab" type="button" role="tab" aria-selected="false" data-tab="shelf">我的书架</button>
+    </div>
+
+    <section id="panelCreator" class="profile-panel" role="tabpanel" aria-label="我创作的课程">
+      <div class="profile-grid" id="creatorGrid"></div>
+    </section>
+
+    <section id="panelShelf" class="profile-panel" role="tabpanel" aria-label="我的书架" hidden>
+      <div class="profile-grid" id="shelfGrid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>PigeonLib · 开放课程学习平台</span>
+    <span><a href="/index.html">返回首页</a> · <span class="icn" data-icon="send" data-size="14" aria-hidden="true"></span></span>
+  </footer>
+
+  <script type="module" src="/src/main-profile.js"></script>
+</body>
+</html>

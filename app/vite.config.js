@@ -62,11 +62,13 @@ export default defineConfig({
         home: 'index.html',
         learn: 'learn.html',
         admin: 'admin.html',
+        profile: 'profile.html',
       },
     },
   },
   server: {
     port: 5173,
+    strictPort: true,
     open: '/index.html',
   },
 })
