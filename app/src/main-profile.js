@@ -427,11 +427,17 @@ async function loadAll() {
   const srcByKey = {};
   for (const c of square.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
   for (const c of mineRes.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
+  // 内置课:解包取课名/知识点总数/封面(书架若收藏内置课,封面需从这里取,服务端广场无内置课记录)。
+  const builtinMeta = {};
   await Promise.all(BUILTIN_COURSES.map(async (b) => {
     try {
       const loaded = await loadPigeonFromUrl(`/${b.url}`);
       const m = loaded.manifest;
       titles[b.id] = { title: m.title || b.title, total: m.stats?.knowledgePoints ?? countKnowledgePoints(m) };
+      builtinMeta[b.id] = {
+        courseKey: b.id, title: m.title || b.title, subtitle: m.subtitle || b.subtitle || '',
+        publisherName: m.author || 'PigeonLib', coverDataUrl: loaded.coverDataUrl || '', source: 'builtin',
+      };
       loaded.revoke();
     } catch {
       if (!titles[b.id]) titles[b.id] = { title: b.title, total: null };
@@ -448,11 +454,13 @@ async function loadAll() {
     return { course, analytics, versions, social };
   }));
 
-  // 书架:补课程摘要(广场 ∪ 内置)
+  // 书架:补课程摘要(广场 ∪ 内置;内置带解包出的封面)
   const metaByKey = new Map();
   for (const c of square.items) metaByKey.set(c.courseKey, c);
   for (const b of BUILTIN_COURSES) {
-    if (!metaByKey.has(b.id)) metaByKey.set(b.id, { courseKey: b.id, title: b.title, subtitle: b.subtitle || '', source: 'builtin' });
+    if (!metaByKey.has(b.id)) {
+      metaByKey.set(b.id, builtinMeta[b.id] || { courseKey: b.id, title: b.title, subtitle: b.subtitle || '', source: 'builtin' });
+    }
   }
   state.shelf = shelf.map((s) => ({ key: s.course_key, addedAt: s.added_at, meta: metaByKey.get(s.course_key) || null }));
 
