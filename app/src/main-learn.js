@@ -5,7 +5,7 @@ import { downloadCourse } from './core/course-source.js';
 import { createStore, globalSet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
-import { initSession } from './core/session.js';
+import { initSession, api } from './core/session.js';
 import { initSync } from './core/sync.js';
 import { initAuthUI } from './core/auth-ui.js';
 import { markMastered, markRead, renderCourseContent } from './render/content-renderer.js';
@@ -148,9 +148,19 @@ function nextSection() {
   if (idx >= 0 && idx < sections.length - 1) navigateTo(sections[idx + 1].id);
 }
 
-function resetProgress() {
+async function resetProgress() {
   if (!confirm('确定重置本课程学习进度、答题记录和错题本吗？')) return;
-  store.clear();
+  // 用当前时间戳覆写(而非删除),使本地 LWW 时间戳比服务端新,
+  // 防止重载后 initSync 拉回旧进度覆盖掉清空结果。
+  const now = Date.now();
+  const emptyOf = (slot) => (slot === 'wrong' ? [] : slot === 'studyTime' ? 0 : {});
+  ['progress', 'quiz', 'wrong', 'studyTime'].forEach((slot) => store.set(slot, emptyOf(slot)));
+  // 同步推到服务端(fire-and-forget,失败静默,LWW 本地已领先)
+  void Promise.allSettled(
+    ['progress', 'quiz', 'wrong', 'studyTime'].map((slot) =>
+      api('PUT', `/state/${encodeURIComponent(course.id)}/${slot}`, { data: emptyOf(slot), updated_at: now }),
+    ),
+  );
   location.reload();
 }
 

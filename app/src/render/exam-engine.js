@@ -114,10 +114,44 @@ function renderSort(q, ans) {
 
 function renderMatch(q, ans) {
   const state = ans || { selectedLeft: null, matches: {} };
+  const matchedLefts = Object.keys(state.matches);
+  const matchedRights = Object.values(state.matches);
+
+  // 左列
+  const leftCol = (q.left || []).map((item) => {
+    const isMatched = matchedLefts.includes(item);
+    const isSelected = state.selectedLeft === item;
+    const cls = `match-item${isMatched ? ' matched' : isSelected ? ' selected' : ''}`;
+    const inner = isMatched
+      ? `<span class="match-check">${icon('check', { size: 14 })}</span><span class="match-crossed">${escapeHtml(item)}</span>`
+      : escapeHtml(item);
+    return `<div class="${cls}" data-action="match-left" data-qid="${escapeHtml(q.id)}" data-value="${escapeHtml(item)}">${inner}</div>`;
+  }).join('');
+
+  // 右列
+  const rightCol = (q.right || []).map((item) => {
+    const isMatched = matchedRights.includes(item);
+    const cls = `match-item${isMatched ? ' matched' : ''}`;
+    const inner = isMatched
+      ? `<span class="match-check">${icon('check', { size: 14 })}</span><span class="match-crossed">${escapeHtml(item)}</span>`
+      : escapeHtml(item);
+    return `<div class="${cls}" data-action="match-right" data-qid="${escapeHtml(q.id)}" data-value="${escapeHtml(item)}">${inner}</div>`;
+  }).join('');
+
+  // 已匹配列表
+  const summary = matchedLefts.length
+    ? `<div class="match-summary">
+        <div class="match-summary-title">已匹配:</div>
+        ${matchedLefts.map((left) => `<div class="match-pair"><span class="match-pair-left">${escapeHtml(left)}</span> → <span class="match-pair-right">${escapeHtml(state.matches[left])}</span></div>`).join('')}
+      </div>`
+    : '';
+
   return `<div class="match-container">
-    <div class="match-column"><div class="match-column-title">项目</div>${(q.left || []).map((item) => `<div class="match-item ${state.selectedLeft === item ? 'selected' : ''} ${state.matches[item] ? 'matched' : ''}" data-action="match-left" data-qid="${escapeHtml(q.id)}" data-value="${escapeHtml(item)}">${escapeHtml(item)}${state.matches[item] ? ` → ${escapeHtml(state.matches[item])}` : ''}</div>`).join('')}</div>
-    <div class="match-column"><div class="match-column-title">说明</div>${(q.right || []).map((item) => `<div class="match-item" data-action="match-right" data-qid="${escapeHtml(q.id)}" data-value="${escapeHtml(item)}">${escapeHtml(item)}</div>`).join('')}</div>
-  </div>`;
+    <div class="match-column"><div class="match-column-title">项目</div>${leftCol}</div>
+    <div class="match-column"><div class="match-column-title">说明</div>${rightCol}</div>
+  </div>
+  ${summary}
+  <p class="match-progress">进度: ${matchedLefts.length}/${(q.left || []).length}</p>`;
 }
 
 export function renderExamQuestion() {

@@ -193,6 +193,14 @@
 .match-item.selected{border-color:var(--gold);background:var(--hover)}
 .match-item.matched{border-color:var(--correct-tx);background:var(--correct-bg)}
 .match-item.wrong{border-color:var(--seal);background:var(--wrong-bg)}
+.match-check{display:inline-flex;align-items:center;vertical-align:middle;color:var(--correct-tx);margin-right:4px}
+.match-crossed{text-decoration:line-through;opacity:.6;vertical-align:middle}
+.match-summary{margin-top:12px;padding:8px 12px;background:var(--card);border:1px solid var(--line-2);border-radius:var(--radius)}
+.match-summary-title{font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:600}
+.match-pair{font-size:13px;margin:2px 0}
+.match-pair-left{color:var(--gold-deep);font-weight:600}
+.match-pair-right{color:var(--correct-tx);font-weight:600}
+.match-progress{font-size:12px;color:var(--ink-soft);margin-top:8px}
 
 /* ============ 考试结果 ============ */
 .exam-result{text-align:center;padding:40px}
