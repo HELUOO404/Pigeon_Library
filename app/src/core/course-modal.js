@@ -131,6 +131,11 @@ function render() {
         </div>
       </div>
 
+      <div class="detail-intro">
+        <p class="detail-section-title">课程简介</p>
+        <p class="detail-intro-body">${esc(card.description || card.subtitle || '作者暂未填写课程简介。')}</p>
+      </div>
+
       <div class="detail-actions">
         <button class="btn btn-primary" type="button" data-act="start">开始学习 ▸</button>
         <button class="btn btn-secondary" type="button" data-act="toggle-shelf">${shelved ? '移出书架' : '加入书架'}</button>
@@ -165,6 +170,9 @@ function bind() {
   if (!modal) return;
 
   modal.addEventListener('click', async (e) => {
+    // 评分星按钮只有 data-score、无 data-act,必须在 data-act 早退之前判定,否则永远点不动。
+    const star = e.target.closest('.rate-star');
+    if (star) return rate(Number(star.dataset.score));
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const act = t.dataset.act;
@@ -176,8 +184,6 @@ function bind() {
     if (act === 'toggle-shelf') return toggleShelf(t);
     if (act === 'del-comment') return delComment(Number(t.dataset.cid));
     if (act === 'more-comments') return loadMore();
-    const star = e.target.closest('.rate-star');
-    if (star) return rate(Number(star.dataset.score));
   });
 
   const form = modal.querySelector('.comment-form');

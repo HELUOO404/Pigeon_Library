@@ -18,7 +18,7 @@ export function currentUser(req) {
   const user = users.byId(sess.user_id);
   if (!user || user.disabled) return null;
   users.touch(user.id, Date.now());
-  return { id: user.id, username: user.username, role: user.role };
+  return { id: user.id, username: user.username, role: user.role, created_at: user.created_at };
 }
 
 export function requireUser(req, res, next) {

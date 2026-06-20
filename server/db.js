@@ -21,6 +21,10 @@ const sessionCols = db.prepare('PRAGMA table_info(sessions)').all().map((c) => c
 if (!sessionCols.includes('ip')) db.exec('ALTER TABLE sessions ADD COLUMN ip TEXT');
 if (!sessionCols.includes('user_agent')) db.exec('ALTER TABLE sessions ADD COLUMN user_agent TEXT');
 
+// 旧库迁移:courses 若缺 description 列则补(课程简介,v1.3 引入)
+const courseCols = db.prepare('PRAGMA table_info(courses)').all().map((c) => c.name);
+if (!courseCols.includes('description')) db.exec('ALTER TABLE courses ADD COLUMN description TEXT');
+
 // ---- users ----
 export const users = {
   count: () => db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
@@ -31,6 +35,7 @@ export const users = {
     db.prepare('INSERT INTO users (username, pass_hash, role, created_at) VALUES (?, ?, ?, ?)')
       .run(username, passHash, role, createdAt),
   setPassword: (id, passHash) => db.prepare('UPDATE users SET pass_hash = ? WHERE id = ?').run(passHash, id),
+  rename: (id, username) => db.prepare('UPDATE users SET username = ? WHERE id = ?').run(username, id),
   setDisabled: (id, disabled) => db.prepare('UPDATE users SET disabled = ? WHERE id = ?').run(disabled ? 1 : 0, id),
   setRole: (id, role) => db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id),
   touch: (id, ts) => db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(ts, id),

@@ -106,3 +106,10 @@ export async function changePassword(oldPassword, newPassword) {
   if (r.ok || r.status === 204) return { ok: true };
   return { ok: false, error: errorMessage(r, '修改失败') };
 }
+
+// 自助改用户名:成功后更新本地登录态(currentUser)。
+export async function changeUsername(username, password) {
+  const r = await api('POST', '/me/username', { username, password });
+  if (r.ok && r.json?.user) { currentUser = r.json.user; return { ok: true, user: currentUser }; }
+  return { ok: false, error: errorMessage(r, '修改失败') };
+}

@@ -7,11 +7,11 @@ function escapeLike(s) {
 }
 
 export const coursesDb = {
-  insertCourse({ ownerId, courseKey, title, subtitle, author, publisherName, category, now }) {
+  insertCourse({ ownerId, courseKey, title, subtitle, description, author, publisherName, category, now }) {
     const info = db.prepare(
-      `INSERT INTO courses (owner_id, course_key, title, subtitle, author, publisher_name, category, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?, ?)`,
-    ).run(ownerId, courseKey, title, subtitle ?? null, author ?? null, publisherName, category ?? null, now, now);
+      `INSERT INTO courses (owner_id, course_key, title, subtitle, description, author, publisher_name, category, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'private', ?, ?)`,
+    ).run(ownerId, courseKey, title, subtitle ?? null, description ?? null, author ?? null, publisherName, category ?? null, now, now);
     return info.lastInsertRowid;
   },
 
@@ -74,7 +74,7 @@ export const coursesDb = {
 
   mine(ownerId) {
     return db.prepare(
-      `SELECT c.id, c.course_key, c.title, c.subtitle, c.publisher_name, c.category, c.status,
+      `SELECT c.id, c.course_key, c.title, c.subtitle, c.description, c.publisher_name, c.category, c.status,
               c.current_version_id, c.latest_version_id, c.created_at, c.updated_at,
               cv.status AS latest_status, cv.stats_json, cv.cover_data, cv.file_size
        FROM courses c
@@ -109,7 +109,7 @@ export const coursesDb = {
 
     const total = db.prepare(`SELECT COUNT(*) AS c FROM courses c${whereSql}`).get(...params).c;
     const items = db.prepare(
-      `SELECT c.id, c.course_key, c.title, c.subtitle, c.author, c.publisher_name, c.category, c.status,
+      `SELECT c.id, c.course_key, c.title, c.subtitle, c.description, c.author, c.publisher_name, c.category, c.status,
               c.current_version_id, c.created_at, c.updated_at,
               cv.version, cv.stats_json, cv.cover_data, cv.file_size, cv.published_at,
               (SELECT COALESCE(ROUND(AVG(r.score), 2), 0) FROM course_ratings r WHERE r.course_key = c.course_key) AS avg_rating,
@@ -127,7 +127,7 @@ export const coursesDb = {
 
   byKeyPublished(courseKey) {
     return db.prepare(
-      `SELECT c.id, c.course_key, c.title, c.subtitle, c.author, c.publisher_name, c.category, c.status,
+      `SELECT c.id, c.course_key, c.title, c.subtitle, c.description, c.author, c.publisher_name, c.category, c.status,
               c.current_version_id, c.created_at, c.updated_at,
               cv.version, cv.stats_json, cv.cover_data, cv.file_size, cv.published_at
        FROM courses c

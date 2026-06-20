@@ -11,6 +11,7 @@ let answers = {};
 let startTime = 0;
 let timerInterval = null;
 let sortDragIdx = null;
+let isReviewSession = false; // 错题重做 session(经 startCustomExam 传入题目)不计入章节考试成绩档
 
 export function initExamEngine(ctx) {
   context = ctx;
@@ -54,6 +55,8 @@ export function openExam(chapter = currentChapter) {
 
 export function startExam(customQuestions = null) {
   clearExamTimer();
+  // 直开章节考试 customQuestions=null;startCustomExam(错题重做)会传入题目数组 → 标记为复习,不入成绩档。
+  isReviewSession = customQuestions != null;
   const randomOrder = document.getElementById('randomOrder')?.checked;
   const randomOptions = document.getElementById('randomOptions')?.checked;
   const source = customQuestions || questions;
@@ -300,6 +303,15 @@ export function finishExam() {
   });
   const score = questions.length ? Math.round((correct / questions.length) * 100) : 0;
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+  // 真实章节考试成绩入档(错题重做不计);供个人中心「综合做题/正确率/考试战绩」聚合。只存汇总,不存逐题。
+  if (!isReviewSession && context.store && questions.length) {
+    const prev = context.store.get('exams', []);
+    const log = Array.isArray(prev) ? prev : [];
+    log.push({ chapter: currentChapter, total: questions.length, correct, score, t: Date.now() });
+    context.store.set('exams', log.slice(-50)); // 仅保留最近 50 次,防止本地膨胀
+  }
+
   document.getElementById('resultScore').textContent = score;
   document.getElementById('resultScore').style.color = score >= 80 ? 'var(--cs)' : score >= 60 ? 'var(--cw)' : 'var(--cd)';
   document.getElementById('resultAccuracy').textContent = `${correct}/${questions.length}`;

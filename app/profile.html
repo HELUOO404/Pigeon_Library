@@ -23,20 +23,33 @@
     <button class="theme-btn" type="button" data-action="toggle-theme" title="切换主题" aria-label="切换主题"><span data-icon="theme" aria-hidden="true"></span></button>
   </header>
 
-  <main class="page-shell">
-    <section class="profile-head" id="profileHead" aria-label="个人信息"></section>
+  <main class="profile-shell">
+    <aside class="profile-nav" aria-label="个人主页导航">
+      <p class="profile-nav-eyebrow">个人主页 / PROFILE</p>
+      <button class="pnav-item is-active" type="button" role="tab" aria-selected="true" data-tab="account"><span class="icn" data-icon="user" data-size="18" aria-hidden="true"></span>个人中心</button>
+      <button class="pnav-item" type="button" role="tab" aria-selected="false" data-tab="creator"><span class="icn" data-icon="package" data-size="18" aria-hidden="true"></span>我的作品</button>
+      <button class="pnav-item" type="button" role="tab" aria-selected="false" data-tab="shelf"><span class="icn" data-icon="bookmark" data-size="18" aria-hidden="true"></span>我的书架</button>
+      <div class="profile-nav-foot" id="profileNavFoot"></div>
+    </aside>
 
-    <div class="profile-tabs" role="tablist" aria-label="个人主页分区">
-      <button class="profile-tab is-active" type="button" role="tab" aria-selected="true" data-tab="creator">我创作的</button>
-      <button class="profile-tab" type="button" role="tab" aria-selected="false" data-tab="shelf">我的书架</button>
-    </div>
+    <section class="profile-main">
+      <div id="panelAccount" class="profile-panel" role="tabpanel" aria-label="个人中心"></div>
 
-    <section id="panelCreator" class="profile-panel" role="tabpanel" aria-label="我创作的课程">
-      <div class="profile-grid" id="creatorGrid"></div>
-    </section>
+      <div id="panelCreator" class="profile-panel" role="tabpanel" aria-label="我的作品" hidden>
+        <div class="panel-head">
+          <h1 class="panel-title">我的作品</h1>
+          <div class="panel-summary" id="creatorSummary"></div>
+        </div>
+        <div class="profile-grid" id="creatorGrid"></div>
+      </div>
 
-    <section id="panelShelf" class="profile-panel" role="tabpanel" aria-label="我的书架" hidden>
-      <div class="profile-grid" id="shelfGrid"></div>
+      <div id="panelShelf" class="profile-panel" role="tabpanel" aria-label="我的书架" hidden>
+        <div class="panel-head">
+          <h1 class="panel-title">我的书架</h1>
+          <div class="panel-summary" id="shelfSummary"></div>
+        </div>
+        <div class="profile-grid" id="shelfGrid"></div>
+      </div>
     </section>
   </main>
 

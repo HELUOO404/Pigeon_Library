@@ -216,6 +216,7 @@ export function parsePigeonBuffer(buffer) {
     courseKey: manifest.id,
     title: manifest.title,
     subtitle: manifest.subtitle || null,
+    description: typeof manifest.description === 'string' ? manifest.description : null,
     author: manifest.author || null,
     version: manifest.version || null,
     stats,

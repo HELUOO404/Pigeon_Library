@@ -67,6 +67,7 @@ coursesRouter.post('/', requireUser, uploadSingle('file'), (req, res) => {
     courseKey: meta.courseKey,
     title: meta.title,
     subtitle: meta.subtitle,
+    description: meta.description,
     author: meta.author,
     publisherName: req.user.username,
     category,

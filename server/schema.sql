@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS courses (
   course_key         TEXT    NOT NULL,                 -- manifest.id(展示/进度/社交/书架关联键,可重复)
   title              TEXT    NOT NULL,
   subtitle           TEXT,
+  description        TEXT,                             -- manifest.description(课程简介,详情弹窗展示)
   author             TEXT,                             -- manifest.author(原始创作者署名)
   publisher_name     TEXT    NOT NULL,                 -- 发布人(卡片 tag):用户课=上传者 username,内置=author
   category           TEXT,                             -- 预设分类枚举之一(非法回退「其他」)

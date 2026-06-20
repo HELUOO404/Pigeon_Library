@@ -49,6 +49,8 @@ const el = {
   nav: document.getElementById('siteNav'),
   squareCount: document.getElementById('squareCount'),
   mineCount: document.getElementById('mineCount'),
+  tabCountSquare: document.getElementById('tabCountSquare'),
+  tabCountMine: document.getElementById('tabCountMine'),
   resumeSlot: document.getElementById('resumeSlot'),
   tabs: [...document.querySelectorAll('.course-tab')],
   panelSquare: document.getElementById('panelSquare'),
@@ -185,6 +187,7 @@ function renderSquare() {
   state.squareView = items;
   const totalUnique = new Set([...state.square, ...state.builtin].map((c) => c.courseKey)).size;
   el.squareCount.textContent = String(totalUnique);
+  if (el.tabCountSquare) el.tabCountSquare.textContent = String(totalUnique);
 
   if (!items.length) {
     const filtering = state.squareFilters.q || state.squareFilters.category || state.squareFilters.publisher;
@@ -229,6 +232,7 @@ async function hydrateBuiltin() {
       const card = {
         source: 'builtin', serverId: null, courseKey: course.id,
         title: m.title || course.title, subtitle: m.subtitle || course.subtitle || '',
+        description: m.description || '',
         author: m.author || '', publisherName: m.author || 'PigeonLib',
         category: '', status: 'published',
         stats: getStats(m), coverDataUrl: loaded.coverDataUrl || '',
@@ -250,6 +254,7 @@ function renderMine() {
   if (!state.loggedIn) {
     state.mineView = [];
     el.mineCount.textContent = '0';
+    if (el.tabCountMine) el.tabCountMine.textContent = '0';
     el.mineGrid.replaceChildren(renderEmptyCard(
       '登录后可上传课程、管理私人课程,并申请发布到课程广场。',
       `<button class="btn btn-secondary empty-action" type="button" data-action="login-empty">${icon('user', { size: 16 })} 登录 / 注册</button>`,
@@ -265,6 +270,7 @@ function renderMine() {
   if (f.status) items = items.filter((c) => c.status === f.status);
   state.mineView = items;
   el.mineCount.textContent = String(state.mine.length);
+  if (el.tabCountMine) el.tabCountMine.textContent = String(state.mine.length);
 
   if (!items.length) {
     const filtering = f.q || f.status;

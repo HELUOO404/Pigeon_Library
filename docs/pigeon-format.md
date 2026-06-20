@@ -28,6 +28,7 @@ cover.png         可选  课程封面(manifest.cover 指向它)
   "id": "ic-packaging",                       // 必需。课程唯一 id(localStorage 命名空间 / ?course= 用)
   "title": "IC封装技术",                       // 必需。课程名(顶栏 logo、首页卡片标题)
   "subtitle": "集创赛备考 · 微电子封装工艺",     // 可选。副标题(首页卡片)
+  "description": "面向集创赛的微电子封装工艺速成:从晶圆减薄到系统级封装……", // 可选。课程简介(详情弹窗展示;缺省时弹窗回退用 subtitle)
   "author": "PigeonLib",                      // 可选
   "version": "1.0",                           // 可选。课程内容版本
   "cover": "cover.png",                       // 可选。封面图相对路径(首页卡片封面)
@@ -60,6 +61,8 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 - 题目 id:`"4-001"`(章号-三位流水)。在 quiz.json 的 `questionBank` 中定义,小测/考试用 id 引用,见 §3。
 
 > **封面**:`cover` 指向包内图片(如 `cover.png`),首页卡片显示该图;若无图,用 `coverText` 显示自定义文字;两者都无则用课程标题首字。建议封面图 ≤ 数百 KB。
+
+> **简介**:`description` 是课程的整体介绍(一段话即可),在课程广场的「课程详情弹窗」里以「课程简介」区展示;缺省时弹窗回退显示 `subtitle`。服务端解析 .pigeon 时提取并存库(权威),与封面/统计一同随卡片下发。
 
 > **分类 / 发布人 / 评分 / 版本审核等是平台层概念,不写入 `.pigeon`**:课程包只描述「内容本身」。分类在发布到课程广场时由发布人选择、存于服务端数据库;发布人、审核状态、评分、下载量、版本指针等同样由平台维护(见 `docs/user-system-design.md` §13)。`manifest.author` 仅表示原始创作者署名,不等于平台「发布人」。
 

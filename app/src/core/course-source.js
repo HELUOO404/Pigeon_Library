@@ -16,6 +16,7 @@ export function normalizeServerCourse(row) {
     courseKey: row.course_key,
     title: row.title,
     subtitle: row.subtitle || '',
+    description: row.description || '',
     author: row.author || '',
     publisherName: row.publisher_name || '',
     category: row.category || '',

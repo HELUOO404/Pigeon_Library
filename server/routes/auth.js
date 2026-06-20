@@ -1,4 +1,4 @@
-// routes/auth.js — 注册 / 登录 / 登出 / me / 改密码。
+// routes/auth.js — 注册 / 登录 / 登出 / me / 改密码 / 改用户名。
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -10,7 +10,7 @@ export const authRouter = Router();
 export const meRouter = Router();
 
 const USERNAME_RE = /^\S{3,32}$/;        // 3–32 个非空白字符
-const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role });
+const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role, created_at: u.created_at });
 
 function issueSession(req, res, userId) {
   const token = randomBytes(32).toString('hex');
@@ -46,10 +46,11 @@ authRouter.post('/register', (req, res) => {
   // 首位注册者自动成为管理员(契约见 user-system-design §3)。
   const role = users.count() === 0 ? 'admin' : 'user';
   const passHash = bcrypt.hashSync(password, config.bcryptRounds);
-  const info = users.create({ username, passHash, role, createdAt: Date.now() });
+  const createdAt = Date.now();
+  const info = users.create({ username, passHash, role, createdAt });
   const id = Number(info.lastInsertRowid);
   issueSession(req, res, id);
-  res.json({ user: { id, username, role } });
+  res.json({ user: { id, username, role, created_at: createdAt } });
 });
 
 authRouter.post('/login', (req, res) => {
@@ -92,4 +93,25 @@ meRouter.post('/password', requireUser, (req, res) => {
   }
   users.setPassword(user.id, bcrypt.hashSync(newPassword, config.bcryptRounds));
   res.status(204).end();
+});
+
+// 自助改用户名:校验当前密码 + 用户名格式 + 查重。用户名为快照语义,不回写历史发布人/评论。
+meRouter.post('/username', requireUser, (req, res) => {
+  const { username, password } = req.body || {};
+  if (typeof username !== 'string' || !USERNAME_RE.test(username)) {
+    return authError(res, 400, 'bad_request', '用户名需为 3–32 个非空白字符');
+  }
+  const user = users.byId(req.user.id);
+  if (!bcrypt.compareSync(password || '', user.pass_hash)) {
+    return authError(res, 401, 'unauthorized', '当前密码错误');
+  }
+  if (username === user.username) {
+    return res.json({ user: publicUser(user) }); // 未改动,幂等返回
+  }
+  const taken = users.byUsername(username);
+  if (taken && taken.id !== user.id) {
+    return authError(res, 409, 'username_taken', '用户名已被占用');
+  }
+  users.rename(user.id, username);
+  res.json({ user: publicUser({ ...user, username }) });
 });

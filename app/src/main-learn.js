@@ -153,11 +153,12 @@ async function resetProgress() {
   // 用当前时间戳覆写(而非删除),使本地 LWW 时间戳比服务端新,
   // 防止重载后 initSync 拉回旧进度覆盖掉清空结果。
   const now = Date.now();
-  const emptyOf = (slot) => (slot === 'wrong' ? [] : slot === 'studyTime' ? 0 : {});
-  ['progress', 'quiz', 'wrong', 'studyTime'].forEach((slot) => store.set(slot, emptyOf(slot)));
+  const slots = ['progress', 'quiz', 'wrong', 'studyTime', 'exams'];
+  const emptyOf = (slot) => (slot === 'wrong' || slot === 'exams' ? [] : slot === 'studyTime' ? 0 : {});
+  slots.forEach((slot) => store.set(slot, emptyOf(slot)));
   // 同步推到服务端(fire-and-forget,失败静默,LWW 本地已领先)
   void Promise.allSettled(
-    ['progress', 'quiz', 'wrong', 'studyTime'].map((slot) =>
+    slots.map((slot) =>
       api('PUT', `/state/${encodeURIComponent(course.id)}/${slot}`, { data: emptyOf(slot), updated_at: now }),
     ),
   );
@@ -269,6 +270,7 @@ async function main() {
   initQuiz({ quiz: course.quiz, store, wrong: wrongbook });
   initExamEngine({
     quiz: course.quiz,
+    store,
     wrongbook,
     setFooterMode,
     navigateTo,

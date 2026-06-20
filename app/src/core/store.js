@@ -114,6 +114,7 @@ purgeGuestData();
  *   quiz      小节小测结果 {qid: {ans, correct, t}}
  *   wrong     错题本 [...]
  *   studyTime 累计学习时长(ms)
+ *   exams     章节考试成绩档 [{chapter,total,correct,score,t}](仅汇总,最近 50 次)
  */
 export function createStore(courseId) {
   const ns = `${PREFIX}:u:${activeUserId}:${courseId}`;
@@ -197,7 +198,7 @@ export function createStore(courseId) {
     },
     /** 清空本课程全部数据(只清当前用户命名空间)。 */
     clear() {
-      ['progress', 'quiz', 'wrong', 'studyTime'].forEach((s) => this.remove(s));
+      ['progress', 'quiz', 'wrong', 'studyTime', 'exams'].forEach((s) => this.remove(s));
     },
   };
 }

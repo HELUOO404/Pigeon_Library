@@ -136,11 +136,12 @@ Base path:`/api`(便于反向代理)。请求/响应均 `application/json`。会
 
 | 方法 & 路径 | 鉴权 | 请求体 | 成功响应 | 说明 |
 |---|---|---|---|---|
-| `POST /api/auth/register` | 公开 | `{username,password}` | `200 {user:{id,username,role}}` + Set-Cookie | 用户名唯一;首注册者→admin;弱口令 400 |
+| `POST /api/auth/register` | 公开 | `{username,password}` | `200 {user:{id,username,role,created_at}}` + Set-Cookie | 用户名唯一;首注册者→admin;弱口令 400 |
 | `POST /api/auth/login` | 公开 | `{username,password}` | `200 {user:{...}}` + Set-Cookie | 失败 401;被禁用 403 |
 | `POST /api/auth/logout` | 用户 | — | `204` | 删除会话 + 清 cookie |
-| `GET  /api/me` | 用户 | — | `200 {user:{id,username,role}}` | 未登录 401(前端据此判定游客) |
+| `GET  /api/me` | 用户 | — | `200 {user:{id,username,role,created_at}}` | 未登录 401(前端据此判定游客);`created_at` 供个人中心显示注册时间 |
 | `POST /api/me/password` | 用户 | `{oldPassword,newPassword}` | `204` | 改本人密码 |
+| `POST /api/me/username` | 用户 | `{username,password}` | `200 {user:{...}}` | 自助改用户名:校验当前密码 + 用户名格式 + 查重(占用 409);用户名变更为快照语义,不回写历史已发布课署名与历史评论 |
 | `GET  /api/state/:courseId` | 用户 | — | `200 {slots:{slot:{data,updated_at}}}` | 拉该课程全部 slot(pull 用) |
 | `GET  /api/state/:courseId/:slot` | 用户 | — | `200 {data,updated_at}` 或 `204` | 单 slot |
 | `PUT  /api/state/:courseId/:slot` | 用户 | `{data,updated_at}` | `200 {applied:bool,updated_at}` | LWW:仅当传入 `updated_at` ≥ 库中才覆盖;`applied=false` 表示服务端更新 |
@@ -391,6 +392,7 @@ CREATE TABLE IF NOT EXISTS courses (
   course_key        TEXT    NOT NULL,         -- manifest.id(展示/进度/社交/书架关联键,可重复)
   title             TEXT    NOT NULL,
   subtitle          TEXT,
+  description       TEXT,                     -- manifest.description(课程简介,详情弹窗展示;服务端解析提取)
   author            TEXT,                     -- manifest.author(原始创作者)
   publisher_name    TEXT    NOT NULL,         -- 发布人(卡片 tag):用户课=上传者 username,内置=author
   category          TEXT,                     -- 预设分类枚举之一(非法回退「其他」)
@@ -546,3 +548,30 @@ CREATE TABLE IF NOT EXISTS bookshelf (
 ### 13.8 本轮不做(划界)
 
 - ❌ 课程独立详情路由页(用弹层);❌ 评论嵌套 / 点赞 / @;❌ 评分理由文本;❌ 按学习者锁定旧版本;❌ 书架分组 / 标签;❌ 课程评分 / 评论的服务端审核前置(本轮先发后审);❌ 私人课逐字段 LWW(服务端为权威 + 离线缓存)。
+
+---
+
+## 14. 课程简介 + 个人主页重构(v1.3 · 本轮 · 权威)
+
+### 14.1 课程简介 `description`
+- `.pigeon` manifest 增可选 `description`(课程简介,见 `pigeon-format.md` §1)。服务端 `pigeon-server.js` 解析提取(权威,不信前端),存 `courses.description`。
+- 旧库迁移(沿用 §12.1 范式):`PRAGMA table_info(courses)` 缺 `description` 列则 `ALTER TABLE courses ADD COLUMN description TEXT`(幂等)。
+- 下发:`GET /api/courses/square`、`GET /api/courses/mine` 的卡片行附带 `description`;前端 `normalizeServerCourse` 归一为 `description`。内置课由前端读 `manifest.description`。
+- 展示:课程详情弹层新增「课程简介」区,取 `description`,缺省回退 `subtitle`。
+
+### 14.2 自助改用户名
+- `POST /api/me/username`(见 §5):requireUser,body `{username,password}`。流程:校验用户名格式(复用注册规则)→ `bcrypt.compareSync` 校验当前密码(失败 401)→ `users.byUsername` 查重(占用且非本人 → `409 username_taken`)→ `users.rename(id,username)` → 返回 `publicUser`。
+- `publicUser` 扩为 `{id,username,role,created_at}`(register/login/me 同源)。
+- **快照语义**:用户名变更**不回写**已发布课程 `publisher_name` 与历史评论 `username`(均为发布/发言时的快照)。
+
+### 14.3 个人主页改为左右分栏三区(`profile.html`)
+- 左侧导航栏(类似学习页 sidebar)三项:**个人中心 / 我的作品 / 我的书架**;右侧内容随 `?tab=account|creator|shelf` 切换(默认 account)。
+- **个人中心**:账户卡(用户名 + 角色 + 注册时间,**无头像**)+ 页内「编辑用户名 / 修改密码」表单 + **学习概览图表**(KPI 数字带 / 正确率环 / 章节考试战绩 / 逐课进度)。
+- **我的作品**:沿用创作者中心,卡片补社交行(★均分 / ⬇学习人数 / 评论数,来自 social)+ 聚合学习数据 + 版本记录。
+- **我的书架**:收藏课网格 + 本人学习情况。
+- **学习统计数据源 = 纯本地**:个人中心图表只读 localStorage 当前用户命名空间(`progress/quiz/wrong/studyTime/exams`)聚合,**不新增服务端聚合接口**(本地优先;创作者「聚合学习数据」仍走 §13.6 的 owner-only analytics)。
+
+### 14.4 章节考试成绩入档(新增本地 slot `exams`)
+- 学习页新增 `exams` slot(`pglib:u:<uid>:<course_key>:exams`),`exam-engine.finishExam()` 在**真实章节考试**结束时追加一条成绩汇总 `{chapter,total,correct,score,t}`(错题重做 session 不计;只存汇总不存逐题)。
+- 随 `__meta` 自动纳入既有 LWW 同步;重置学习进度时一并清空。
+- 个人中心「综合做题数 / 正确率」= 小测(`quiz`)+ 考试(`exams`)合并统计。
