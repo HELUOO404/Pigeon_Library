@@ -25,7 +25,7 @@ body::before{
 
 a{color:inherit;text-decoration:none}
 button,input,textarea{font:inherit}
-code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{font-family:var(--mono)}
+code,pre,.course-stats,.progress-text,.eyebrow,.section-kicker{font-family:var(--mono)}
 
 /* ---------- 顶栏 ---------- */
 .site-header{
@@ -72,14 +72,6 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .btn-secondary{background:transparent;border-color:var(--line-2);color:var(--ink)}
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold-deep)}
 
-/* 邮资票据 / 计数 */
-.dispatch-ticket{
-  display:inline-flex;flex-wrap:wrap;align-items:center;gap:10px;width:max-content;max-width:100%;
-  margin-top:26px;padding:9px 16px;border:1px dashed var(--gold);border-radius:8px;
-  background:color-mix(in srgb,var(--gold) 7%,transparent);font-size:12.5px;color:var(--ink-soft);letter-spacing:.02em;
-}
-.dispatch-ticket strong{color:var(--ink);font-weight:700}
-
 /* ---------- 续学 / 检索 ---------- */
 .resume-slot{margin:0 0 clamp(30px,5vw,46px)}
 .resume-card{
@@ -104,49 +96,13 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .course-search input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-family:var(--sans);font-size:14px}
 .course-search input::placeholder{color:var(--ink-soft)}
 
-/* 英雄区画面:做成一枚邮票(齿孔边 + 邮戳)*/
+/* 英雄区画面:干净整图(图片裁进方形容器;图缺失时显示暖纸渐变占位底)*/
 .hero-media{
-  position:relative;aspect-ratio:5/4.4;border-radius:6px;padding:16px;
-  background:
-    linear-gradient(155deg,color-mix(in srgb,var(--card) 90%,var(--gold)),var(--card));
-  box-shadow:var(--shadow);
-  /* 邮票齿孔:四边打孔 */
-  --perf: radial-gradient(circle 5px at center, transparent 0 5px, #000 5.6px);
-  -webkit-mask:
-    var(--perf) 0 0/14px 14px,
-    linear-gradient(#000 0 0) 7px 7px/calc(100% - 14px) calc(100% - 14px) no-repeat;
-  -webkit-mask-composite:source-over;
-          mask:
-    var(--perf) 0 0/14px 14px,
-    linear-gradient(#000 0 0) 7px 7px/calc(100% - 14px) calc(100% - 14px) no-repeat;
+  position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;
+  border:1px solid var(--line-2);box-shadow:var(--shadow);
+  background:linear-gradient(155deg,color-mix(in srgb,var(--card) 90%,var(--gold)),var(--card));
 }
-.hero-media::after{ /* 邮戳印 */
-  content:"PIGEON POST";position:absolute;right:14px;bottom:14px;z-index:2;
-  width:84px;height:84px;border-radius:50%;border:2px solid color-mix(in srgb,var(--seal) 70%,transparent);
-  color:color-mix(in srgb,var(--seal) 78%,transparent);
-  display:grid;place-items:center;text-align:center;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.08em;
-  transform:rotate(-12deg);opacity:.8;
-}
-.hero-photo:not([hidden]) ~ .dispatch-illustration{display:none}
-.hero-media:has(.hero-photo:not([hidden])) .dispatch-illustration{display:none}
-.hero-photo{width:100%;height:100%;object-fit:cover;border-radius:4px}
-.dispatch-illustration{width:100%;height:100%}
-.flight-path{stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-dasharray:9 12;animation:drawPath 1.1s var(--ease-out) forwards}
-.flight-dot{fill:var(--seal)}
-/* 折纸信鸽:同 logo 轮廓,白纸折面 + 墨色描边;三面不同明度做出折纸立体感 */
-.paper-plane path{stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.paper-plane .facet-1{fill:color-mix(in srgb,var(--paper) 82%,#fff)}        /* 主翼:亮白纸面 */
-.paper-plane .facet-2{fill:color-mix(in srgb,var(--paper) 86%,var(--ink))}  /* 背翼:浅阴影折面 */
-.paper-plane .facet-3{fill:color-mix(in srgb,var(--paper) 74%,var(--ink))}  /* 尾折:较深折面 */
-.parcel rect{fill:color-mix(in srgb,var(--card) 70%,var(--paper));stroke:var(--ink);stroke-width:2}
-.parcel path{fill:none;stroke:var(--gold);stroke-width:2}
-/* 邮政圆戳:墨色描边、半透明,似盖在信封上的戳印(与右下 PIGEON POST 戳成系列) */
-.postmark{opacity:.82}
-.postmark .pm-ring{fill:none;stroke:var(--seal);stroke-width:2}
-.postmark .pm-ring-inner{stroke-width:1.2}
-.postmark .pm-arc{fill:var(--seal);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em}
-.postmark .pm-arc-small{font-size:7.5px;letter-spacing:.22em}
-.postmark .pm-char{fill:var(--seal);font-family:"Noto Serif SC",serif;font-size:19px;font-weight:700}
+.hero-photo{width:100%;height:100%;object-fit:cover;display:block}
 
 /* ---------- 区块 ---------- */
 .page-shell{counter-reset:sec}
@@ -335,7 +291,8 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .format-panel + .format-panel{border-top:1px solid var(--line)}
 .panel-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 20px;background:transparent;border:0;color:var(--ink);cursor:pointer;text-align:left;font-weight:700;font-size:15px;transition:background var(--dur-base) var(--ease-soft)}
 .panel-trigger:hover{background:color-mix(in srgb,var(--gold) 9%,transparent)}
-.panel-trigger span{font-family:var(--mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.panel-trigger .panel-caret{font-family:var(--mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.panel-trigger .trigger-label{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .panel-body{display:none;padding:0 20px 20px;color:var(--ink-soft);font-size:14.5px;line-height:1.7}
 .format-panel.open .panel-body{display:block;animation:riseIn var(--dur-base) var(--ease-out) both}
 .panel-body code{font-family:var(--mono);background:color-mix(in srgb,var(--ink) 8%,transparent);padding:1px 6px;border-radius:5px;font-size:.9em}
@@ -379,7 +336,6 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
 .reveal{animation:riseIn .6s var(--ease-out) both}
 .reveal:nth-child(2){animation-delay:.07s}.reveal:nth-child(3){animation-delay:.14s}.reveal:nth-child(4){animation-delay:.21s}.reveal:nth-child(5){animation-delay:.28s}.reveal:nth-child(6){animation-delay:.35s}
 @keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes drawPath{from{stroke-dashoffset:180}to{stroke-dashoffset:0}}
 @keyframes skeletonPulse{from{background-position:120% 0}to{background-position:-120% 0}}
 
 /* ---------- 响应式 ---------- */
@@ -391,7 +347,8 @@ code,pre,.dispatch-ticket,.course-stats,.progress-text,.eyebrow,.section-kicker{
   .menu-btn{display:block}
   .site-nav{position:fixed;top:var(--header-h);left:0;right:0;display:none;flex-direction:column;align-items:stretch;margin:0;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line-2);box-shadow:var(--shadow)}
   .site-nav.open{display:flex}
-  .theme-btn{margin-left:auto}
+  .site-header .account-slot{display:flex;margin-left:auto}
+  .hero-media{display:none}
   .hero h1{font-size:38px}
   .hero-actions{flex-direction:column}
   .btn{width:100%}

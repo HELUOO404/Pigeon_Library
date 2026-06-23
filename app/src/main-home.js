@@ -47,8 +47,6 @@ const state = {
 
 const el = {
   nav: document.getElementById('siteNav'),
-  squareCount: document.getElementById('squareCount'),
-  mineCount: document.getElementById('mineCount'),
   tabCountSquare: document.getElementById('tabCountSquare'),
   tabCountMine: document.getElementById('tabCountMine'),
   resumeSlot: document.getElementById('resumeSlot'),
@@ -186,7 +184,6 @@ function renderSquare() {
   const items = squareItems();
   state.squareView = items;
   const totalUnique = new Set([...state.square, ...state.builtin].map((c) => c.courseKey)).size;
-  el.squareCount.textContent = String(totalUnique);
   if (el.tabCountSquare) el.tabCountSquare.textContent = String(totalUnique);
 
   if (!items.length) {
@@ -253,7 +250,6 @@ async function hydrateBuiltin() {
 function renderMine() {
   if (!state.loggedIn) {
     state.mineView = [];
-    el.mineCount.textContent = '0';
     if (el.tabCountMine) el.tabCountMine.textContent = '0';
     el.mineGrid.replaceChildren(renderEmptyCard(
       '登录后可上传课程、管理私人课程,并申请发布到课程广场。',
@@ -269,7 +265,6 @@ function renderMine() {
   }
   if (f.status) items = items.filter((c) => c.status === f.status);
   state.mineView = items;
-  el.mineCount.textContent = String(state.mine.length);
   if (el.tabCountMine) el.tabCountMine.textContent = String(state.mine.length);
 
   if (!items.length) {
@@ -294,6 +289,12 @@ async function fetchMine() {
 
 // ---------- 续学卡 ----------
 function renderResumeCard() {
+  // 续学卡仅对登录用户有意义(访客进度不持久化);访客一律隐藏。
+  if (!state.loggedIn) {
+    el.resumeSlot.hidden = true;
+    el.resumeSlot.replaceChildren();
+    return;
+  }
   const last = globalGet('lastCourse', null);
   const all = [...state.builtin, ...state.square, ...state.mine];
   const exists = last && all.some((c) => c.courseKey === last.id);
@@ -434,11 +435,13 @@ function togglePanel(trigger, forceOpen = false) {
   document.querySelectorAll('.format-panel.open').forEach((item) => {
     if (item !== panel) {
       item.classList.remove('open');
-      item.querySelector('.panel-trigger span').textContent = '展开 ▾';
+      const caret = item.querySelector('.panel-caret');
+      if (caret) caret.textContent = '展开 ▾';
     }
   });
   panel.classList.toggle('open', isOpen);
-  trigger.querySelector('span').textContent = isOpen ? '收起 ▴' : '展开 ▾';
+  const caret = trigger.querySelector('.panel-caret');
+  if (caret) caret.textContent = isOpen ? '收起 ▴' : '展开 ▾';
 }
 
 function onGridClick(event, context) {

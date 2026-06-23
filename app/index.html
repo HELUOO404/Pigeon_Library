@@ -34,60 +34,17 @@
           <img src="/brand-logo.svg" alt="" class="hero-logo">
           <p class="hero-brand">PigeonLib</p>
         </div>
-        <p class="eyebrow reveal">信鸽邮政 / Knowledge Dispatch</p>
+        <p class="eyebrow reveal">Knowledge Dispatch</p>
         <h1 id="heroTitle" class="reveal">把知识装进信鸽<br><span>可打包、可分享的课程</span></h1>
         <p class="hero-intro reveal">PigeonLib 是一个开放的课程学习平台。课程以 <code>.pigeon</code> 文件独立投递,与平台解耦:你可以学习内置课程,也能上传任何人或 AI 制作的课程包,即开即学。</p>
         <div class="hero-actions reveal">
           <a class="btn btn-primary" href="#courses">浏览课程广场</a>
           <a class="btn btn-secondary" href="#format" data-action="open-format">了解 .pigeon 格式 →</a>
         </div>
-        <div class="dispatch-ticket reveal" aria-live="polite">
-          <span><span class="icn" data-icon="package" data-size="14" aria-hidden="true"></span> 广场 <strong id="squareCount">0</strong> 门</span>
-          <span>·</span>
-          <span><span class="icn" data-icon="folder" data-size="14" aria-hidden="true"></span> 我的 <strong id="mineCount">0</strong> 门</span>
-          <span>·</span>
-          <span><span class="icn" data-icon="sun-moon" data-size="14" aria-hidden="true"></span> 双主题</span>
-        </div>
       </div>
 
       <div class="hero-media reveal" aria-hidden="true">
-        <img class="hero-photo" alt="" hidden>
-        <svg class="dispatch-illustration" viewBox="0 0 560 420" role="img">
-          <defs>
-            <filter id="paperShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#1b2330" flood-opacity=".14"/>
-            </filter>
-          </defs>
-          <!-- 飞行轨迹:沿用上一版长弧 + 三点,保持不变 -->
-          <path class="flight-path" d="M76 112 C168 26 266 58 282 154 S424 298 494 190" fill="none"/>
-          <circle class="flight-dot dot-a" cx="76" cy="112" r="5"/>
-          <circle class="flight-dot dot-b" cx="282" cy="154" r="5"/>
-          <circle class="flight-dot dot-c" cx="494" cy="190" r="5"/>
-          <!-- 折纸信鸽:logo 同款折纸轮廓,白纸折面 + 墨色描边;较上一版放大并左移(scale 8,中心≈208,198) -->
-          <g class="paper-plane" filter="url(#paperShadow)">
-            <path class="facet-1" d="M126 222 L262 110 L226 230 Z"/>
-            <path class="facet-2" d="M262 110 L290 222 L226 230 Z"/>
-            <path class="facet-3" d="M226 230 L242.8 286 L266.8 225.2 Z"/>
-          </g>
-          <!-- 信封:较上一版放大,置于右侧作画面锚点(168×112) -->
-          <g class="parcel" filter="url(#paperShadow)">
-            <rect x="316" y="240" width="168" height="112" rx="12"/>
-            <path d="M316 268 L400 318 L484 268"/>
-            <path d="M316 240 L400 300 L484 240"/>
-          </g>
-          <!-- 邮政圆戳(沿用这一版精简款):双圈 + 上弧 PIGEON POST + 中心鸽 + 年份;盖在信封右上角 -->
-          <g class="postmark" transform="translate(26 -2) rotate(-13 430 246)">
-            <defs>
-              <path id="pmArcTop" d="M400 246 a30 30 0 0 1 60 0"/>
-              <path id="pmArcBottom" d="M402 246 a28 28 0 0 0 56 0"/>
-            </defs>
-            <circle class="pm-ring" cx="430" cy="246" r="39"/>
-            <circle class="pm-ring pm-ring-inner" cx="430" cy="246" r="33"/>
-            <text class="pm-arc"><textPath href="#pmArcTop" startOffset="50%" text-anchor="middle">PIGEON · POST</textPath></text>
-            <text class="pm-arc pm-arc-small"><textPath href="#pmArcBottom" startOffset="50%" text-anchor="middle">· 2026 ·</textPath></text>
-            <text class="pm-char" x="430" y="254" text-anchor="middle">鸽</text>
-          </g>
-        </svg>
+        <img class="hero-photo" src="/hero-cover.png" alt="把知识装进信鸽:可打包、可分享的课程" onerror="this.style.display='none'">
       </div>
     </section>
 
@@ -152,25 +109,15 @@
       </div>
       <div class="accordion" id="formatAccordion">
         <article class="format-panel">
-          <button class="panel-trigger" type="button">什么是 .pigeon 文件?<span>展开 ▾</span></button>
+          <button class="panel-trigger" type="button">什么是 .pigeon 文件?<span class="panel-caret">展开 ▾</span></button>
           <div class="panel-body">
             <p><code>.pigeon</code> 本质是 zip 压缩课程包,把课程元信息、知识点正文、题库、术语表和图片资源放在同一个可分享文件里。</p>
-          </div>
-        </article>
-        <article class="format-panel">
-          <button class="panel-trigger" type="button">目录结构样张<span>展开 ▾</span></button>
-          <div class="panel-body">
             <pre><code>mycourse.pigeon
 ├─ manifest.json
 ├─ content.json
 ├─ quiz.json
 ├─ glossary.json
 └─ assets/images/</code></pre>
-          </div>
-        </article>
-        <article class="format-panel">
-          <button class="panel-trigger" type="button">各文件字段说明<span>展开 ▾</span></button>
-          <div class="panel-body">
             <table class="format-table">
               <tbody>
                 <tr><th>manifest.json</th><td>课程 id、标题、版本、章节索引和首页统计。</td></tr>
@@ -179,10 +126,11 @@
                 <tr><th>glossary.json</th><td>术语表数组,字段为 <code>{t, full, cn, d}</code>。</td></tr>
               </tbody>
             </table>
+            <p>格式保留 <code>html</code> 内容块和开放题型枚举。未来可以增加 HTML 片段、更多题型或新的资源类型,旧课程仍能被基础渲染器跳过未知类型后继续学习。</p>
           </div>
         </article>
         <article class="format-panel" data-panel="ai">
-          <button class="panel-trigger" type="button"><span class="icn" data-icon="sparkles" aria-hidden="true"></span> 给 AI 的课程制作指南<span>展开 ▾</span></button>
+          <button class="panel-trigger" type="button"><span class="trigger-label"><span class="icn" data-icon="sparkles" aria-hidden="true"></span>给 AI 的课程制作指南</span><span class="panel-caret">展开 ▾</span></button>
           <div class="panel-body">
             <p>下面是可直接复制给 AI 的课程制作提示词核心版。完整版本见 <a href="/docs/ai-course-authoring-prompt.md">docs/ai-course-authoring-prompt.md</a>。</p>
             <textarea id="aiPrompt" readonly></textarea>
@@ -196,17 +144,11 @@
             </div>
           </div>
         </article>
-        <article class="format-panel">
-          <button class="panel-trigger" type="button">格式可扩展性说明<span>展开 ▾</span></button>
-          <div class="panel-body">
-            <p>格式保留 <code>html</code> 内容块和开放题型枚举。未来可以增加 HTML 片段、更多题型或新的资源类型,旧课程仍能被基础渲染器跳过未知类型后继续学习。</p>
-          </div>
-        </article>
       </div>
     </section>
 
     <section id="about" class="section-block about-strip" aria-label="关于 PigeonLib">
-      <p>PigeonLib 把课程当作可投递的知识包裹:轻量、自包含、可分享,并能由 AI 辅助制作。</p>
+      <p>PigeonLib 把课程当作可投递的知识包裹：轻量、自包含、可分享,并能由 AI 辅助制作。</p>
     </section>
   </main>
 
