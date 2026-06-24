@@ -6,6 +6,7 @@ import { initSession, getUser, isAdmin, api } from './core/session.js';
 import { initAuthUI } from './core/auth-ui.js';
 import { toast } from './core/toast.js';
 import { sparkline, sparkbars } from './core/sparkline.js';
+import { BUILTIN_COURSES } from './core/course-registry.js';
 
 applyInitialTheme();
 
@@ -24,7 +25,7 @@ const ACTION_LABEL = {
   course_approve: '通过课程', course_reject: '拒绝课程', course_takedown: '下架课程',
 };
 
-const COURSE_STATUS = { private: '私有', pending: '审核中', published: '已发布', rejected: '被拒' };
+const COURSE_STATUS = { private: '私有', pending: '审核中', published: '已发布', rejected: '被拒', builtin: '内置示例' };
 
 // ---------- 工具 ----------
 function esc(s) {
@@ -71,11 +72,11 @@ function renderStats(s) {
     { label: '用户总数', value: s.userCount, sub: `今日 +${s.newToday} · 7日 +${s.new7d}` },
     { label: '活跃 · 7日', value: s.active7d, sub: `今日 ${s.activeToday} · 30日 ${s.active30d}` },
     { label: '管理员', value: s.adminCount, sub: `禁用 ${s.disabledCount}` },
-    { label: '从未登录', value: s.neverLoggedIn },
-    { label: '有效会话', value: s.activeSessions },
+    { label: '从未登录', value: s.neverLoggedIn, sub: '未完成首次登录' },
+    { label: '有效会话', value: s.activeSessions, sub: '当前在线' },
     { label: '同步行', value: s.stateRows, sub: `${s.courseCount} 门课程` },
-    { label: '课程数', value: s.courseCount },
-    { label: '数据库', value: fmtBytes(s.dbBytes), mono: true },
+    { label: '课程数', value: s.courseCount, sub: `${s.stateRows} 行同步数据` },
+    { label: '数据库', value: fmtBytes(s.dbBytes), mono: true, sub: 'SQLite 文件大小' },
   ];
   $('adminStats').innerHTML = cards.map((c) => `
     <div class="admin-stat">
@@ -139,9 +140,14 @@ function renderPending(list) {
 }
 
 function renderAllCourses(list) {
-  $('adminAllCoursesSub').textContent = `${list.length} 门`;
-  if (!list.length) { $('adminAllCourses').innerHTML = '<p class="admin-empty">还没有课程</p>'; return; }
-  $('adminAllCourses').innerHTML = list.map((c) => {
+  const builtins = BUILTIN_COURSES.map((b) => ({
+    id: null, title: b.title, course_key: b.id, status: 'builtin',
+    publisher_name: '内置示例', category: '', updated_at: null,
+  }));
+  const all = [...builtins, ...list];
+  $('adminAllCoursesSub').textContent = `${all.length} 门`;
+  if (!all.length) { $('adminAllCourses').innerHTML = '<p class="admin-empty">还没有课程</p>'; return; }
+  $('adminAllCourses').innerHTML = all.map((c) => {
     const vid = c.current_version_id || c.latest_version_id || '';
     return `
     <div class="admin-row review-row">
@@ -150,8 +156,8 @@ function renderAllCourses(list) {
         <span class="admin-row-meta">发布人 ${esc(c.publisher_name)} · ${esc(c.category || '未分类')} · ${fmtRel(c.updated_at)}</span>
       </div>
       <div class="review-actions">
-        ${vid ? `<button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${esc(c.course_key)}" data-cid="${c.id}" data-vid="${vid}">预览</button>` : ''}
-        ${c.status === 'published' ? `<button class="admin-mini-btn danger" type="button" data-act="takedown-course" data-cid="${c.id}" data-title="${esc(c.title)}">下架</button>` : ''}
+        ${c.id && vid ? `<button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${esc(c.course_key)}" data-cid="${c.id}" data-vid="${vid}">预览</button>` : ''}
+        ${c.id && c.status === 'published' ? `<button class="admin-mini-btn danger" type="button" data-act="takedown-course" data-cid="${c.id}" data-title="${esc(c.title)}">下架</button>` : ''}
       </div>
     </div>`;
   }).join('');

@@ -31,11 +31,13 @@
    个人中心
    ==================================================================== */
 .account-card{background:var(--card);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow);padding:clamp(18px,3vw,26px);margin-bottom:26px}
+.account-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .account-id{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.account-id h1{font-family:var(--serif);font-size:clamp(24px,3.4vw,30px);font-weight:800;color:var(--ink);line-height:1.1}
-.account-joined{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-left:auto}
-.account-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.account-note{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.6}
+.account-id h1{font-family:var(--serif);font-size:clamp(28px,4vw,40px);font-weight:800;color:var(--ink);line-height:1.1;flex:1}
+.account-joined{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+.account-actions{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+.account-note{display:none;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.6}
+.account-form[data-form="username"]:not([hidden]) ~ .account-note{display:block}
 
 /* 页内编辑表单(展开/收起) */
 .account-form{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);display:grid;gap:12px;max-width:420px}
@@ -80,6 +82,7 @@
 .course-progress-list{display:flex;flex-direction:column;gap:10px}
 .cp-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line-2);border-radius:11px;padding:12px 14px;box-shadow:var(--shadow)}
 .cp-badge{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:var(--paper);background:linear-gradient(150deg,var(--ink),color-mix(in srgb,var(--ink) 60%,var(--gold-deep)));font-family:var(--serif);font-weight:900;font-size:18px}
+.cp-badge.has-image{background-size:cover;background-position:center;color:transparent;border:1px solid var(--line-2)}
 .cp-main{min-width:0}
 .cp-title{font-weight:700;font-size:14.5px;color:var(--ink);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cp-meta{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:5px}

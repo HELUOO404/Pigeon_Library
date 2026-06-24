@@ -65,8 +65,8 @@ function setFooterMode(mode) {
   const progress = document.getElementById('footerProgress');
   const info = document.getElementById('footerExamInfo');
   if (mode === 'exam') {
-    left.style.display = 'none';
-    right.style.display = 'none';
+    if (left) left.style.display = 'none';
+    if (right) right.style.display = 'none';
     progress.style.display = 'none';
     info.style.display = 'block';
     const count = (course.quiz.examQuestions || []).filter((q) => q.chapter === currentChapter).length;
@@ -77,8 +77,8 @@ function setFooterMode(mode) {
     info.innerHTML = `${icon('square-pen')} <span class="exam-info-text"></span>`;
     info.querySelector('.exam-info-text').textContent = label;
   } else {
-    left.style.display = 'flex';
-    right.style.display = 'flex';
+    if (left) left.style.display = 'flex';
+    if (right) right.style.display = 'flex';
     progress.style.display = 'block';
     info.style.display = 'none';
     updateFooterProgress(course.manifest, store, currentChapter);
@@ -138,16 +138,6 @@ function navigateTo(sectionId, cardId) {
   if (window.innerWidth <= 768) closeSidebar();
 }
 
-function prevSection() {
-  const idx = sections.findIndex((section) => section.id === currentSection);
-  if (idx > 0) navigateTo(sections[idx - 1].id);
-}
-
-function nextSection() {
-  const idx = sections.findIndex((section) => section.id === currentSection);
-  if (idx >= 0 && idx < sections.length - 1) navigateTo(sections[idx + 1].id);
-}
-
 async function resetProgress() {
   if (!confirm('确定重置本课程学习进度、答题记录和错题本吗？')) return;
   // 用当前时间戳覆写(而非删除),使本地 LWW 时间戳比服务端新,
@@ -179,7 +169,7 @@ function bindEvents() {
     else if (action === 'switch-chapter') switchChapter(target.dataset.chapter);
     else if (action === 'toggle-tree') {
       target.classList.toggle('collapsed');
-      target.nextElementSibling?.classList.toggle('hidden');
+      target.closest('.tree-section')?.querySelectorAll('.tree-items').forEach((el) => el.classList.toggle('hidden'));
     } else if (action === 'navigate') navigateTo(target.dataset.section, target.dataset.card);
     else if (action === 'toggle-card') {
       target.classList.toggle('collapsed');
@@ -207,8 +197,6 @@ function bindEvents() {
     else if (action === 'exam-option') selectExamOption(target.dataset.qid, target.dataset.value);
     else if (action === 'match-left') selectMatchLeft(target.dataset.qid, target.dataset.value);
     else if (action === 'match-right') selectMatchRight(target.dataset.qid, target.dataset.value);
-    else if (action === 'prev-section') prevSection();
-    else if (action === 'next-section') nextSection();
     else if (action === 'remove-wrong') wrongbook.removeWrongQuestion(target.dataset.id);
     else if (action === 'redo-wrong') wrongbook.redoWrong(target.dataset.id);
     else if (action === 'term-nav') navigateToTerm(target.dataset.term);

@@ -96,14 +96,16 @@ function renderNavFoot() {
 function accountCardHtml(user) {
   return `
   <div class="account-card">
-    <div class="account-id">
-      <h1>${esc(user.username)}</h1>
-      <span class="pf-role">${esc(ROLE_LABEL[user.role] || user.role)}</span>
-      <span class="account-joined">注册于 ${fmtDate(user.created_at)}</span>
-    </div>
-    <div class="account-actions">
-      <button class="btn btn-secondary" type="button" data-act="toggle-username">${icon('square-pen', { size: 15 })} 编辑用户名</button>
-      <button class="btn btn-secondary" type="button" data-act="toggle-password">${icon('shield', { size: 15 })} 修改密码</button>
+    <div class="account-top">
+      <div class="account-id">
+        <h1>${esc(user.username)}</h1>
+        <span class="pf-role">${esc(ROLE_LABEL[user.role] || user.role)}</span>
+        <span class="account-joined">注册于 ${fmtDate(user.created_at)}</span>
+      </div>
+      <div class="account-actions">
+        <button class="btn btn-secondary" type="button" data-act="toggle-username">${icon('square-pen', { size: 15 })} 编辑用户名</button>
+        <button class="btn btn-secondary" type="button" data-act="toggle-password">${icon('shield', { size: 15 })} 修改密码</button>
+      </div>
     </div>
 
     <form class="account-form" data-form="username" hidden>
@@ -147,8 +149,12 @@ function courseRowHtml(c) {
     c.studyMs ? fmtDuration(c.studyMs) : null,
     c.examCount ? `考试 ${c.examCount} 次` : null,
   ].filter(Boolean).join(' · ');
+  const cover = state.titles[c.courseKey]?.coverDataUrl || '';
+  const badgeClass = cover ? 'cp-badge has-image' : 'cp-badge';
+  const badgeStyle = cover ? ` style="background-image:url('${cover}')"` : '';
+  const badgeContent = cover ? '' : esc(letterOf(c.title));
   return `<div class="cp-row">
-    <div class="cp-badge" aria-hidden="true">${esc(letterOf(c.title))}</div>
+    <div class="${badgeClass}"${badgeStyle} aria-hidden="true">${badgeContent}</div>
     <div class="cp-main">
       <div class="cp-title">${esc(c.title)}</div>
       ${bar}
@@ -425,15 +431,15 @@ async function loadAll() {
   // 课名 / 知识点总数 / 服务端 id 映射(供逐课进度与 learn 链接)
   const titles = {};
   const srcByKey = {};
-  for (const c of square.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
-  for (const c of mineRes.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
+  for (const c of square.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null, coverDataUrl: c.coverDataUrl || '' }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
+  for (const c of mineRes.items) { titles[c.courseKey] = { title: c.title, total: c.stats?.knowledgePoints || null, coverDataUrl: c.coverDataUrl || '' }; if (c.serverId) srcByKey[c.courseKey] = c.serverId; }
   // 内置课:解包取课名/知识点总数/封面(书架若收藏内置课,封面需从这里取,服务端广场无内置课记录)。
   const builtinMeta = {};
   await Promise.all(BUILTIN_COURSES.map(async (b) => {
     try {
       const loaded = await loadPigeonFromUrl(`/${b.url}`);
       const m = loaded.manifest;
-      titles[b.id] = { title: m.title || b.title, total: m.stats?.knowledgePoints ?? countKnowledgePoints(m) };
+      titles[b.id] = { title: m.title || b.title, total: m.stats?.knowledgePoints ?? countKnowledgePoints(m), coverDataUrl: loaded.coverDataUrl || '' };
       builtinMeta[b.id] = {
         courseKey: b.id, title: m.title || b.title, subtitle: m.subtitle || b.subtitle || '',
         publisherName: m.author || 'PigeonLib', coverDataUrl: loaded.coverDataUrl || '', source: 'builtin',
