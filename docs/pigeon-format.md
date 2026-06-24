@@ -102,7 +102,8 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 | `summaryBox` | `title: string, items: Span[][]` | `<div class="summary-box"><h4>title</h4><ul><li>…</li></ul></div>` |
 | `compareBox` | `title: string, headers: string[], rows: CompareRow[]` | `<div class="compare-box"><h4>title</h4><table class="compare-table">…</table></div>` |
 | `sectionQuiz` | `quizRef: string` | `<div class="section-quiz">`,题目来自 quiz.json.sectionQuizzes[quizRef] |
-| `html` | `html: string` | **扩展位/逃生舱**:原样插入的 HTML 片段,用于结构化块表达不了的内容(如含图片或 `rowspan`/`colspan` 合并单元格的复杂表格)。其中 `<img src="assets/...">` 等**相对资源路径会在加载时自动解析为运行时 URL**(与 `image` 块一致);`http/blob/data/` 与绝对路径原样保留 |
+| `html` | `html: string` | **扩展位/逃生舱**:原样插入的 HTML 片段,用于结构化块表达不了的内容(如含图片或 `rowspan`/`colspan` 合并单元格的复杂表格)。其中 `<img src="assets/...">` 等**相对资源路径会在加载时自动解析为运行时 URL**(与 `image` 块一致);`http/blob/data/` 与绝对路径原样保留。**注:`<script>` 与内联事件不执行**(渲染器用 `insertAdjacentHTML` 注入),需要 JS 交互请用 `sandbox` 块 |
+| `sandbox` | `html: string, height?: number` | **隔离沙箱**:把含 JS 逻辑的 HTML 片段渲染进 `<iframe sandbox="allow-scripts">`,脚本可运行但与主站完全隔离。`assets/...` 相对路径同样解析为运行时 URL;`height` 为初始/兜底高度(像素,缺省 320),运行时按内容自适应。详见 §2.3 |
 
 - `CompareRow`:`{ "label": string, "cells": string[] }` — 首列是 `.compare-label`(行标题),其余是 `cells`。`headers[0]` 是对比项目列头,`headers[1..]` 是各方案列头。
 - `summaryBox.items`:每个 li 是一个 `Span[]`(支持其中的 `<strong>` 加粗,如"**塑料封装**占90%市场")。
@@ -123,6 +124,22 @@ cover.png         可选  课程封面(manifest.cover 指向它)
 - 否则 → 文本节点(术语提示在渲染后由 glossary 模块走 TreeWalker 注入)
 
 > **拆包工具断言**:解析课程正文 `<p>` 时,若遇到上述三种以外的内联标签(如 `<a>`、`<img>` 内联),必须报错中止,提示人工处理 —— 确保 Span 模型对本课程 100% 完备。
+
+### 2.3 sandbox 块 — 隔离运行的交互片段
+
+`html` 块用 `insertAdjacentHTML` 注入主页面,其中 `<script>` 与内联事件**永不执行**(安全考量)。当课件确有「真靠 JS 驱动」的片段(点击切换、小计算器、动态图示)时,用 `sandbox` 块:
+
+```jsonc
+{ "type": "sandbox", "html": "<button onclick=\"this.textContent='已点击'\">点我</button>", "height": 320 }
+```
+
+**渲染**:整段 `html` 装进一个 `<iframe class="sandbox-frame" sandbox="allow-scripts" srcdoc="...">`。脚本可运行,`assets/...` 相对路径在装入前解析为运行时 Blob URL(与 `image`/`html` 块一致)。
+
+**高度自适应**:`height` 是初始/兜底高度(像素,缺省 320)。iframe 内置脚本在 load 与内容尺寸变化时,通过 `postMessage({pigeonHeight})` 把实际高度上报给学习页;学习页只认「本页生成的 iframe」(按 `contentWindow` 比对来源)后调整其高度。脚本不跑或上报失败时即保持 `height` 兜底值。
+
+**安全边界(沙箱不获 `allow-same-origin`)**:沙箱内代码**无法**访问父页 DOM、`localStorage`、登录 cookie、学习进度,也不能改主站任何状态;它是一个独立源的隔离文档。代价是它**也无法继承站点的明暗主题与设计令牌**(`var(--…)` 跨文档不可见)—— 作者需在 `html` 内**自管配色**(建议显式给定背景与文字色,以同时适配明/暗环境)。
+
+**向后兼容**:`schemaVersion` 仍为 1。旧渲染器遇到 `sandbox`(未知 type)按「跳过 + `console.warn`」处理,不崩溃。
 
 ---
 

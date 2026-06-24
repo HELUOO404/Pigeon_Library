@@ -65,6 +65,9 @@
 .card-body.hidden{display:none}
 .card-body p{margin-bottom:10px;line-height:1.8}
 .card-body p>strong:only-child{display:inline-block;margin-top:8px}
+/* 正文段落首行缩进两格(纯样式,不动数据);编号/加粗小标题(strong 独占该段)与小测题目不缩进 */
+.card-body>p,.overview-card>p{text-indent:2em}
+.card-body>p:has(>strong:only-child),.overview-card>p:has(>strong:only-child){text-indent:0}
 .sub-title{font-weight:600;margin-top:8px;color:var(--ink)}
 /* 去竖线:编号小标题改 mono 药丸(暖底),不再用 border-left */
 .num-title{display:inline-block;font-family:var(--mono);background:color-mix(in srgb,var(--gold) 12%,transparent);padding:5px 12px;border-radius:7px;margin-top:10px;font-weight:700;font-size:14px;color:var(--gold-deep)}
@@ -78,6 +81,13 @@
 .params-table tr:nth-child(even){background:color-mix(in srgb,var(--gold) 7%,transparent)}
 .params-table th .term-tip{color:var(--paper);border-bottom-color:color-mix(in srgb,var(--paper) 55%,transparent)}
 .params-table th .term-tip:hover{background:rgba(255,255,255,0.15);border-radius:2px}
+
+/* 宽表在窄屏(手机)左右滑动,不撑破主栏;桌面内容不超宽时无滚动条 */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-scroll>.params-table,.table-scroll>.compare-table{min-width:max-content}
+
+/* sandbox 块:隔离 iframe 容器(令牌化;沙箱文档自管配色,不继承明暗主题) */
+.sandbox-frame{display:block;width:100%;margin:12px 0;border:1px solid var(--line-2);border-radius:var(--radius);background:var(--card)}
 
 /* ============ 小结框 / 小测 ============ */
 .summary-box{background:var(--surface-sunken);border-radius:var(--radius);padding:16px;margin-top:16px;font-size:14px}

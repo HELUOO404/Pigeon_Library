@@ -4,7 +4,7 @@
 
 | 文件 | 职责 |
 |---|---|
-| `content-renderer.js` | 知识点正文:类型化块(段落/表格/小结/对比/小测/图片/`html`)→ HTML;状态徽章;**`html` 块相对资源路径在此解析为 Blob URL**。 |
+| `content-renderer.js` | 知识点正文:类型化块(段落/表格/小结/对比/小测/图片/`html`/`sandbox`)→ HTML;状态徽章;**`html` 块相对资源路径在此解析为 Blob URL**;**`sandbox` 块装进隔离 iframe(`sandbox="allow-scripts"`,允许 JS、与主站隔离),高度由 `main-learn.js` 的 message 监听按内容自适应**。 |
 | `sidebar-renderer.js` | 目录树、章节 tab、侧栏/页脚学习进度。 |
 | `quiz.js` | 小节小测:渲染判分、结果恢复、错题记录(按题库 id 去重)。 |
 | `exam-engine.js` | 章节考试引擎:单选/判断/排序/匹配的渲染、作答、计时、判分、错题汇总。 |

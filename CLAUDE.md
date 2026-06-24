@@ -24,7 +24,7 @@ app/                 网站源码(Vite)
   public/            站点静态资源(brand-logo.svg)
 server/              可选同步后端(Node + Express + node:sqlite + bcryptjs):auth/state/admin 路由
 courses/<id>/        课程包源(解包形态):manifest/content/quiz/glossary.json + cover.png + assets/images
-tools/               build-pigeon.mjs(打包) / extract-ic-course.mjs(从原站抽取) / migrate-quiz.mjs(题库迁移)
+tools/               build-pigeon.mjs(打包) / pigeon-push.mjs(推送到同步后端) / extract-ic-course.mjs(从原站抽取) / migrate-quiz.mjs(题库迁移)
 dist-courses/        打包产物 *.pigeon
 docs/                格式契约、设计系统、代码规范、agent 工作流、AI 制作提示词、用户系统设计
 参考项目/             原始硬编码站点(只读基线)

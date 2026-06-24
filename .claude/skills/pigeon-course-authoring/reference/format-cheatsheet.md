@@ -71,7 +71,8 @@ cover.png       可选  封面(manifest.cover 指向)
 | `summaryBox` | `title`,`items: Span[][]` | 要点框 |
 | `compareBox` | `title`,`headers[]`,`rows: {label,cells[]}[]` | 对比表 |
 | `sectionQuiz` | `quizRef` | 小节小测(题来自 quiz.json.sectionQuizzes[quizRef]) |
-| `html` | `html` | 逃生舱:原样 HTML(相对资源路径自动解析);承载复杂表格/合并单元格 |
+| `html` | `html` | 逃生舱:原样 HTML(相对资源路径自动解析);承载复杂表格/合并单元格。**`<script>`/内联事件不执行** |
+| `sandbox` | `html`,`height?` | 隔离 iframe(`sandbox="allow-scripts"`):JS 可运行,与主站隔离;`height` 缺省 320 自适应。**作者须自管配色**(不继承明暗主题) |
 
 未知 type → 渲染器跳过 + warn(向后兼容)。
 

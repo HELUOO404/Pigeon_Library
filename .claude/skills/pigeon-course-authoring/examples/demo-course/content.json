@@ -4,7 +4,7 @@
 // blocks[] 每块 { type, ... },type 取值:
 //   paragraph{spans[]}  numTitle{text}  boldCaption{text}  heading{text}
 //   image{src,alt}  paramsTable{headers[],rows[][]}  summaryBox{title,items[][]}
-//   compareBox{title,headers[],rows[{label,cells[]}]}  sectionQuiz{quizRef}  html{html}
+//   compareBox{title,headers[],rows[{label,cells[]}]}  sectionQuiz{quizRef}  html{html}  sandbox{html,height}
 // spans[] 内联文本:{t} 普通 / {t,b:true} 加粗 / {t,sub:true} 子标题
 
 {
@@ -47,6 +47,13 @@
       "blocks": [
         { "type": "paragraph", "spans": [ { "t": "本知识点的章节考试覆盖 single / judge / sort / match 四种题型。" } ] },
         { "type": "sectionQuiz", "quizRef": "1-1-2" }
+      ]
+    },
+    "1-1-3": {
+      "title": "交互沙箱（sandbox）",
+      "blocks": [
+        { "type": "paragraph", "spans": [ { "t": "sandbox 块把含 JS 的片段装进隔离 iframe:脚本能运行,但读不到父页 DOM / localStorage / 登录态。下方按钮可点击计数,并自检隔离是否生效;它自带配色,不随站点明暗主题变化。" } ] },
+        { "type": "sandbox", "height": 150, "html": "<div style=\"font-family:system-ui,sans-serif;color:#1c1c1c\"><button id=\"b\" style=\"padding:8px 16px;border:1px solid #c9a14a;border-radius:8px;background:#f6efdd;color:#7a5a12;cursor:pointer;font-size:14px\">点击次数:0</button><p id=\"iso\" style=\"margin:10px 0 0;font-size:12px;color:#888\"></p><script>var n=0,b=document.getElementById('b');b.onclick=function(){n++;b.textContent='点击次数:'+n};try{var _=window.parent.localStorage.length;document.getElementById('iso').textContent='⚠ 读到了父页存储(隔离失效)'}catch(e){document.getElementById('iso').textContent='✓ 无法访问父页存储(隔离生效)'}</script></div>" }
       ]
     }
   }

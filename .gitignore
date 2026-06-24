@@ -12,3 +12,5 @@ Thumbs.db
 # 临时
 *.tmp
 .cache/
+# CLI 本地会话(含 cookie + 使用者自己的后端地址,语义同 server/.env,绝不提交)
+tools/.pigeon-cli.json

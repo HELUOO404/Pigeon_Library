@@ -224,6 +224,15 @@ function bindEvents() {
     }
   });
   window.addEventListener('beforeunload', saveStudyTime);
+
+  // sandbox 块高度自适应:只认本页生成的 iframe(按 contentWindow 比对来源),按上报高度调整。
+  window.addEventListener('message', (event) => {
+    const h = event.data?.pigeonHeight;
+    if (typeof h !== 'number' || !(h > 0)) return;
+    document.querySelectorAll('iframe.sandbox-frame').forEach((frame) => {
+      if (frame.contentWindow === event.source) frame.style.height = `${Math.ceil(h)}px`;
+    });
+  });
 }
 
 async function main() {
