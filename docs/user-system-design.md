@@ -49,7 +49,7 @@
 
 要点:
 - 渲染层(`content-renderer`/`quiz`/`wrongbook`/`exam-engine`/`panels`/`sidebar`/`main-learn`)**调用面不变** —— 仍用 `createStore(courseId).get/set(slot,…)`。变的只是 store 的「底层来源」:登录后由 `sync.js` 接管,做本地+远端双写。
-- 后端只存**用户态数据**(进度/答题/错题/时长/主题/已上传课程元信息),**不存课程内容**(`.pigeon` 仍本地,IndexedDB)。
+- 后端只存**用户态数据**(进度/答题/错题/仿真练习/时长/主题/已上传课程元信息),**不存课程内容**(`.pigeon` 仍本地,IndexedDB)。
 - 同步冲突用 **LWW(last-write-wins,按 `updated_at`)**:简单、可预测;复杂合并留作升级点。
 
 > **MVP 技术栈(实现说明)**:数据库用 **Node 内置 `node:sqlite`**(需 Node ≥ 22.5),密码用 **`bcryptjs`(纯 JS)**——两者都**免原生编译**,`npm install` 不需要 Visual Studio 构建工具,装即用,贴合本项目「双击即跑」的取向。更高并发/更强安全可平滑换 better-sqlite3 + argon2(接口不变,见 §2 升级点)。
@@ -62,7 +62,7 @@
 |---|---|---|
 | 认证 | 用户名 + 密码注册/登录/登出;httpOnly 会话 cookie | OAuth / 第三方登录、邮箱验证、找回密码、2FA |
 | 账户 | 账户档案(用户名、角色、创建时间);改密码 | 头像、昵称、个人主页、绑定邮箱 |
-| 同步 | 跨设备同步 progress/quiz/wrong/studyTime/theme + 已上传课程**元数据**;LWW 合并;去抖 push;离线缓冲回联补传 | 课程包字节云端托管、端到端加密、实时多端推送、更强冲突合并(CRDT/三方合并) |
+| 同步 | 跨设备同步 progress/quiz/wrong/studyTime/simulations/theme + 已上传课程**元数据**;LWW 合并;去抖 push;离线缓冲回联补传 | 课程包字节云端托管、端到端加密、实时多端推送、更强冲突合并(CRDT/三方合并) |
 | 角色 | 游客 / 普通用户 / 管理员 三级;管理面板(用户列表、禁用、全局统计) | 班级/组织、教师角色、细粒度 RBAC、审计日志 |
 | 数据可携 | (无) | 导出 / 导入个人数据、跨账户迁移 |
 | 排行/社交 | (无) | 排行榜、学习小组、评论 |
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS user_state (
   user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   course_id   TEXT    NOT NULL,                  -- 课程 id(含 '__global__' 表示站点级,如 theme)
-  slot        TEXT    NOT NULL,                  -- 'progress'|'quiz'|'wrong'|'studyTime'|'theme'|'localCourses'
+  slot        TEXT    NOT NULL,                  -- 'progress'|'quiz'|'wrong'|'studyTime'|'simulations'|'theme'|'localCourses'
   data_json   TEXT    NOT NULL,                  -- 该 slot 的 JSON 字符串
   updated_at  INTEGER NOT NULL,                  -- epoch ms;LWW 比较键
   PRIMARY KEY (user_id, course_id, slot)
@@ -124,7 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_state_user ON user_state(user_id);
 ```
 
 约定:
-- **slot 枚举**与前端 store 对齐:课程级 `progress|quiz|wrong|studyTime`;站点级用保留 `course_id='__global__'` + `slot='theme'`(主题)、`slot='localCourses'`(已上传课程元信息清单)。
+- **slot 枚举**与前端 store 对齐:课程级 `progress|quiz|wrong|studyTime|simulations`;站点级用保留 `course_id='__global__'` + `slot='theme'`(主题)、`slot='localCourses'`(已上传课程元信息清单)。
 - `data_json` 原样存前端那一块状态(服务端不解释其结构,只按 `updated_at` 决定新旧),这样新增 slot 不必改表。
 - 大小防护:单 `data_json` 上限(如 256KB),超限 413;`wrong` 已是数组,通常很小。
 

@@ -68,6 +68,12 @@ async function main() {
   const get1 = await ca2('GET', '/api/state/ic-packaging/progress');
   check('GET progress matches', get1.json?.data?.['4-1-1'] === 'mastered' && get1.json?.updated_at === t1);
 
+  const simulationState = { 'sandbox:smoke': { version: 1, controls: [{ index: 0, value: '850', checked: null }], score: { score: 1, total: 1, detail: '' } } };
+  const putSimulation = await ca2('PUT', '/api/state/ic-packaging/simulations', { data: simulationState, updated_at: t1 });
+  check('PUT simulations applied', putSimulation.json?.applied === true);
+  const getSimulation = await ca2('GET', '/api/state/ic-packaging/simulations');
+  check('GET simulations matches', getSimulation.json?.data?.['sandbox:smoke']?.controls?.[0]?.value === '850');
+
   const putOld = await ca2('PUT', '/api/state/ic-packaging/progress', { data: { '4-1-1': 'read' }, updated_at: t1 - 5000 });
   check('LWW rejects older', putOld.json?.applied === false && putOld.json?.updated_at === t1);
 
@@ -77,6 +83,8 @@ async function main() {
   const sync = await ca2('GET', '/api/sync');
   const hasRow = Array.isArray(sync.json?.states) && sync.json.states.some((s) => s.course_id === 'ic-packaging' && s.slot === 'progress');
   check('sync includes row', hasRow);
+  const hasSimulation = sync.json?.states?.some((s) => s.course_id === 'ic-packaging' && s.slot === 'simulations');
+  check('sync includes simulations', hasSimulation);
 
   // admin 守卫
   const adminList = await ca2('GET', '/api/admin/users');

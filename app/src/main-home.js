@@ -1,7 +1,6 @@
 // main-home.js — 首页脚本:课程广场 / 我的课程两区、登录受限上传、发布/撤回/删除、课程详情弹层。
 // 课程来源经 course-source.js 统一访问(服务端);内置课作为广场预置课保底(不变量 5:无后端仍可见内置课)。
 import { BUILTIN_COURSES } from './core/course-registry.js';
-import { loadPigeonFromUrl } from './core/pigeon-loader.js';
 import { createStore, globalGet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
@@ -18,7 +17,7 @@ import { openCourseDetail } from './core/course-modal.js';
 applyInitialTheme();
 
 const STATUS_LABEL = { private: '私有', pending: '审核中', published: '已发布', rejected: '被拒' };
-const DROP_HELP = '或点击选择文件 · 单文件 ≤50MB · 登录后上传到「我的课程」(跨设备)';
+const DROP_HELP = '或点击选择文件 · 单文件 ≤1GB · 登录后上传到「我的课程」(跨设备)';
 const AI_PROMPT_FALLBACK = '请把我提供的教材整理成 PigeonLib schemaVersion 1 的 .pigeon 课程包源码(manifest.json / content.json / quiz.json / glossary.json + assets/images)。完整制作规范见首页"格式说明"区或 docs/ai-course-authoring-prompt.md。';
 
 async function loadAuthoringPrompt() {
@@ -35,7 +34,6 @@ const state = {
   tab: 'square',
   loggedIn: false,
   builtin: [],
-  builtinError: false,
   square: [],
   squareFilters: { q: '', category: '', publisher: '' },
   squareView: [],
@@ -74,23 +72,6 @@ function escapeHtml(value) {
   return text(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[char]));
-}
-
-function getStats(meta = {}) {
-  const stats = meta.stats || {};
-  return {
-    chapters: stats.chapters ?? (Array.isArray(meta.chapters) ? meta.chapters.length : 0),
-    knowledgePoints: stats.knowledgePoints ?? countKnowledgePoints(meta),
-    questions: stats.questions ?? 0,
-  };
-}
-
-function countKnowledgePoints(meta) {
-  if (!Array.isArray(meta.chapters)) return 0;
-  return meta.chapters.reduce((sum, chapter) => {
-    const sections = Array.isArray(chapter.sections) ? chapter.sections : [];
-    return sum + sections.reduce((inner, section) => inner + (section.knowledgePoints?.length || 0), 0);
-  }, 0);
 }
 
 // 学习进度按 course_key 命名空间读取(与换设备/重新下载无关)。
@@ -134,6 +115,7 @@ function renderCourseCard(card, context) {
   const publisher = text(card.publisherName || card.author, 'PigeonLib');
   const progress = getProgress(card.courseKey, stats.knowledgePoints);
   const cover = card.coverDataUrl || '';
+  const coverText = text(card.coverText, title.slice(0, 1));
 
   const badges = context === 'square'
     ? `<span class="course-metrics"><span class="course-metric">${icon('star', { size: 12 })} ${card.avgRating || '—'}</span><span class="course-metric">${icon('download', { size: 12 })} ${card.downloadCount || 0}</span></span>`
@@ -143,7 +125,7 @@ function renderCourseCard(card, context) {
   article.className = 'course-card';
   article.dataset.courseKey = card.courseKey;
   article.innerHTML = `
-    <div class="course-cover ${cover ? 'has-image' : ''}" aria-hidden="true">${cover ? '' : `<span class="cover-letter">${escapeHtml(title.slice(0, 1))}</span>`}</div>
+    <div class="course-cover ${cover ? 'has-image' : ''}" aria-hidden="true">${cover ? '' : `<span class="${coverText.length > 1 ? 'cover-text' : 'cover-letter'}">${escapeHtml(coverText)}</span>`}</div>
     <div class="course-topline">
       <span class="course-badge">${escapeHtml(publisher)}</span>
       ${badges}
@@ -220,30 +202,15 @@ async function fetchSquare() {
   state.square = r.items;
 }
 
-async function hydrateBuiltin() {
-  let failed = false;
-  const cards = await Promise.all(BUILTIN_COURSES.map(async (course) => {
-    try {
-      const loaded = await loadPigeonFromUrl(`/${course.url}`);
-      const m = loaded.manifest;
-      const card = {
-        source: 'builtin', serverId: null, courseKey: course.id,
-        title: m.title || course.title, subtitle: m.subtitle || course.subtitle || '',
-        description: m.description || '',
-        author: m.author || '', publisherName: m.author || 'PigeonLib',
-        category: '', status: 'published',
-        stats: getStats(m), coverDataUrl: loaded.coverDataUrl || '',
-        avgRating: 0, ratingCount: 0, downloadCount: 0,
-      };
-      loaded.revoke();
-      return card;
-    } catch {
-      failed = true;
-      return null;
-    }
+function hydrateBuiltin() {
+  state.builtin = BUILTIN_COURSES.map((course) => ({
+    source: 'builtin', serverId: null, courseKey: course.id,
+    title: course.title, subtitle: course.subtitle || '', description: course.description || '',
+    author: course.author || '', publisherName: course.author || 'PigeonLib',
+    category: '', status: 'published', stats: course.stats || {},
+    coverDataUrl: course.coverUrl || '', coverText: course.coverText || '',
+    avgRating: 0, ratingCount: 0, downloadCount: 0,
   }));
-  state.builtin = cards.filter(Boolean);
-  state.builtinError = failed;
 }
 
 // ---------- 我的课程 ----------
@@ -510,14 +477,19 @@ function bindEvents() {
 
 async function init() {
   hydrateIcons();
+  hydrateBuiltin();
+  renderSquare();
   await initSession();
   state.loggedIn = isLoggedIn();
   initAuthUI(document.getElementById('accountSlot'));
   buildCategoryFilter();
-  el.aiPrompt.value = await loadAuthoringPrompt();
   bindEvents();
   renderResumeCard();
-  await Promise.all([hydrateBuiltin(), fetchSquare(), fetchMine()]);
+  await Promise.all([
+    loadAuthoringPrompt().then((value) => { el.aiPrompt.value = value; }),
+    fetchSquare(),
+    fetchMine(),
+  ]);
   rebuildPublisherFilter();
   renderSquare();
   renderMine();

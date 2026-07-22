@@ -39,7 +39,7 @@ function answerLine(w) {
   return `<div class="wrong-answer">你的答案：<span class="user">${escapeHtml(w.yourAnswer || '未作答')}</span></div><div class="wrong-answer">正确答案：<span class="correct">${escapeHtml(w.correctAnswer || '')}</span></div>`;
 }
 
-function singleOptions(w) {
+function singleOptions(w, { showCorrectAnswerTag = true } = {}) {
   if (!Array.isArray(w.options) || !w.options.length) return answerLine(w);
   return `<div class="result-options-list">${w.options.map((opt) => {
     const label = opt.charAt(0);
@@ -48,14 +48,16 @@ function singleOptions(w) {
     const wrong = label === w.yourAnswer && !correct;
     const cls = correct ? 'correct' : wrong ? 'wrong' : '';
     const mark = correct ? icon('check') : wrong ? icon('x') : '';
-    const tag = correct ? '<span class="answer-tag">← 正确答案</span>' : wrong ? '<span class="answer-tag">← 你的答案</span>' : '';
+    const tag = correct
+      ? showCorrectAnswerTag ? '<span class="answer-tag">← 正确答案</span>' : ''
+      : wrong ? '<span class="answer-tag">← 你的答案</span>' : '';
     return `<div class="result-option ${cls}"><span class="result-option-label">${mark} ${escapeHtml(label)}.</span><span class="result-option-text">${escapeHtml(text)}</span>${tag}</div>`;
   }).join('')}</div>`;
 }
 
 // 错题答案详情:单选→列出全部选项并标"对/错";其它题型→你的/正确答案行。错题本与考试结果共用。
-export function renderAnswerDetail(w) {
-  return w.type === 'single' ? singleOptions(w) : answerLine(w);
+export function renderAnswerDetail(w, options) {
+  return w.type === 'single' ? singleOptions(w, options) : answerLine(w);
 }
 
 export function renderWrongList(filterChapter = 'all') {

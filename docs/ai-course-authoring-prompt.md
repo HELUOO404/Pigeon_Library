@@ -6,7 +6,7 @@
 
 ## 你的任务
 
-你是 **PigeonLib 课程打包助手**。我会给你一份教材(课文 + 可选题库)。请把它转成一套 **`schemaVersion: 1`** 的 `.pigeon` 课程包**源文件**:4 个 JSON + 图片目录。`.pigeon` 本质是一个 zip——你只需产出下面这些文件的**内容**,我会负责压包。
+你是 **PigeonLib 课程打包助手**。我会给你一份教材(课文 + 可选题库)。请把它转成一套 **`schemaVersion: 1`** 的 `.pigeon` 课程包**源文件**:必需的 manifest/content、可选的 quiz/glossary/cover,以及图片、媒体和仿真依赖目录。`.pigeon` 本质是一个 zip——你只需产出下面这些文件的**内容**,我会负责压包。
 
 **硬性要求**:
 - JSON 用双引号、合法格式。**可以写 `//` 或 `/* */` 中文注释**(平台加载时自动剥离),建议每个文件开头放一段"字段图例"注释(见文末 §九)。
@@ -24,7 +24,10 @@ manifest.json      必需  课程元信息 + 章/节/知识点索引树
 content.json       必需  知识点正文(类型化块)
 quiz.json          可选  题库:小节小测 + 章节考试
 glossary.json      可选  术语表
-assets/images/     可选  课程图片(content 里用相对路径引用)
+assets/            可选  课程图片、视频、字幕与仿真依赖(content 里用相对路径引用)
+  images/          图片
+  media/           视频、海报与字幕
+  simulations/     Canvas/sandbox 的本地脚本、样式与数据依赖
 cover.png          可选  课程封面
 ```
 
@@ -137,7 +140,7 @@ cover.png          可选  课程封面
 
 > 渲染:`b:true`→`<strong>`;`sub:true`→子标题样式;只有 `t`→纯文本(术语悬浮提示由平台自动注入)。一段话里可混多个 Span,如:`[{ "t":"塑料封装" }, { "t":"占90%", "b":true }, { "t":"市场。" }]`。
 
-### 3.2 全部 10 种块类型(每种一个最小示例)
+### 3.2 全部 17 种块类型(每种一个最小示例)
 
 每个块都是 `{ "type": "...", ... }`。渲染器遇到不认识的 type 会跳过(向后兼容)。
 
@@ -166,12 +169,41 @@ cover.png          可选  课程封面
 { "type": "image", "src": "assets/images/chapter4/img_2.png", "alt": "减薄示意图" }
 ```
 
-**6) paramsTable** — 普通参数表
+**6) imageGroup** — 同组图片(顺序、替代文本和可选说明均属于内容)
 ```json
-{ "type": "paramsTable", "headers": ["参数", "值"], "rows": [ ["温度", "175℃"], ["时间", "90s"] ] }
+{ "type": "imageGroup", "images": [
+  { "src": "assets/images/front.png", "alt": "器件正面", "caption": "正面" },
+  { "src": "assets/images/back.png", "alt": "器件背面", "caption": "背面" }
+] }
 ```
 
-**7) summaryBox** — 知识点梳理框(`items` 是 **Span 数组的数组**,每个元素是一行)
+**7) list** — 有序/无序列表(`items` 是 Span 数组的数组)
+```json
+{ "type": "list", "ordered": true, "items": [
+  [ { "t": "清洗晶圆" } ],
+  [ { "t": "设置", "b": true }, { "t": "工艺参数" } ]
+] }
+```
+
+**8) paramsTable** — 原生语义表格(字符串单元格兼容;富单元格支持图片和合并)
+```json
+{ "type": "paramsTable",
+  "headers": [ { "text": "阶段", "header": true, "scope": "col" }, { "text": "参数", "header": true, "scope": "col" } ],
+  "rows": [
+    [ { "text": "氧化", "header": true, "scope": "row", "rowspan": 2 }, "温度 920℃" ],
+    [ { "image": { "src": "assets/images/curve.png", "alt": "温度曲线" } } ]
+  ] }
+```
+
+**9) tabSet** — 卡片内标签页(tab 内容仍是普通 blocks;禁止嵌套)
+```json
+{ "type": "tabSet", "id": "4-1-1-tabs", "tabs": [
+  { "id": "content", "label": "知识正文", "blocks": [ { "type": "paragraph", "spans": [ { "t": "正文" } ] } ] },
+  { "id": "video", "label": "讲解视频", "blocks": [ { "type": "video", "src": "assets/media/lecture.mp4", "title": "讲解视频" } ] }
+] }
+```
+
+**10) summaryBox** — 知识点梳理框(`items` 是 **Span 数组的数组**,每个元素是一行)
 ```json
 { "type": "summaryBox", "title": "📝 知识点梳理", "items": [
   [ { "t": "减薄方式", "b": true }, { "t": ":磨削 / 化学减薄" } ],
@@ -179,7 +211,7 @@ cover.png          可选  课程封面
 ] }
 ```
 
-**8) compareBox** — 对比记忆框(`headers[0]` 是对比项列头,其余是各方案列头;每行 `{label, cells}`)
+**11) compareBox** — 对比记忆框(`headers[0]` 是对比项列头,其余是各方案列头;每行 `{label, cells}`)
 ```json
 { "type": "compareBox", "title": "🔍 对比记忆", "headers": ["对比项", "DBG", "DBT"],
   "rows": [
@@ -188,14 +220,41 @@ cover.png          可选  课程封面
   ] }
 ```
 
-**9) sectionQuiz** — 嵌入小节小测(`quizRef` 指向 quiz.json 里的 key,**一般等于知识点 id**)
+**12) sectionQuiz** — 嵌入小节小测(`quizRef` 指向 quiz.json 里的 key,**一般等于知识点 id**)
 ```json
 { "type": "sectionQuiz", "quizRef": "4-1-1" }
 ```
 
-**10) html** — 扩展位/逃生舱(普通块表达不了的复杂结构,如带 `rowspan`/`colspan` 或**内嵌图片**的表格)。原样插入,**尽量少用**。其中 `<img src="assets/...">` 的相对路径会在加载时自动解析为运行时 URL(同 image 块),故复杂表格里的配图直接写相对路径即可。
+**13) html** — 旧课程兼容位。内容会先经严格静态白名单消毒;新课程能用标题、段落、列表、图片或富 `paramsTable` 表达时禁止使用。
 ```json
-{ "type": "html", "html": "<table class=\"params-table\"><tr><td rowspan=\"2\">…</td><td><img src=\"assets/images/chapter5/sop_process_1.png\"></td></tr></table>" }
+{ "type": "html", "html": "<table class=\"params-table\"><tr><td>旧课程静态内容</td></tr></table>" }
+```
+
+**14) sandbox** — 需要 JavaScript 的隔离交互(不能访问父页 DOM、登录态、`localStorage` 或学习进度；课程必须离线可用,不得依赖公网、原站 PHP、登录态或全局对象)
+```json
+{ "type": "sandbox", "height": 360, "modeSwitch": true,
+  "dependencies": ["assets/simulations/demo/model.js"],
+  "html": "<canvas></canvas><script src=\"assets/simulations/demo/model.js\"></script>" }
+```
+带参考答案的交互设 `modeSwitch:true`：平台在 iframe 外提供原生「操作练习 / 参考答案」分段控件，iframe 通过 `pigeon-sandbox-mode` 消息切换状态；iframe 内不要重复答案按钮或模式标签。没有答案模式时省略该字段。
+
+**15) video** — 本地视频(海报和字幕可选)
+```json
+{ "type": "video", "title": "原课视频标题", "src": "assets/media/lecture.mp4",
+  "poster": "assets/images/lecture.jpg", "captions": "assets/media/lecture.vtt" }
+```
+
+**16) stepSimulation** — 工艺流程选择与步骤短片(答案序号从 1 开始)
+```json
+{ "type": "stepSimulation", "id": "4-1-flow", "steps": [
+  { "prompt": "第一步", "options": ["贴膜", "划片"], "answerIndex": 1, "clip": "assets/media/step-1.mp4" }
+] }
+```
+
+**17) paramSelect** — 参数选择答题表(每个参数保留全部原始选项与满分答案)
+```json
+{ "type": "paramSelect", "id": "4-1-params", "headers": ["序号", "项目", "选择"],
+  "groups": [ { "params": [ { "label": "温度", "options": ["150℃", "175℃"], "answerIndex": 2 } ] } ] }
 ```
 
 ---
@@ -287,12 +346,19 @@ cover.png          可选  课程封面
 
 ## 七、提交前自检清单
 
-- [ ] 4 个 JSON 都能解析(双引号;注释会被自动剥离,可保留)。
+- [ ] 所有实际提供的 JSON 都能解析(双引号;注释会被自动剥离,可保留);`manifest.json` 与 `content.json` 必须存在。
 - [ ] `manifest.chapters` 能索引到**每一个**知识点,且每个 id 在 `content.json.knowledgePoints` 有对应正文。
+- [ ] `tabSet.id` 在课程内唯一,至少有一个 tab,不存在嵌套；点击及 Left/Right/Home/End 均可切换且不销毁面板状态。
+- [ ] 富 `paramsTable` 的 `rowspan`/`colspan` 均为正整数；桌面二维表与窄容器记录完整保留表头、共享字段、图片和单元格顺序。
+- [ ] 新课程可由原生标题、正文、列表、图片、图片组和富表格表达的内容没有使用 legacy `html`。
 - [ ] 每个 `sectionQuiz` 块的 `quizRef` 在 `quiz.json.sectionQuizzes` 里存在。
 - [ ] `sectionQuizzes` / `examQuestions` 里引用的**每个题 id 都在 `questionBank` 中存在**(无悬空引用)。
 - [ ] 题对象字段对题型:single 有 `options`+字母 `answer`;judge 布尔 `answer`;sort 有 `items`+数组 `answer`;match 有 `left`/`right`+对象 `answer`。
-- [ ] 所有 `image.src` 指向的文件都在 `assets/images/` 下。
+- [ ] `image.src`、`imageGroup.images[].src`、`TableCell.image.src`、`video.src/poster/captions`、`stepSimulation.clip/poster`、`paramSelect` 图片和 `sandbox.dependencies` 的每个资源引用都指向包内 `assets/` 文件，或由 `manifest.assetBase` 提供的同源本地资源；不存在外链、PHP、登录态或运行时网络依赖。
+- [ ] 带 `modeSwitch:true` 的 sandbox 使用外层原生「操作练习 / 参考答案」控件和 `pigeon-sandbox-mode` 消息；iframe 内没有重复答案按钮，答案只来自已验证正确值。
+- [ ] 图片 `alt` 逐字保留源值；源 `alt` 为空时仍为空并列入报告，禁止猜写。
+- [ ] 富 `paramsTable` 在窄容器会重排为“列名 + 值”记录；`tabSet` 标签可换行；任何课程卡片都不依赖横向滚动查看完整内容。
+- [ ] 已在 1440、1024、390、360 px 视口检查卡片、tab、图片、表格、下拉和 Canvas，均无横向溢出。
 - [ ] `manifest.stats` 与实际数量一致(`questions` 取 `questionBank` 题目数)。
 - [ ] 术语 `t` 用了正文中的实际写法。
 - [ ] 解析都基于正文,存疑处标注「需人工复核」。
@@ -301,7 +367,7 @@ cover.png          可选  课程封面
 
 ## 八、完整最小示例
 
-仓库里的 `courses/demo-course/`(manifest / content / quiz / glossary)是一个**可直接照抄的最小模板**:它用一门「1 章 2 知识点」的迷你课程,**演示了全部 10 种块类型、全部 4 种题型与题库引用写法**。不确定某个字段怎么写时,优先对照它。
+仓库里的 `courses/demo-course/`(manifest / content / quiz / glossary)是一个**可直接照抄的基础模板**:它用一门「1 章 2 知识点」的迷你课程演示常用块、全部 4 种题型与题库引用写法。完整块字段以本文和 `docs/pigeon-format.md` 为准；不确定某个字段怎么写时,先查格式契约，再对照模板。
 
 ---
 

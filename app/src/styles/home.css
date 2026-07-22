@@ -50,8 +50,8 @@ code,pre,.course-stats,.progress-text,.eyebrow,.section-kicker{font-family:var(-
 /* ---------- 英雄区(平衡的两栏:文案 / 邮票画面)---------- */
 .hero{
   display:grid;grid-template-columns:1fr clamp(320px,38%,420px);
-  align-items:center;gap:clamp(28px,5vw,56px);
-  min-height:calc(100vh - var(--header-h) - 150px);padding-bottom:24px;
+  align-items:start;gap:clamp(28px,5vw,56px);
+  min-height:min(810px,calc(100vh - var(--header-h) - 256px));padding:24px 0;
 }
 .brand-lockup{display:flex;align-items:center;gap:13px;margin-bottom:18px}
 .hero-logo{width:54px;height:54px}
@@ -99,6 +99,7 @@ code,pre,.course-stats,.progress-text,.eyebrow,.section-kicker{font-family:var(-
 /* 英雄区画面:干净整图(图片裁进方形容器;图缺失时显示暖纸渐变占位底)*/
 .hero-media{
   position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;
+  margin-top:20px;
   border:1px solid var(--line-2);box-shadow:var(--shadow);
   background:linear-gradient(155deg,color-mix(in srgb,var(--card) 90%,var(--gold)),var(--card));
 }
@@ -341,7 +342,7 @@ code,pre,.course-stats,.progress-text,.eyebrow,.section-kicker{font-family:var(-
 /* ---------- 响应式 ---------- */
 @media(max-width:860px){
   .hero{grid-template-columns:1fr;min-height:auto;gap:30px}
-  .hero-media{max-width:420px;order:-1}
+  .hero-media{max-width:420px;margin-top:0;order:-1}
 }
 @media(max-width:768px){
   .menu-btn{display:block}

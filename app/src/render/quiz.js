@@ -20,6 +20,15 @@ function questionById(qid) {
   return null;
 }
 
+function markOptionResult(item, selectedAnswer, correctAnswer) {
+  item?.querySelectorAll('.quiz-opt').forEach((opt) => opt.classList.remove('correct', 'wrong'));
+  item?.querySelectorAll('.quiz-opt input').forEach((input) => {
+    const label = input.closest('.quiz-opt');
+    if (input.value === correctAnswer) label?.classList.add('correct');
+    else if (input.value === selectedAnswer) label?.classList.add('wrong');
+  });
+}
+
 export function selectOpt(label) {
   label.parentElement.querySelectorAll('.quiz-opt').forEach((opt) => opt.classList.remove('selected'));
   label.classList.add('selected');
@@ -42,8 +51,7 @@ export function submitQuiz(qid) {
     ? `${icon('check')} 正确！${escapeHtml(q.exp || '')}`
     : `${icon('x')} 错误。正确答案：${escapeHtml(q.ans)}。${escapeHtml(q.exp || '')}`;
   const item = selected.closest('.quiz-item');
-  item?.querySelectorAll('.quiz-opt').forEach((opt) => opt.classList.remove('correct', 'wrong'));
-  selected.closest('.quiz-opt')?.classList.add(correct ? 'correct' : 'wrong');
+  markOptionResult(item, selected.value, q.ans);
 
   const results = storeRef.get('quiz', {});
   results[qid] = { ans: selected.value, correct, t: Date.now() };
@@ -76,16 +84,14 @@ export function restoreQuizResults() {
     const fb = document.getElementById(`fb-${qid}`);
     if (!q || !fb) return;
     document.querySelectorAll(`input[name="${CSS.escape(qid)}"]`).forEach((input) => {
-      const label = input.closest('.quiz-opt');
       if (input.value === result.ans) {
         input.checked = true;
-        label?.classList.add(result.correct ? 'correct' : 'wrong');
       }
     });
+    markOptionResult(fb.closest('.quiz-item'), result.ans, q.ans);
     fb.className = `quiz-fb show ${result.correct ? 'correct' : 'wrong'}`;
     fb.innerHTML = result.correct
       ? `${icon('check')} 已正确回答 ${icon('lightbulb')} ${escapeHtml(q.exp || '')}`
       : `${icon('x')} 错误。上次答案：${escapeHtml(result.ans)} ${icon('lightbulb')} ${escapeHtml(q.exp || '')}`;
   });
 }
-

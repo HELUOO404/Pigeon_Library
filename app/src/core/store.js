@@ -119,6 +119,7 @@ purgeGuestData();
 export function createStore(courseId) {
   const ns = `${PREFIX}:u:${activeUserId}:${courseId}`;
   const keyOf = (slot) => `${ns}:${slot}`;
+  const sessionState = {};
 
   // 配额溢出时,按重要性从低到高回收当前课程的数据,腾出空间后重试。
   const RECLAIM_ORDER = ['wrong', 'quiz'];
@@ -159,8 +160,10 @@ export function createStore(courseId) {
   return {
     courseId,
     get(slot, fallback) {
-      // 访客:不持久化,始终返回 fallback。
-      if (activeUserId === 'local') return fallback;
+      // 访客只保留当前页面会话,不写入 localStorage。
+      if (activeUserId === 'local') {
+        return Object.hasOwn(sessionState, slot) ? sessionState[slot] : fallback;
+      }
       try {
         const v = localStorage.getItem(keyOf(slot));
         return v ? JSON.parse(v) : fallback;
@@ -170,7 +173,10 @@ export function createStore(courseId) {
     },
     // 用户发起的写:本地写 + 记 updated_at=now + 派发事件(供 sync 上行)。访客不持久化。
     set(slot, val) {
-      if (activeUserId === 'local') return;
+      if (activeUserId === 'local') {
+        sessionState[slot] = val;
+        return;
+      }
       const at = Date.now();
       if (writeRaw(slot, JSON.stringify(val))) {
         stamp(slot, at);
@@ -187,6 +193,10 @@ export function createStore(courseId) {
       return readMeta()[`${courseId}:${slot}`] || 0;
     },
     remove(slot) {
+      if (activeUserId === 'local') {
+        delete sessionState[slot];
+        return;
+      }
       try {
         localStorage.removeItem(keyOf(slot));
         const meta = readMeta();

@@ -50,7 +50,7 @@
         </div>
         <div class="exam-progress" id="examProgress" style="display:none">
           <div class="exam-header">
-            <span class="exam-timer"><span class="icn" data-icon="clock" data-size="16" aria-hidden="true"></span> <span id="examTimer">30:00</span></span>
+            <span class="exam-timer"><span class="icn" data-icon="clock" data-size="16" aria-hidden="true"></span> <span id="examTimer">00:00</span></span>
             <span class="exam-counter" id="examCounter">1/20</span>
           </div>
           <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgressFill" style="width:5%"></div></div>
@@ -79,9 +79,10 @@
     </div>
   </div>
   <footer class="app-footer">
+    <div class="footer-nav" id="footerNavLeft"><button data-action="prev-section">← 上一节</button></div>
     <div class="footer-progress" id="footerProgress">加载中…</div>
     <div class="footer-exam-info" id="footerExamInfo" style="display:none"></div>
-    <div class="footer-nav" id="footerNavRight"><button class="footer-quiz" data-action="open-exam">章节测试</button></div>
+    <div class="footer-nav" id="footerNavRight"><button class="footer-quiz" data-action="open-exam">章节测试</button><button data-action="next-section">下一节 →</button></div>
   </footer>
   <div class="panel" id="panel"></div>
   <script type="module" src="/src/main-learn.js"></script>

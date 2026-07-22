@@ -4,13 +4,14 @@
 
 | 文件 | 职责 |
 |---|---|
-| `content-renderer.js` | 知识点正文:类型化块(段落/表格/小结/对比/小测/图片/`html`/`sandbox`)→ HTML;状态徽章;**`html` 块相对资源路径在此解析为 Blob URL**;**`sandbox` 块装进隔离 iframe(`sandbox="allow-scripts"`,允许 JS、与主站隔离),高度由 `main-learn.js` 的 message 监听按内容自适应**。 |
-| `sidebar-renderer.js` | 目录树、章节 tab、侧栏/页脚学习进度。 |
+| `content-renderer.js` | 知识点正文:原生段落/列表/图片组/富表格/tab/小测及媒体块 → HTML;`paramsTable` 支持单元格单图/多图与合并关系,并与 `compareBox` 同时生成桌面语义表和窄容器记录;legacy `html` 先经 DOM 白名单消毒并解析本地资源;`sandbox` 装进隔离 iframe、按内容自适应高度、复用外层原生练习/答案模式,并通过受限消息桥持久化控件值与最近分数。 |
+| `param-select.js` | 实验/工程参数选择表:支持分组合并纵表和同一源行多个选择框的二维矩阵;桌面原表与移动端“列名 + 值”记录共享状态;`merged` 支持文本、单图和按源顺序解析的多图;统一处理练习/答案、提交反馈、结果图展开与刷新恢复。 |
+| `sidebar-renderer.js` | 章节 → 小节 → 知识卡目录、章节 tab、侧栏/页脚进度;当前章节用站点令牌动画展开,桌面侧栏和移动抽屉共用同一棵树;页脚保留逐节前后导航并让进度居中。 |
 | `quiz.js` | 小节小测:渲染判分、结果恢复、错题记录(按题库 id 去重)。 |
-| `exam-engine.js` | 章节考试引擎:单选/判断/排序/匹配的渲染、作答、计时、判分、错题汇总。 |
+| `exam-engine.js` | 章节考试引擎:单选/判断/排序/匹配的渲染、作答、从 `00:00` 持续累计的正计时、判分与错题汇总;不因固定时限自动交卷。 |
 | `glossary.js` | 术语表渲染 + 正文术语提示(TreeWalker 注入 `.term-tip`)。 |
-| `wrongbook.js` | 错题本:增删、按章筛选、渲染、重做。 |
+| `wrongbook.js` | 错题本:增删、按章筛选、渲染、重做;答案详情也供考试结果复用,结果页可隐藏正确选项后重复的文字标签而保留状态与图标。 |
 | `panels.js` | 浮层面板:学习仪表盘 / 错题本 / 术语速查。 |
 | `utils.js` | 公用工具:`escapeHtml`、Span 渲染、章节展开、计数、时长格式化。 |
 
-注意:**class 名与 DOM 结构是契约**(JS/CSS 都依赖),重命名需同步。动态 HTML 必须 `escapeHtml` 外部数据;图标用 `core/icons.js` 的 `icon()`。
+注意:**class 名与 DOM 结构是契约**(JS/CSS 都依赖),重命名需同步。文本节点用 `escapeHtml`,属性用属性转义;课程 `html` 必须经过结构化消毒,不能直接插入。图标用 `core/icons.js` 的 `icon()`。

@@ -5,7 +5,7 @@ description: Author a PigeonLib .pigeon course package from teaching material, f
 
 # PigeonLib 课程包制作 / .pigeon Course Authoring
 
-把教材**忠实**转成一个合法的 **`.pigeon`** 课程包(本质是 zip:4 个 JSON + 图片)。换一门课无需改网站代码 —— 平台在浏览器本地解压渲染。
+把教材**忠实**转成一个合法的 **`.pigeon`** 课程包(本质是 zip:JSON + `assets/` 资源)。换一门课无需改网站代码 —— 平台在浏览器本地解压渲染。
 
 **最高纪律(贯穿全程)**:**正文与题目 100% 不被改动 —— 逐字保留,连错别字、可疑错误也不在制作中擅改,只在 P6 打包完成后单独汇报提醒。** 制作时只做三件事:选块类型、排版式、补「增强内容」(解析/术语/梳理),三者都不得改动一个原文字符。
 
@@ -32,7 +32,7 @@ description: Author a PigeonLib .pigeon course package from teaching material, f
 每章一个子代理,**只抽取、不创作**。各自产出该章的 content/quiz 片段:
 - **正文** → 类型化块,**逐字保留**(只决定块类型与排块,不改字)。块选型见 [reference/typography.md](./reference/typography.md)。
 - **题目** → 逐字进 `questionBank`,**一题只定义一次**;小测/考试用 id 引用。
-- **表格**:规则表 → `paramsTable`/`compareBox`;合并单元格/含图 → `html` 块。
+- **表格**:静态数据表(含合并单元格和单元格图片)→ 富 `paramsTable`;参数选择表→`paramSelect`;流程答题表→`stepSimulation`;布局表按阅读顺序拆成段落/图片。新课程理论表格不得回退 `html`。
 - **HTML 片段** → 走下面的「HTML 决策分支」。
 - 拿不准某块会渲成什么 → 查只读快照 [reference/renderer-src/](./reference/renderer-src/)。
 
@@ -54,14 +54,14 @@ description: Author a PigeonLib .pigeon course package from teaching material, f
 
 ### P4 · 元信息 + 排版(主)
 - 智能补 `subtitle` / `description` / `stats` / `coverText`(或 `cover.png`);新版本则递增 `manifest.version`。
-- **排版走平台 CSS,不进数据**:首行缩进、标题顶格、宽表横滑都是平台自动的;**不要往 content 塞空格/缩进**(见 typography.md 第一节)。
+- **排版走平台 CSS,不进数据**:首行缩进、标题顶格、富表格窄容器重排都是平台自动的;**不要往 content 塞空格/缩进或横向滚动壳**(见 typography.md 第一节)。
 
 ### P5 · 构建 + 自检
 ```bash
 node tools/build-pigeon.mjs <id>          # → dist-courses/<id>.pigeon
 ```
 - 跑 [reference/format-cheatsheet.md](./reference/format-cheatsheet.md) 末尾自检清单。
-- 在首页上传该 `.pigeon`:目录树/卡片/小测/考试/术语提示正常;含 `sandbox` 的知识点可交互;宽表手机视口可左右滑。
+- 在首页上传该 `.pigeon`:目录树/卡片/小测/考试/术语提示正常;含 `sandbox` 的知识点可交互;桌面和手机视口的卡片均无横向滚动。
 
 ### P6 · 推送(可选)+ 错别字汇报
 - 推送到云端(需后端在跑):
@@ -77,9 +77,9 @@ node tools/build-pigeon.mjs <id>          # → dist-courses/<id>.pigeon
 
 课件里出现 HTML 片段时:
 
-1. **能拆成普通文档/表格**(静态结构、无脚本)→ 问用户是否规范化为结构化块(paragraph/paramsTable/compareBox);用户要保留原结构则进 `html` 块。
-2. **静态但结构复杂**(合并单元格、图文混排)→ `html` 块(`<script>` 不执行,相对资源路径自动解析)。
-3. **真靠 JS 驱动**(点击/计算/动态)→ `sandbox` 块(隔离 iframe,JS 可运行)。**只把配色改成自洽可读的令牌色,绝不碰逻辑**;沙箱不继承主题,须自管配色。详见 typography.md 第四节。
+1. **静态文档/表格**→ 规范化为 `paragraph`/`list`/`image`/`imageGroup`/富 `paramsTable`;理论结构无法无损转换时报告并停止，不回退 `html`。
+2. **旧课程静态兼容内容**→ 才保留 `html` 块；平台先用 DOM/template 白名单消毒，脚本、样式、事件属性和危险 URL 均被移除。
+3. **真靠 JS 驱动**(点击/计算/动态)→ `sandbox` 块(隔离 iframe,JS 可运行)。逐项保留原参数、公式、坐标、初始状态和输出逻辑；视觉只调用站点注入令牌，不硬编码样式，也不访问外部网络。详见 typography.md 第四节。
 
 ---
 

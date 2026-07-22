@@ -63,7 +63,7 @@ npm run smoke    # 终端 2:注册→登录→state(LWW)→sync→admin 守卫�
 | `POST /api/admin/courses/:id/versions/:vid/approve`·`reject` | admin | 通过(发布)/ 拒绝(写原因);均记审计 |
 | `POST /api/admin/courses/:id/takedown` | admin | 已发布下架 |
 
-slot 枚举:`progress | quiz | wrong | studyTime | theme | localCourses`。
+slot 枚举:`progress | quiz | wrong | studyTime | simulations | theme | localCourses`。
 
 ### 课程广场相关文件
 

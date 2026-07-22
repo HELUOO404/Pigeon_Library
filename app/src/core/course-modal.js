@@ -42,7 +42,7 @@ export function closeCourseDetail() {
 }
 
 // 打开课程详情弹层。
-//  card: 归一化课程对象(courseKey/title/subtitle/author/publisherName/category/stats/coverDataUrl/source/serverId)
+//  card: 归一化课程对象(courseKey/title/subtitle/author/publisherName/category/stats/coverDataUrl/coverText/source/serverId)
 //  opts: { onStart(card), shelved:boolean, onShelfChange(courseKey, added) }
 export async function openCourseDetail(card, opts = {}) {
   ensureOverlay();
@@ -106,6 +106,7 @@ function render() {
   const { card, social, shelved, loading } = current;
   const s = card.stats || {};
   const cover = card.coverDataUrl || '';
+  const coverText = card.coverText || (card.title || '?').slice(0, 1);
   const publisher = card.publisherName || card.author || '未署名';
   const ratingLine = social
     ? `${starsStatic(social.avgRating)} <span class="detail-metric-num">${social.avgRating || '—'}</span> <span class="detail-metric-sub">(${social.ratingCount} 人评分)</span>`
@@ -116,7 +117,7 @@ function render() {
     <div class="detail-modal" role="dialog" aria-modal="true" aria-label="${esc(card.title)}">
       <button class="detail-close" type="button" data-act="close" aria-label="关闭">${icon('x', { size: 18 })}</button>
       <div class="detail-head">
-        <div class="detail-cover ${cover ? 'has-image' : ''}" ${cover ? `style="background-image:url('${cover}')"` : ''} aria-hidden="true">${cover ? '' : `<span>${esc((card.title || '?').slice(0, 1))}</span>`}</div>
+        <div class="detail-cover ${cover ? 'has-image' : ''}" ${cover ? `style="background-image:url('${cover}')"` : ''} aria-hidden="true">${cover ? '' : `<span>${esc(coverText)}</span>`}</div>
         <div class="detail-headinfo">
           <span class="course-badge">${esc(publisher)}</span>
           ${card.category ? `<span class="course-cat">${esc(card.category)}</span>` : ''}

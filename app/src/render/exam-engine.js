@@ -80,15 +80,15 @@ export function startCustomExam(customQuestions) {
 
 function startExamTimer() {
   const timer = document.getElementById('examTimer');
-  timerInterval = setInterval(() => {
+  const updateTimer = () => {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const left = Math.max(0, 30 * 60 - elapsed);
-    const minutes = Math.floor(left / 60);
-    const seconds = left % 60;
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
     // 计时图标在 learn.html 里固定为 #examTimer 同级的时钟图标,这里只更新时间文本
     if (timer) timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    if (left === 0) finishExam();
-  }, 1000);
+  };
+  updateTimer();
+  timerInterval = setInterval(updateTimer, 1000);
 }
 
 function renderSingle(q, ans) {
@@ -321,7 +321,7 @@ export function finishExam() {
   document.getElementById('resultSort').textContent = stats.sort[1] ? `${stats.sort[0]}/${stats.sort[1]}` : '--';
   document.getElementById('resultMatch').textContent = stats.match[1] ? `${stats.match[0]}/${stats.match[1]}` : '--';
   document.getElementById('resultWrongList').innerHTML = wrong.length
-    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div>${renderAnswerDetail(w)}<div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
+    ? `<h3 style="margin:24px 0 16px;">错题回顾</h3>${wrong.map((w) => `<div class="wrong-item" style="text-align:left;"><div class="wrong-meta">第 ${w.examNum} 题</div><div class="wrong-question">${escapeHtml(w.question)}</div>${renderAnswerDetail(w, { showCorrectAnswerTag: false })}<div style="font-size:12px;color:var(--ctx2);margin-top:8px;">${icon('lightbulb')} ${escapeHtml(w.explain || '')}</div></div>`).join('')}`
     : `<div style="margin-top:24px;color:var(--correct-tx);font-size:18px;">${icon('party-popper')} 恭喜！全部答对！</div>`;
 }
 
@@ -340,4 +340,3 @@ export function exitExam() {
   context.setFooterMode('normal');
   context.navigateTo(context.getCurrentSection());
 }
-

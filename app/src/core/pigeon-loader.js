@@ -5,18 +5,18 @@
 //   content.json    知识点正文(类型化节点)
 //   quiz.json       题库(小节小测 + 章节考试)
 //   glossary.json   术语表
-//   assets/images/  图片(content 用相对路径引用)
+//   assets/         图片、视频、字幕等(content 用相对路径引用)
 //   cover.png       (可选)封面
 //
-// 图片不走网络:解压得到字节后转成 Blob URL,再填进 <img src>,
-// 因此课程完全自包含、可离线、可分享。
+// 包内资源不走网络:解压得到字节后转成 Blob URL。大型视频也可通过
+// manifest.assetBase 从同源本地目录读取,同时保留含全部媒体的迁移备份。
 //
 // 解析结果是一个 LoadedCourse 对象,交给渲染器使用。调用方在卸载课程时
 // 应调用 course.revoke() 释放所有 Blob URL,避免内存泄漏。
 
 import { unzipSync, strFromU8 } from 'fflate';
 
-export const MAX_PIGEON_BYTES = 50 * 1024 * 1024; // 50MB 上限,与首页文案一致
+export const MAX_PIGEON_BYTES = 1024 * 1024 * 1024; // 1GB: supports portable offline video packages.
 
 /** 课程包校验/解析错误,带可读的 code 供 UI 显示对应文案。 */
 export class PigeonError extends Error {
@@ -31,6 +31,10 @@ const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif)$/i;
 const MIME = {
   png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
   webp: 'image/webp', svg: 'image/svg+xml', avif: 'image/avif',
+  mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', ogg: 'video/ogg', vtt: 'text/vtt',
+  html: 'text/html', htm: 'text/html', css: 'text/css', js: 'text/javascript', mjs: 'text/javascript',
+  json: 'application/json', wasm: 'application/wasm', txt: 'text/plain', csv: 'text/csv',
+  woff: 'font/woff', woff2: 'font/woff2', ttf: 'font/ttf', otf: 'font/otf',
 };
 
 function mimeFor(path) {
@@ -52,6 +56,18 @@ function bytesToDataUrl(bytes, mime) {
 // zip 内路径统一为不带前导 ./ 的正斜杠形式,便于按相对路径查找。
 function normalize(path) {
   return path.replace(/\\/g, '/').replace(/^\.?\//, '');
+}
+
+function localAssetBase(value) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+  const base = value.trim();
+  if (!/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(base)) return base;
+  if (typeof location === 'undefined' || !location.origin || location.origin === 'null') return '';
+  try {
+    return new URL(base, location.href).origin === location.origin ? base : '';
+  } catch {
+    return '';
+  }
 }
 
 // 课程 JSON 允许写成 JSONC:加载时剥离 `//` 行注释、`/* */` 块注释,并容忍尾随逗号。
@@ -177,7 +193,7 @@ function normalizeQuiz(quiz) {
 export function parsePigeon(buffer) {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   if (bytes.byteLength > MAX_PIGEON_BYTES) {
-    throw new PigeonError('too-large', '文件超过 50MB 上限');
+    throw new PigeonError('too-large', '文件超过 1GB 上限');
   }
 
   let raw;
@@ -216,16 +232,21 @@ export function parsePigeon(buffer) {
   const quiz = normalizeQuiz(parseJSON(files, 'quiz.json'));
   const glossary = parseJSON(files, 'glossary.json') || [];
 
-  // 图片转 Blob URL,建立 相对路径 -> objectURL 映射。
+  // assets/ 下的资源全部转 Blob URL。仿真可能依赖 JS/CSS/WASM/字体/JSON,
+  // 不能只处理图片和视频。
   const blobUrls = [];
+  const assetMap = {};
   const imageMap = {};
   let imageCount = 0;
   for (const path of Object.keys(files)) {
-    if (!IMAGE_EXT.test(path)) continue;
+    if (!path.startsWith('assets/') && !IMAGE_EXT.test(path)) continue;
     const url = URL.createObjectURL(new Blob([files[path]], { type: mimeFor(path) }));
     blobUrls.push(url);
-    imageMap[path] = url;
-    imageCount++;
+    assetMap[path] = url;
+    if (IMAGE_EXT.test(path)) {
+      imageMap[path] = url;
+      imageCount++;
+    }
   }
 
   // 封面单独取一份(可能也在 imageMap 里)。
@@ -235,7 +256,7 @@ export function parsePigeon(buffer) {
   let coverDataUrl = null;
   if (manifest.cover) {
     const coverPath = normalize(manifest.cover);
-    coverUrl = imageMap[coverPath] || null;
+    coverUrl = assetMap[coverPath] || null;
     if (files[coverPath]) coverDataUrl = bytesToDataUrl(files[coverPath], mimeFor(coverPath));
   }
 
@@ -245,7 +266,18 @@ export function parsePigeon(buffer) {
    */
   function resolveAsset(relPath) {
     if (!relPath) return relPath;
-    return imageMap[normalize(relPath)] || relPath;
+    if (/^(https?:|blob:|data:|\/)/i.test(relPath)) return relPath;
+    const match = String(relPath).match(/^([^?#]*)([?#].*)?$/);
+    const normalized = normalize(match?.[1] || relPath);
+    const suffix = match?.[2] || '';
+    if (assetMap[normalized]) return `${assetMap[normalized]}${suffix}`;
+    const configuredBase = localAssetBase(manifest.assetBase);
+    if (configuredBase) {
+      const base = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
+      const relative = base.endsWith('/assets/') && normalized.startsWith('assets/') ? normalized.slice('assets/'.length) : normalized;
+      return `${base}${relative}${suffix}`;
+    }
+    return relPath;
   }
 
   return {
@@ -284,7 +316,7 @@ export async function loadPigeonFromFile(file) {
 export function pigeonErrorText(err) {
   const code = err && err.code;
   switch (code) {
-    case 'too-large': return '文件超过 50MB 上限';
+    case 'too-large': return '文件超过 1GB 上限';
     case 'not-zip': return '文件已损坏或不是 .pigeon 课程包';
     case 'no-manifest': return '缺少 manifest.json(不是合法课程包)';
     case 'bad-manifest': return err.message || 'manifest 格式错误';

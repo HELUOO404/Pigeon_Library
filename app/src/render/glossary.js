@@ -111,11 +111,12 @@ export function bindTooltipEvents() {
 }
 
 export function navigateToTerm(term) {
-  const tip = Array.from(document.querySelectorAll('.term-tip')).find((el) => el.dataset.abbr === term);
+  const matches = Array.from(document.querySelectorAll('.term-tip')).filter((el) => el.dataset.abbr === term);
+  const tip = matches.find((el) => typeof el.getClientRects === 'function' && el.getClientRects().length > 0)
+    || matches[0];
   if (tip) {
     tip.scrollIntoView({ behavior: 'smooth', block: 'center' });
     tip.style.background = 'var(--chv)';
     setTimeout(() => { tip.style.background = ''; }, 1200);
   }
 }
-

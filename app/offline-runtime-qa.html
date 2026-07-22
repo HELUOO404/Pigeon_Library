@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>离线仿真运行 QA</title>
+  <link rel="stylesheet" href="/src/styles/tokens.css">
+  <link rel="stylesheet" href="/src/styles/learn.css">
+</head>
+<body style="margin:0;background:var(--paper);color:var(--ink)">
+  <main style="box-sizing:border-box;width:100%;max-width:1100px;margin:0 auto;padding:32px 20px;overflow-x:hidden">
+    <div id="runtime"></div>
+  </main>
+  <script type="module">
+    import { renderStepSimulation, initStepSimulations, handleStepSimulationAction } from '/src/render/step-simulation.js';
+
+    const data = {};
+    const store = {
+      get(key, fallback) { return data[key] ?? fallback; },
+      set(key, value) { data[key] = value; },
+    };
+    const course = { resolveAsset: (path) => path };
+    const block = {
+      type: 'stepSimulation',
+      id: 'offline-runtime-qa',
+      title: '离线步骤仿真验收',
+      steps: [
+        { prompt: '请选择第一步的正确操作。', options: ['错误操作', '已验证操作'], answerIndex: 2, clip: 'assets/media/step-01.mp4' },
+        { prompt: '请选择第二步的正确操作。', options: ['已验证的后续操作', '错误的后续操作'], answerIndex: 1, clip: 'assets/media/step-02.mp4' },
+      ],
+    };
+    const root = document.getElementById('runtime');
+    root.innerHTML = renderStepSimulation(block, course);
+    initStepSimulations(store);
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-action]');
+      if (target) handleStepSimulationAction(target, store);
+    });
+    document.addEventListener('change', (event) => {
+      const target = event.target.closest('[data-action]');
+      if (target) handleStepSimulationAction(target, store);
+    });
+    if (new URLSearchParams(location.search).get('verified') === '1') {
+      HTMLMediaElement.prototype.play = async function playForQa() {};
+      const choice = root.querySelector('[data-action="simulation-select"][data-step="1"]');
+      choice.value = '2';
+      choice.dispatchEvent(new Event('change', { bubbles: true }));
+      const video = root.querySelector('.step-simulation-video');
+      video?.addEventListener('error', (event) => event.stopImmediatePropagation(), { capture: true });
+      video?.dispatchEvent(new Event('ended'));
+    }
+  </script>
+</body>
+</html>

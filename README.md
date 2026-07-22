@@ -5,7 +5,7 @@
 > 内容与平台解耦的课程学习平台。课程打包成独立的 `.pigeon` 文件(本质是 zip),由网站在浏览器本地解压渲染 —— **换一门课无需改一行网站代码**。**本地优先、可离线**;另带一个**可选**的轻量后端,登录后开启跨设备进度同步。
 
 - **首页** `index.html`:浏览内置课程、上传 `.pigeon`、查看格式说明。
-- **学习页** `learn.html?course=<id>`:目录树、知识卡片、小节小测、章节考试(单选/判断/排序/匹配)、错题本、术语速查、亮/暗主题。
+- **学习页** `learn.html?course=<id>`:目录树、知识卡片、小节小测、正计时章节考试(单选/判断/排序/匹配)、错题本、术语速查、亮/暗主题。
 
 ## 特性
 
@@ -13,7 +13,7 @@
 - **本地优先**:浏览器内解压(fflate),图片转 Blob URL,自包含、可离线;进度按课程隔离存于本地。
 - **可选跨设备同步**:登录账户后,进度/错题/时长等通过轻量后端(Node + SQLite)在多设备间接续;不登录/不部署后端则等同纯静态本地档案。
 - **邮政编辑风设计**:统一设计令牌、衬线标题、SVG 图标(无 emoji),亮/暗双主题。
-- **可扩展格式**:内容块与题型为开放枚举,`html` 块作逃生舱承载复杂表格/图片,`sandbox` 块在隔离 iframe 里跑交互(JS 可运行、与主站隔离)。
+- **可扩展格式**:原生块覆盖正文、列表、图片组、支持合并单元格多图的富表格和卡内 tab;`html` 仅作旧课程静态兼容位,需要 JS 的内容进入隔离 `sandbox`,可复用站点原生练习/答案模式控件并保存练习状态。
 
 ## 截图
 
@@ -103,7 +103,7 @@ docs/                格式契约、设计系统、代码规范、agent 工作�
 
 - 前端纯静态(Vite),本地优先;课程本地解压、图片转 Blob URL、可离线。可选后端(`server/`)仅作跨设备同步层。
 - 进度/答题/错题/时长按 `pglib:u:<用户|local>:<courseId>:<slot>` 命名空间隔离(未登录 = `local` 访客档案);主题站点级共享。
-- `.pigeon` 可扩展:内容块与题型为开放枚举,`html` 块(相对资源路径加载时解析为 Blob URL)与 `sandbox` 块(隔离 iframe 跑 JS)作扩展位。课程作者可用 [`.claude/skills/pigeon-course-authoring`](./.claude/skills/pigeon-course-authoring/SKILL.md) 忠实制作,并经 `tools/pigeon-push.mjs` 推送到同步后端。
+- `.pigeon` 可扩展:优先使用原生内容块;`html` 仅兼容旧课程静态片段(相对资源路径加载时解析为 Blob URL),`sandbox` 负责隔离运行 JS 并可选外层练习/答案模式。课程作者可用 [`.claude/skills/pigeon-course-authoring`](./.claude/skills/pigeon-course-authoring/SKILL.md) 忠实制作,并经 `tools/pigeon-push.mjs` 推送到同步后端。
 
 ## 许可
 

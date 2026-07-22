@@ -46,7 +46,7 @@ export const config = {
 };
 
 // 合法 slot 枚举(与前端 store 对齐)。
-export const SLOTS = ['progress', 'quiz', 'wrong', 'studyTime', 'theme', 'localCourses'];
+export const SLOTS = ['progress', 'quiz', 'wrong', 'studyTime', 'simulations', 'theme', 'localCourses'];
 
 // 课程广场预设分类(发布时选其一;非法值回退「其他」)。前端另有一份对齐副本。
 export const COURSE_CATEGORIES = ['电子/集成电路', '材料/工艺', '计算机/软件', '数理基础', '通用/综合', '其他'];
