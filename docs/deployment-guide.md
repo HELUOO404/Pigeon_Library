@@ -68,6 +68,8 @@ cd app && npm run build                           # → app/dist/
 
 > **注意构建顺序**:若构建时 `dist-courses/ic-packaging.pigeon` 不存在,`npm run build` 仍成功,但产物**无内置课程**(运行时 `/courses/ic-packaging.pigeon` 404)。务必先打包。
 
+> **课程内容不入版本库**:`.gitignore` 排除了 `courses/` 与 `dist-courses/` 下除 `demo-course` 外的全部课程(含内置课 `ic-packaging` 与 2026 系列)。全新 clone 只有平台代码,课程源与打包产物需另行获取到本机;`app/dist/courses/` 里的课程内容也可脱离站点单独部署到 web 根目录的同名路径。
+
 > **子路径部署**:若部署在 `https://host/pigeonlib/` 这类子路径下,需给 Vite 配 `base`(`vite build --base=/pigeonlib/`)。根路径部署无需改动。
 
 纯静态部署下,用户数据全部留在浏览器本地(访客档案),无跨设备同步——这是完全合法的部署形态。

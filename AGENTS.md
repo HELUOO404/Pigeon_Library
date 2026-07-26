@@ -37,7 +37,7 @@ docs/                格式契约、设计系统、代码规范、agent 工作�
 
 - **最快**:双击根目录 `启动PigeonLib.bat`(自动装依赖、打包内置课、起服务、开浏览器)。
 - 手动:`cd app && npm install && npm run dev`(→ http://localhost:5173)。
-- **构建顺序(重要)**:`app/dist/` 的内置课程是构建时从 `dist-courses/ic-packaging.pigeon` 拷入的。**首次构建前先打包课程**:
+- **构建顺序(重要)**:`app/dist/` 的内置课程是构建时从 `dist-courses/ic-packaging.pigeon` 拷入的。**课程内容不入版本库**(见 `.gitignore`,仓库只留 `demo-course` 示例),内置课需本机自备 `courses/ic-packaging/` 源。**首次构建前先打包课程**:
   ```bash
   node tools/build-pigeon.mjs ic-packaging   # 仓库根运行 → dist-courses/ic-packaging.pigeon
   cd app && npm run build

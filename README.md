@@ -35,7 +35,7 @@ npm run build      # 产出静态站点到 app/dist/
 npm run preview    # 预览生产构建
 ```
 
-**构建顺序(重要)**:`app/dist/` 的内置课程在构建时从 `dist-courses/ic-packaging.pigeon` 拷入。若该文件不存在,`npm run build` 仍成功但产物**无内置课程**(运行时 404)。首次构建前先打包课程:
+**构建顺序(重要)**:`app/dist/` 的内置课程在构建时从 `dist-courses/ic-packaging.pigeon` 拷入。**课程内容不入版本库**(见 `.gitignore`),clone 后仓库里只有 `demo-course` 示例;内置课需自备 `courses/ic-packaging/` 源再打包。若打包产物不存在,`npm run build` 仍成功但产物**无内置课程**(运行时 404):
 
 ```bash
 node tools/build-pigeon.mjs ic-packaging   # 仓库根运行 → dist-courses/ic-packaging.pigeon

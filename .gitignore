@@ -16,15 +16,13 @@ Thumbs.db
 tools/.pigeon-cli.json
 
 # —— 课程内容与抓取数据(本地资产,不入库;部署时另行分发)——
-# courses/ 与 dist-courses/ 只保留入库示例(demo-course / ic-packaging),其余课程包不提交
+# courses/ 与 dist-courses/ 只保留最小示例 demo-course,其余课程包(含内置课 ic-packaging)不提交
 courses/*
 !courses/README.md
 !courses/demo-course/
-!courses/ic-packaging/
 dist-courses/*
 !dist-courses/README.md
 !dist-courses/demo-course.pigeon
-!dist-courses/ic-packaging.pigeon
 # dev 期拷入 app 的课程包副本(由脚本生成)
 app/courses/
 # 表格 QA 图片夹具(来自课程素材,不入库)

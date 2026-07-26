@@ -12,7 +12,7 @@ courses/<id>/
   assets/images/    可选  正文/表格引用的图片
 ```
 
-- 现有:`ic-packaging`(IC 封装技术,内置课)、`demo-course`(最小示例/模板)。
+- 入库的只有 `demo-course`(最小示例/模板);其余课程包(含内置课 `ic-packaging`)是本地资产,不进版本库,随部署另行分发(见根 `.gitignore`)。
 - 字段与块类型契约见 [`../docs/pigeon-format.md`](../docs/pigeon-format.md);JSON 可写注释(JSONC),约定见 [`../docs/code-style.md`](../docs/code-style.md)。
 - 复杂表格(含图/合并单元格)用 `html` 块,内嵌 `<img src="assets/...">` 路径加载时自动解析。
 - 改了课程数据后**记得重新打包**:`node tools/build-pigeon.mjs <id>`。
