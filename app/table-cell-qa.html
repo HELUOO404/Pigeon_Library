@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TableCell multi-image QA</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/src/styles/learn.css">
+</head>
+<body>
+  <div class="app">
+    <main class="main" id="qaRoot"></main>
+  </div>
+  <pre id="qaResult" hidden></pre>
+  <script>
+    window.__qaErrors = [];
+    addEventListener('error', (event) => window.__qaErrors.push(String(event.error?.stack || event.message)));
+    addEventListener('unhandledrejection', (event) => window.__qaErrors.push(String(event.reason?.stack || event.reason)));
+  </script>
+  <script type="module">
+    import { renderCourseContent } from '/src/render/content-renderer.js';
+
+    const course = {
+      manifest: {
+        chapters: [{
+          id: '1',
+          title: '第1章 IC制造工艺',
+          sections: [{
+            id: '1.6',
+            title: '第1.6节 光刻',
+            knowledgePoints: [{ id: '1-6-1', title: '光刻工艺流程' }],
+          }],
+        }],
+      },
+      content: {
+        overviews: {},
+        knowledgePoints: {
+          '1-6-1': {
+            title: '光刻工艺流程',
+            blocks: [{
+              type: 'paramsTable',
+              headers: ['工艺', '方法', '特点', '图示', '设备'],
+              rows: [
+                [
+                  '涂胶',
+                  '最常用的方法是旋转涂胶',
+                  '厚度由胶的黏度和转速决定',
+                  { image: { src: '/qa/photolithography-diagram.png', alt: '' }, rowspan: 2 },
+                  {
+                    images: [
+                      { src: '/qa/spinner.png', alt: '' },
+                      { src: '/qa/hotplate.png', alt: '' },
+                    ],
+                    rowspan: 2,
+                  },
+                ],
+                ['前烘', '前烘的目的是烘干已涂的光刻胶', '前烘温度一般为60～100℃，时间为1～2min'],
+              ],
+            }],
+          },
+        },
+      },
+      quiz: { sectionQuizzes: {} },
+      resolveAsset(value) { return value; },
+    };
+
+    renderCourseContent(document.querySelector('#qaRoot'), course, { get: () => ({}) });
+    document.querySelector('.card-body')?.classList.remove('hidden');
+    document.querySelector('.card-header')?.classList.remove('collapsed');
+
+    const allImages = [...document.querySelectorAll('.params-table-cell-images img')];
+    await Promise.all(allImages.map((image) => image.complete
+      ? Promise.resolve()
+      : new Promise((resolve) => {
+        const finish = () => resolve();
+        image.addEventListener('load', finish, { once: true });
+        image.addEventListener('error', finish, { once: true });
+        setTimeout(finish, 3000);
+      })));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const root = document.documentElement;
+    const wrap = document.querySelector('.params-table-wrap');
+    const desktopTable = document.querySelector('.params-table');
+    const mobileTable = document.querySelector('.params-table-mobile');
+    const desktopTableVisible = getComputedStyle(desktopTable).display !== 'none';
+    const mobileTableVisible = getComputedStyle(mobileTable).display !== 'none';
+    const visibleTable = desktopTableVisible ? desktopTable : mobileTable;
+    const group = visibleTable.querySelector('.params-table-cell-images');
+    const images = [...group.querySelectorAll('img')];
+    const rects = images.map((image) => image.getBoundingClientRect());
+    const report = {
+      viewport: { width: innerWidth, height: innerHeight },
+      imageCount: images.length,
+      sourceOrder: images.map((image) => new URL(image.src).pathname.split('/').pop()),
+      pageHorizontalOverflow: root.scrollWidth > root.clientWidth,
+      tableHorizontalOverflow: wrap.scrollWidth > wrap.clientWidth,
+      groupHorizontalOverflow: group.scrollWidth > group.clientWidth,
+      imagesInsideGroup: rects.every((rect) => rect.left >= group.getBoundingClientRect().left - 1
+        && rect.right <= group.getBoundingClientRect().right + 1),
+      imagesOverlap: rects.length === 2
+        && rects[0].left < rects[1].right && rects[1].left < rects[0].right
+        && rects[0].top < rects[1].bottom && rects[1].top < rects[0].bottom,
+      desktopTableVisible,
+      mobileTableVisible,
+    };
+    const passed = report.imageCount === 2
+      && report.sourceOrder.join(',') === 'spinner.png,hotplate.png'
+      && !report.pageHorizontalOverflow
+      && !report.tableHorizontalOverflow
+      && !report.groupHorizontalOverflow
+      && report.imagesInsideGroup
+      && !report.imagesOverlap;
+    document.body.dataset.qa = passed ? 'pass' : 'fail';
+    document.querySelector('#qaResult').textContent = JSON.stringify(report);
+  </script>
+</body>
+</html>
