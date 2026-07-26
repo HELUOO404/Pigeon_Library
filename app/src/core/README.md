@@ -6,6 +6,7 @@
 |---|---|
 | `pigeon-loader.js` | 解压 `.pigeon`(fflate)、校验 manifest/content、JSONC 注释剥离、题库引用归一(`normalizeQuiz`)、图片转 Blob URL、封面转 base64;暴露 `resolveAsset`。 |
 | `course-registry.js` | 内置课程清单 `BUILTIN_COURSES`(含首页轻量卡片元数据,避免列表页解压完整课程包)+ 本地课程包的 IndexedDB 存取(`getLocalCourse` 供学习页离线读取)。 |
+| `course-overrides.js` | 合并临时可见性与封面模式覆盖到内置课程默认值：`visible=false` 只隐藏公开列表、不改变审核状态，且与内置课删除的 `hidden` 墓碑分开；图片模式限 PNG/JPEG/WebP 原图不超过 600 KB，文字模式为 1-6 个 Unicode 字符。服务端可选且不可用时保留打包默认值，同时保留静态包 URL、封面与统计字段供离线回退。 |
 | `course-source.js` | 课程数据源:服务端「广场 / 私人课程 + 社交(评分·评论·下载量)+ 书架 + 审核」API 封装 + 归一化;含分类枚举 `COURSE_CATEGORIES`。**本地优先**:连不上后端/未登录时静默退化,不抛错。 |
 | `course-modal.js` | 课程详情弹层(`openCourseDetail`):简介/统计/评分/下载量/评论区/加入书架/开始学习;广场与个人主页共用。 |
 | `session.js` | 登录态 + 后端 fetch 封装(`api` / `apiUpload` 多部件上传 / `apiBytes` 二进制下载);导出 `API_BASE`。 |

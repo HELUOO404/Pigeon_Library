@@ -31,6 +31,8 @@ npm start                 # → http://localhost:8787
 ```bash
 npm start        # 终端 1
 npm run smoke    # 终端 2:注册→登录→state(LWW)→sync→admin 守卫→登出 + 密码哈希断言
+npm run smoke:admin-courses  # 可回滚地验证管理员课程编辑/删除 API
+npm run test:admin-cover  # 验证管理员课程展示覆盖与封面处理
 ```
 
 ## 端点速查(权威契约见设计稿 §5)
@@ -60,6 +62,9 @@ npm run smoke    # 终端 2:注册→登录→state(LWW)→sync→admin 守卫�
 | `PUT/GET /api/social/:key/rating` · `comments` | 公开读 / 用户写 | 评分(1–5)/ 评论(先发后审,作者·admin 可删) |
 | `GET/PUT/DELETE /api/bookshelf[/:key]` | 用户 | 书架(收藏)增删查 |
 | `GET /api/admin/courses/pending` · `/` | admin | 待审版本队列 / 全部课程 |
+| `GET /api/admin/courses/:ref` | admin | 获取当前平台展示资料；上传课的 `original` 从当前已发布包读取（否则 latest），内置课返回 `original: null`，管理端从本地 `BUILTIN_COURSES` 取原始展示资料；`ref` 为数字 ID 或 `builtin:<course_key>` |
+| `PATCH /api/admin/courses/:ref` (multipart) | admin | 展示元数据更新并返回 `{course}`：`visible` 使用 `true|false`（multipart 文本值为 `"true"|"false"`），图片字段为 `coverImage`；封面可选原始、PNG/JPEG/WebP 图片（原图不超过 600 KB）或 1-6 个 Unicode 字符文字；不改变课程包、版本或审核状态 |
+| `DELETE /api/admin/courses/:ref` | admin | 删除课程；内置课写入 `hidden` 删除墓碑，和 `visible=false` 的可恢复临时隐藏分开；`ref` 为数字 ID 或 `builtin:<course_key>` |
 | `POST /api/admin/courses/:id/versions/:vid/approve`·`reject` | admin | 通过(发布)/ 拒绝(写原因);均记审计 |
 | `POST /api/admin/courses/:id/takedown` | admin | 已发布下架 |
 
@@ -67,8 +72,10 @@ slot 枚举:`progress | quiz | wrong | studyTime | simulations | theme | localCo
 
 ### 课程广场相关文件
 
-- `lib/pigeon-server.js` —— 服务端 `.pigeon`(zip)解析:校验 manifest、提取权威 `stats`/`cover`/`hash`(**不信任前端元数据**)。
+- `lib/pigeon-server.js` —— 服务端 `.pigeon`(zip)解析:解包前拒绝 ZIP64、预检最多 2048 个条目，再以 `fflate` 流式解包并按实际输出限制 64 MiB，同时校验声明大小与 CRC；最后校验 manifest、提取权威 `stats`/`cover`/`hash`(**不信任前端元数据**)。
+- `lib/version-cover-backfill.js` —— 启动时尽力回填既有版本的 `manifest.coverText`；`cover_text_checked` 持久记录成功、无文字封面、缺失、损坏或超限结果，后续启动不重复解析；不阻塞启动、不改包字节。
 - `db-courses.js` —— `courses` + `course_versions` 增删查 + **聚合-only** 学习数据(绝不外泄个体)。
+- `builtin_course_overrides` —— 内置课在线元数据覆盖与隐藏标记；静态包保留作为无后端回退。
 - `db-social.js` / `db-bookshelf.js` —— 评分/评论/下载去重、书架,均按 `course_key`。
 - `routes/courses.js` · `social.js` · `bookshelf.js` · `admin-courses.js` —— 对应路由;课程文件落 `data/courses/<courseId>/<hash>.pigeon`。
 

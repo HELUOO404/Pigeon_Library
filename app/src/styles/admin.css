@@ -61,7 +61,7 @@
 /* ---------- 小按钮 / 工具按钮 / 图标按钮 ---------- */
 .admin-mini-btn{
   flex:none;border:1px solid var(--line-2);background:transparent;color:var(--ink-soft);cursor:pointer;
-  font:inherit;font-size:12px;padding:5px 11px;border-radius:7px;
+  font:inherit;font-size:12px;padding:5px 11px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;
   transition:border-color var(--dur-base) var(--ease-soft),color var(--dur-base) var(--ease-soft),background var(--dur-base) var(--ease-soft);
 }
 .admin-mini-btn:hover{border-color:var(--gold);color:var(--gold-deep)}
@@ -126,6 +126,7 @@
 .admin-table .mono{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
 .admin-role{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold-deep);white-space:nowrap}
 .admin-role.is-admin{background:color-mix(in srgb,var(--seal) 16%,transparent);color:var(--seal)}
+.admin-role.is-hidden{background:var(--surface-sunken);color:var(--ink-soft)}
 .admin-state-ok{color:var(--correct-tx)}
 .admin-state-off{color:var(--seal)}
 .admin-self{font-family:var(--mono);font-size:10px;color:var(--ink-soft);background:color-mix(in srgb,var(--ink) 7%,transparent);padding:1px 6px;border-radius:999px;margin-left:4px}
@@ -179,18 +180,57 @@
   background:var(--surface);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow);
   padding:26px 24px 22px;
 }
+.admin-modal.admin-course-modal{width:min(920px,92vw);max-height:calc(100vh - 40px);overflow-y:auto}
 .admin-modal-close{position:absolute;right:12px;top:12px}
 .admin-modal-title{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink);margin:6px 0 16px}
 .admin-form{display:flex;flex-direction:column;gap:13px}
 .admin-form label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-family:var(--mono);color:var(--ink-soft)}
-.admin-form input{
+.admin-form input:not([type="radio"]):not([type="checkbox"]),.admin-form textarea{
   border:1px solid var(--line-2);border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);
-  color:var(--ink);font:inherit;font-size:14.5px;padding:10px 12px;outline:0;
+  color:var(--ink);font:inherit;font-size:14.5px;padding:10px 12px;outline:0;max-width:100%;
 }
-.admin-form input:focus{border-color:var(--gold);box-shadow:var(--focus-ring)}
+.admin-form textarea{resize:vertical;min-height:118px;line-height:1.6}
+.admin-form input:not([type="radio"]):not([type="checkbox"]):focus,.admin-form textarea:focus{border-color:var(--gold);box-shadow:var(--focus-ring)}
+.admin-form [hidden]{display:none}
 .admin-form .admin-select{width:100%}
 .admin-form-msg{font-size:12.5px;color:var(--seal);font-family:var(--mono);min-height:1em;margin:-2px 0 0}
 .admin-form .admin-tool-btn{margin-top:4px;justify-content:center}
+.admin-course-form{display:grid;grid-template-columns:1fr 1fr;gap:13px 14px}
+.admin-course-form .admin-form-wide{grid-column:1/-1}
+.admin-form-actions{display:flex;justify-content:flex-end;gap:9px}
+.admin-course-form .admin-form-actions .admin-tool-btn{margin-top:0}
+.admin-course-previews{
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;padding-bottom:18px;
+  border-bottom:1px solid var(--line);
+}
+.admin-course-preview{min-width:0}
+.admin-preview-label{
+  margin:0 0 8px;font-family:var(--mono);font-size:11px;color:var(--gold-deep);letter-spacing:0;
+}
+.admin-preview-cover{
+  display:grid;place-items:center;aspect-ratio:16/7;overflow:hidden;border-radius:8px;
+  background:var(--surface-sunken);background-size:cover;background-position:center;color:var(--ink);
+  font-family:var(--serif);font-size:30px;font-weight:700;
+}
+.admin-preview-copy{display:flex;flex-direction:column;gap:3px;margin-top:9px;min-width:0}
+.admin-preview-copy strong,.admin-preview-copy span,.admin-preview-copy p{overflow-wrap:anywhere}
+.admin-preview-copy strong{font-family:var(--serif);font-size:16px;color:var(--ink)}
+.admin-preview-copy span{font-size:12px;color:var(--ink-soft)}
+.admin-preview-copy p{margin:3px 0 0;font-size:12.5px;line-height:1.55;color:var(--ink-soft)}
+.admin-visibility-toggle{flex-direction:row!important;align-items:center;gap:8px!important;color:var(--ink)!important}
+.admin-visibility-toggle input{width:16px;height:16px;margin:0;accent-color:var(--gold)}
+.admin-visibility-toggle:focus-within{box-shadow:var(--focus-ring);border-radius:6px}
+.admin-cover-fieldset{display:flex;flex-direction:column;gap:10px;margin:0;padding:13px 0 0;border:0;border-top:1px solid var(--line)}
+.admin-cover-fieldset legend{padding:0 0 8px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.admin-cover-segments{display:flex;flex-wrap:wrap;gap:8px}
+.admin-form .admin-cover-segments label{
+  flex-direction:row;align-items:center;gap:6px;padding:7px 11px;border:1px solid var(--line-2);
+  border-radius:7px;background:var(--surface-sunken);color:var(--ink);cursor:pointer;
+}
+.admin-cover-segments label:has(input:checked){border-color:var(--gold);color:var(--ink)}
+.admin-cover-segments label:focus-within{box-shadow:var(--focus-ring)}
+.admin-cover-segments input{margin:0;accent-color:var(--gold)}
+.admin-cover-count{align-self:flex-end;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
 
 /* ---------- 响应式 ---------- */
 @media(max-width:760px){
@@ -202,4 +242,7 @@
 @media(max-width:600px){
   .admin-table th:nth-child(4),.admin-table td:nth-child(4){display:none} /* 窄屏隐藏「创建」列 */
   .drawer-metas{grid-template-columns:1fr}
+  .admin-course-previews{grid-template-columns:1fr}
+  .admin-course-form{grid-template-columns:1fr}
+  .admin-course-form .admin-form-wide{grid-column:auto}
 }

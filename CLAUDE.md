@@ -74,6 +74,7 @@ docs/                格式契约、设计系统、代码规范、agent 工作�
 | [`docs/code-style.md`](./docs/code-style.md) | 代码风格与**中文注释规范** |
 | [`docs/agent-workflow.md`](./docs/agent-workflow.md) | **agent/codex 执行规范**:**编程实现默认交 codex 执行、Claude 设计/复核**;构建/提交/QA、文档维护规则 |
 | [`docs/pigeon-format.md`](./docs/pigeon-format.md) | `.pigeon` 课程包格式**契约(权威)** |
+| [`tools/autosmt-2026/CONVERSION.md`](./tools/autosmt-2026/CONVERSION.md) | AutoSMT 2026 原站内容到新课程包的**唯一转换规范**、证据门禁与分阶段验收流程 |
 | [`docs/user-system-design.md`](./docs/user-system-design.md) | **用户系统/同步契约(权威)**:架构、数据模型、API、同步流程、角色权限、安全 |
 | [`docs/deployment-guide.md`](./docs/deployment-guide.md) | 部署指南:本地 / 静态托管 / Node 后端 / Windows Server(IIS 反代 + NSSM)/ CORS·cookie / 排错 |
 | [`docs/ai-course-authoring-prompt.md`](./docs/ai-course-authoring-prompt.md) | 给 AI 的课程制作提示词 |

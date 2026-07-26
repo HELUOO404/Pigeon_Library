@@ -1,6 +1,7 @@
 // main-home.js — 首页脚本:课程广场 / 我的课程两区、登录受限上传、发布/撤回/删除、课程详情弹层。
 // 课程来源经 course-source.js 统一访问(服务端);内置课作为广场预置课保底(不变量 5:无后端仍可见内置课)。
 import { BUILTIN_COURSES } from './core/course-registry.js';
+import { applyBuiltinOverrides, firstCodePoint } from './core/course-overrides.js';
 import { createStore, globalGet } from './core/store.js';
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
@@ -115,7 +116,7 @@ function renderCourseCard(card, context) {
   const publisher = text(card.publisherName || card.author, 'PigeonLib');
   const progress = getProgress(card.courseKey, stats.knowledgePoints);
   const cover = card.coverDataUrl || '';
-  const coverText = text(card.coverText, title.slice(0, 1));
+  const coverText = text(card.coverText, firstCodePoint(title));
 
   const badges = context === 'square'
     ? `<span class="course-metrics"><span class="course-metric">${icon('star', { size: 12 })} ${card.avgRating || '—'}</span><span class="course-metric">${icon('download', { size: 12 })} ${card.downloadCount || 0}</span></span>`
@@ -200,17 +201,23 @@ function buildCategoryFilter() {
 async function fetchSquare() {
   const r = await listSquare({ pageSize: 100 });
   state.square = r.items;
+  state.builtin = normalizeBuiltins(applyBuiltinOverrides(BUILTIN_COURSES, r.builtinOverrides));
+}
+
+function normalizeBuiltins(courses) {
+  return courses.map((course) => ({
+    source: 'builtin', serverId: null, courseKey: course.id,
+    title: course.title, subtitle: course.subtitle || '', description: course.description || '',
+    author: course.author || '', publisherName: course.publisherName || course.author || 'PigeonLib',
+    category: course.category || '', status: 'published', stats: course.stats || {},
+    coverDataUrl: course.coverUrl || '', coverText: course.coverText || '',
+    updatedAt: course.updatedAt || 0,
+    avgRating: 0, ratingCount: 0, downloadCount: 0,
+  }));
 }
 
 function hydrateBuiltin() {
-  state.builtin = BUILTIN_COURSES.map((course) => ({
-    source: 'builtin', serverId: null, courseKey: course.id,
-    title: course.title, subtitle: course.subtitle || '', description: course.description || '',
-    author: course.author || '', publisherName: course.author || 'PigeonLib',
-    category: '', status: 'published', stats: course.stats || {},
-    coverDataUrl: course.coverUrl || '', coverText: course.coverText || '',
-    avgRating: 0, ratingCount: 0, downloadCount: 0,
-  }));
+  state.builtin = normalizeBuiltins(BUILTIN_COURSES);
 }
 
 // ---------- 我的课程 ----------

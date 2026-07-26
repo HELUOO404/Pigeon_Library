@@ -60,6 +60,10 @@ CREATE TABLE IF NOT EXISTS courses (
   publisher_name     TEXT    NOT NULL,                 -- 发布人(卡片 tag):用户课=上传者 username,内置=author
   category           TEXT,                             -- 预设分类枚举之一(非法回退「其他」)
   status             TEXT    NOT NULL DEFAULT 'private', -- private|pending|published|rejected(由版本推导维护)
+  visible            INTEGER NOT NULL DEFAULT 1,       -- 公开列表展示开关，不改变审核状态
+  cover_mode         TEXT    NOT NULL DEFAULT 'default', -- default|image|text
+  cover_image        TEXT,                              -- 管理员图片封面 data URL，原图 <= 600 KB
+  cover_text         TEXT,                              -- 管理员文字封面，1 至 6 个 Unicode 字符
   current_version_id INTEGER,                          -- 广场展示的「当前已发布版」(指向 course_versions.id,不设外键避免建表循环)
   latest_version_id  INTEGER,                          -- 最新上传版(可能 pending)
   created_at         INTEGER NOT NULL,                 -- epoch ms
@@ -68,6 +72,23 @@ CREATE TABLE IF NOT EXISTS courses (
 CREATE INDEX IF NOT EXISTS idx_courses_owner  ON courses(owner_id);
 CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
 CREATE INDEX IF NOT EXISTS idx_courses_key    ON courses(course_key);
+
+-- 内置课程仍由前端常量提供离线默认值；本表只保存服务端在线时的元数据覆盖与隐藏标记。
+CREATE TABLE IF NOT EXISTS builtin_course_overrides (
+  course_key      TEXT PRIMARY KEY,
+  title           TEXT NOT NULL,
+  subtitle        TEXT,
+  description     TEXT,
+  author          TEXT,
+  publisher_name  TEXT NOT NULL,
+  category        TEXT,
+  hidden          INTEGER NOT NULL DEFAULT 0,
+  visible         INTEGER NOT NULL DEFAULT 1,       -- 公开列表展示开关，不改变审核状态
+  cover_mode      TEXT    NOT NULL DEFAULT 'default', -- default|image|text
+  cover_image     TEXT,                              -- 管理员图片封面 data URL，原图 <= 600 KB
+  cover_text      TEXT,                              -- 管理员文字封面，1 至 6 个 Unicode 字符
+  updated_at      INTEGER NOT NULL
+);
 
 -- 版本级文件(多版本核心)。文件落盘 server/data/courses/<courseId>/<versionId>.pigeon。
 CREATE TABLE IF NOT EXISTS course_versions (
@@ -80,6 +101,8 @@ CREATE TABLE IF NOT EXISTS course_versions (
   file_hash    TEXT,                                   -- sha256
   stats_json   TEXT,                                   -- {chapters,knowledgePoints,questions}(服务端解析,权威)
   cover_data   TEXT,                                   -- base64 缩略(卡片用,无图为空)
+  cover_text   TEXT,                                   -- manifest.coverText(版本级默认文字封面)
+  cover_text_checked INTEGER NOT NULL DEFAULT 0,       -- 旧包文字封面回填已处理(含无封面/失败)
   review_note  TEXT,                                   -- 拒绝原因
   reviewer_id  INTEGER,
   created_at   INTEGER NOT NULL,

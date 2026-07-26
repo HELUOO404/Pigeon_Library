@@ -56,7 +56,7 @@ npm start                 # → http://localhost:8787
 npm run smoke             # 可选:冒烟自测
 ```
 
-首个注册的用户自动成为管理员(`admin.html` 管理面板)。技术栈用 Node 内置 `node:sqlite` + 纯 JS `bcryptjs`,**免原生编译**,装即用(需 Node ≥ 22.5)。契约见 [`docs/user-system-design.md`](./docs/user-system-design.md),细节见 [`server/README.md`](./server/README.md)。
+首个注册的用户自动成为管理员(`admin.html` 管理面板)，可审核课程并编辑/删除上传课与内置课的元数据。管理员可独立控制公开课程的可见性（只影响公开列表，不改变审核状态），并在原始展示资料与当前平台展示资料之间对照；封面可保留原始封面、改用 PNG/JPEG/WebP 图片（原图不超过 600 KB），或设置 1-6 个 Unicode 字符的文字封面。内置课的删除会留下隐藏墓碑，和 `visible=false` 的可恢复临时隐藏分开；这些展示覆盖均不改变课程包、版本或审核状态。技术栈用 Node 内置 `node:sqlite` + 纯 JS `bcryptjs`,**免原生编译**,装即用(需 Node ≥ 22.5)。契约见 [`docs/user-system-design.md`](./docs/user-system-design.md),细节见 [`server/README.md`](./server/README.md)。
 
 ## 目录结构
 

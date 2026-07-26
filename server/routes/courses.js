@@ -44,6 +44,15 @@ function ownerCourse(req, res) {
   return course;
 }
 
+function courseVersion(course, versionId, res) {
+  const version = coursesDb.versionById(Number(versionId));
+  if (!version || version.course_id !== course.id) {
+    authError(res, 404, 'not_found', 'version not found');
+    return null;
+  }
+  return version;
+}
+
 // Resolve the on-disk directory for a course's package files.
 function courseDir(courseId) {
   return path.join(config.coursesDir, String(courseId));
@@ -87,6 +96,7 @@ coursesRouter.post('/', requireUser, uploadSingle('file'), (req, res) => {
     fileHash: meta.fileHash,
     statsJson: meta.statsJson,
     coverData: meta.coverBase64,
+    coverText: meta.coverText,
     now,
   });
   coursesDb.setLatestVersion(courseId, versionId, now);
@@ -103,13 +113,15 @@ coursesRouter.get('/mine', requireUser, (req, res) => {
 // GET /square - public, paginated, filterable listing of published courses.
 coursesRouter.get('/square', (req, res) => {
   const { q, category, publisher, page, pageSize } = req.query;
-  res.json(coursesDb.square({
+  const result = coursesDb.square({
     q: typeof q === 'string' ? q : '',
     category: typeof category === 'string' ? category : '',
     publisher: typeof publisher === 'string' ? publisher : '',
     page: Number(page) || 1,
     pageSize: Number(pageSize) || 24,
-  }));
+  });
+  const builtinOverrides = coursesDb.publicBuiltinOverrides();
+  res.json({ ...result, builtinOverrides });
 });
 
 // GET /:id/file - download a package. Public for published versions; owner/admin may grab any.
@@ -119,8 +131,8 @@ coursesRouter.get('/:id/file', (req, res) => {
 
   const user = currentUser(req);
   const versionId = req.query.v ? Number(req.query.v) : course.current_version_id;
-  const version = coursesDb.versionById(versionId);
-  if (!version) return authError(res, 404, 'not_found', 'version not found');
+  const version = courseVersion(course, versionId, res);
+  if (!version) return;
 
   const isOwner = user && user.id === course.owner_id;
   const isAdmin = user && user.role === 'admin';
@@ -152,10 +164,12 @@ coursesRouter.post('/:id/publish', requireUser, (req, res) => {
   }
   const vid = course.latest_version_id;
   if (!vid) return authError(res, 400, 'bad_request', '没有可发布的版本');
+  const version = courseVersion(course, vid, res);
+  if (!version) return;
 
   const now = Date.now();
   coursesDb.setCategory(course.id, req.body.category, now);
-  coursesDb.setVersionStatus(vid, 'pending', now);
+  coursesDb.setVersionStatus(version.id, 'pending', now);
   coursesDb.setCourseStatus(course.id, 'pending', now);
   res.json({ ok: true });
 });
@@ -164,6 +178,7 @@ coursesRouter.post('/:id/publish', requireUser, (req, res) => {
 coursesRouter.post('/:id/unpublish', requireUser, (req, res) => {
   const course = ownerCourse(req, res);
   if (!course) return;
+  if (course.current_version_id && !courseVersion(course, course.current_version_id, res)) return;
   const now = Date.now();
   coursesDb.setCurrentVersion(course.id, null, now);
   coursesDb.setCourseStatus(course.id, 'private', now);
@@ -220,6 +235,7 @@ coursesRouter.post('/:id/versions', requireUser, uploadSingle('file'), (req, res
     fileHash: meta.fileHash,
     statsJson: meta.statsJson,
     coverData: meta.coverBase64,
+    coverText: meta.coverText,
     now,
   });
   coursesDb.setLatestVersion(course.id, versionId, now);
@@ -240,8 +256,10 @@ coursesRouter.get('/:id/versions', requireUser, (req, res) => {
 coursesRouter.post('/:id/versions/:vid/publish', requireUser, (req, res) => {
   const course = ownerCourse(req, res);
   if (!course) return;
+  const version = courseVersion(course, req.params.vid, res);
+  if (!version) return;
   const now = Date.now();
-  coursesDb.setVersionStatus(Number(req.params.vid), 'pending', now);
+  coursesDb.setVersionStatus(version.id, 'pending', now);
   coursesDb.setCourseStatus(course.id, 'pending', now);
   res.json({ ok: true });
 });

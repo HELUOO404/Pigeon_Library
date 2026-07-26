@@ -29,6 +29,11 @@ export function normalizeServerCourse(row) {
       questions: stats.questions ?? 0,
     },
     coverDataUrl: row.cover_data || '',
+    coverText: row.cover_text || '',
+    visible: row.visible !== 0,
+    coverMode: row.cover_mode || 'default',
+    coverImageOverride: row.cover_image || '',
+    coverTextOverride: row.cover_text_override || '',
     fileSize: row.file_size || 0,
     updatedAt: row.updated_at || 0,
     avgRating: row.avg_rating ?? 0,
@@ -46,12 +51,15 @@ export async function listSquare(filters = {}) {
   qs.set('page', String(filters.page || 1));
   qs.set('pageSize', String(filters.pageSize || 24));
   const r = await api('GET', `/courses/square?${qs.toString()}`);
-  if (!r.ok || !r.json) return { items: [], total: 0, page: 1, pageSize: 24, offline: !!r.networkError };
+  if (!r.ok || !r.json) {
+    return { items: [], total: 0, page: 1, pageSize: 24, builtinOverrides: [], offline: !!r.networkError };
+  }
   return {
     items: (r.json.items || []).map(normalizeServerCourse),
     total: r.json.total || 0,
     page: r.json.page || 1,
     pageSize: r.json.pageSize || 24,
+    builtinOverrides: r.json.builtinOverrides || [],
     offline: false,
   };
 }

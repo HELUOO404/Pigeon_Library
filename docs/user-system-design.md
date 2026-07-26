@@ -397,6 +397,10 @@ CREATE TABLE IF NOT EXISTS courses (
   publisher_name    TEXT    NOT NULL,         -- 发布人(卡片 tag):用户课=上传者 username,内置=author
   category          TEXT,                     -- 预设分类枚举之一(非法回退「其他」)
   status            TEXT    NOT NULL DEFAULT 'private', -- private|pending|published|rejected(由版本推导维护)
+  visible           INTEGER NOT NULL DEFAULT 1, -- 公开列表展示开关，不改变审核状态
+  cover_mode        TEXT    NOT NULL DEFAULT 'default', -- default|image|text
+  cover_image       TEXT,                     -- 管理员图片封面 data URL，原图 <= 600 KB
+  cover_text        TEXT,                     -- 管理员文字封面，1 至 6 个 Unicode 字符
   current_version_id INTEGER,                 -- 广场展示的「当前已发布版」
   latest_version_id  INTEGER,                 -- 最新上传版(可能 pending)
   created_at        INTEGER NOT NULL,
@@ -405,6 +409,23 @@ CREATE TABLE IF NOT EXISTS courses (
 CREATE INDEX IF NOT EXISTS idx_courses_owner  ON courses(owner_id);
 CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
 CREATE INDEX IF NOT EXISTS idx_courses_key    ON courses(course_key);
+
+-- 内置课在线元数据覆盖；前端常量仍是无后端时的离线默认值
+CREATE TABLE IF NOT EXISTS builtin_course_overrides (
+  course_key      TEXT PRIMARY KEY,
+  title           TEXT NOT NULL,
+  subtitle        TEXT,
+  description     TEXT,
+  author          TEXT,
+  publisher_name  TEXT NOT NULL,
+  category        TEXT,
+  hidden          INTEGER NOT NULL DEFAULT 0,
+  visible         INTEGER NOT NULL DEFAULT 1, -- 公开列表展示开关，不改变审核状态
+  cover_mode      TEXT    NOT NULL DEFAULT 'default', -- default|image|text
+  cover_image     TEXT,                       -- 管理员图片封面 data URL，原图 <= 600 KB
+  cover_text      TEXT,                       -- 管理员文字封面，1 至 6 个 Unicode 字符
+  updated_at      INTEGER NOT NULL
+);
 
 -- 版本级文件(多版本核心)
 CREATE TABLE IF NOT EXISTS course_versions (
@@ -417,6 +438,8 @@ CREATE TABLE IF NOT EXISTS course_versions (
   file_hash    TEXT,                          -- sha256
   stats_json   TEXT,                          -- {chapters,knowledgePoints,questions}(服务端解析,权威)
   cover_data   TEXT,                          -- base64 缩略(卡片用,无图为空)
+  cover_text   TEXT,                          -- manifest.coverText(版本级默认文字封面)
+  cover_text_checked INTEGER NOT NULL DEFAULT 0, -- 旧包文字封面回填已处理(含无封面/失败)
   review_note  TEXT,                          -- 拒绝原因
   reviewer_id  INTEGER,
   created_at   INTEGER NOT NULL,
@@ -463,7 +486,7 @@ CREATE TABLE IF NOT EXISTS bookshelf (
 );
 ```
 
-文件存储:`server/data/courses/<courseId>/<versionId>.pigeon`;上限沿用 `.pigeon` 格式上限 **50MB**(multer limits)。multipart 用 `multer`(纯 JS);服务端用 `fflate` 解包**校验并提取权威元数据**(不信任前端传入)。
+文件存储:`server/data/courses/<courseId>/<versionId>.pigeon`;上传上限沿用 `.pigeon` 格式上限 **50MB**(multer limits)。服务端在解包前拒绝 ZIP64，并通过 ZIP 中央目录预检最多 2048 个条目与声明解压尺寸；随后用 `fflate` 流式解包，按实际输出字节再次强制累计不超过 64 MiB，并校验中央目录声明的条目大小与 CRC 后再**提取权威元数据**(不信任前端传入)。旧库启动时幂等新增 `course_versions.cover_text` 与 `cover_text_checked`，并尽力从既有包回填；成功、无文字封面、文件缺失、损坏或超限都会持久标记为已处理，后续启动不再同步解析该行。不阻塞启动，也不改写包字节。
 
 ### 13.3 课程标识与进度命名空间
 
@@ -523,11 +546,16 @@ CREATE TABLE IF NOT EXISTS bookshelf (
 |---|---|
 | `GET /pending` | 待审版本队列(课 + 版本 + 发布人 + 分类 + 大小 + 提交时间) |
 | `GET /` | 全部课程总览(可按 status 筛) |
+| `GET /:ref` | 读取一门课程的管理元数据；`ref` 为数字课程 ID 或 `builtin:<course_key>` |
+| `PATCH /:ref` multipart(`title,subtitle,category,publisherName,author,description,visible,coverMode,coverText,coverImage?`) → `{course}` | 编辑课程元数据和封面；`visible` 是布尔值，multipart 中使用 `"true"|"false"`；`ref` 为数字课程 ID 或 `builtin:<course_key>` |
+| `DELETE /:ref` | 删除服务端课程及版本文件；内置课写 `hidden=1` 墓碑 |
 | `POST /:id/versions/:vid/approve` | 通过 → published + 切 current_version_id |
 | `POST /:id/versions/:vid/reject` `{note}` | 拒绝 → rejected + review_note |
 | `POST /:id/takedown` | 已发布下架 → private |
 
 错误格式沿用 `authError(res,status,code,message)`;新增码:`not_owner`、`course_not_found`、`bad_pigeon`、`payload_too_large`、`already_published`。
+
+管理员元数据校验上限：标题 120、副标题 180、发布人 120、作者 120、简介 2000 字符；标题和发布人不能为空，分类为空或取预设枚举。multipart 最多 9 个文本字段、1 个文件和 10 个 part。`visible=false` 只从公开列表隐藏课程，不改变审核状态、记录或可编辑性；内置课的 `hidden=1` 是删除后的墓碑，阻止该内置课回到列表。封面模式为 `default|image|text`：图片字段名为 `coverImage`，原图最多 600 KB，只接受 PNG/JPEG/WebP 且校验文件签名；文字封面为 1 至 6 个 Unicode 字符。有效封面优先级为「图片覆盖 → 文字覆盖 → 课程包/内置默认 → 标题首字符」。后端不可用时仍显示随站打包的内置默认封面。编辑/删除分别记 `course_edit` / `course_delete` 审计。删除课程不清理按 `course_key` 独立存储的学习进度、评分、评论与书架记录。
 
 ### 13.6 个人主页 + 创作者数据 + 隐私铁律
 
@@ -544,6 +572,7 @@ CREATE TABLE IF NOT EXISTS bookshelf (
 - **首页**:两区 tab(课程广场 / 我的课程),各自工具栏(搜索 + 分类下拉 + 广场发布人下拉 / 我的状态下拉);卡片 tag=`publisher_name`,加 ★均分·⬇人数 轻量徽(mono);课程详情弹层承载评分 / 评论 / 下载量 / 版本 / 开始学习 / 加入书架。
 - **守设计系统**:令牌配色 + 动效令牌、无 UI emoji、无竖向装饰线、serif 标题 / mono 数据、亮暗双主题、`:focus-visible`、`prefers-reduced-motion`、破坏性操作二次确认 + 在途禁用。
 - **本地优先降级**:无后端 / 未登录 → 广场仅内置课;上传 / 发布 / 评分 / 评论 / 书架按钮禁用并提示「登录并启动同步后端后可用」。
+- **内置课管理覆盖**:后端在线时，`GET /api/courses/square` 附带 `builtinOverrides`，首页将其合并到内置常量并过滤 `hidden=1`；后端离线时直接使用内置常量，静态课程包仍可学习。
 
 ### 13.8 本轮不做(划界)
 

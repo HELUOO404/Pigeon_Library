@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
+import { backfillVersionCoverText } from './lib/version-cover-backfill.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,9 +22,27 @@ const sessionCols = db.prepare('PRAGMA table_info(sessions)').all().map((c) => c
 if (!sessionCols.includes('ip')) db.exec('ALTER TABLE sessions ADD COLUMN ip TEXT');
 if (!sessionCols.includes('user_agent')) db.exec('ALTER TABLE sessions ADD COLUMN user_agent TEXT');
 
-// 旧库迁移:courses 若缺 description 列则补(课程简介,v1.3 引入)
+// 旧库迁移:courses 若缺课程广场元数据列则补。
 const courseCols = db.prepare('PRAGMA table_info(courses)').all().map((c) => c.name);
 if (!courseCols.includes('description')) db.exec('ALTER TABLE courses ADD COLUMN description TEXT');
+if (!courseCols.includes('visible')) db.exec('ALTER TABLE courses ADD COLUMN visible INTEGER NOT NULL DEFAULT 1');
+if (!courseCols.includes('cover_mode')) db.exec("ALTER TABLE courses ADD COLUMN cover_mode TEXT NOT NULL DEFAULT 'default'");
+if (!courseCols.includes('cover_image')) db.exec('ALTER TABLE courses ADD COLUMN cover_image TEXT');
+if (!courseCols.includes('cover_text')) db.exec('ALTER TABLE courses ADD COLUMN cover_text TEXT');
+
+const builtinOverrideCols = db.prepare('PRAGMA table_info(builtin_course_overrides)').all().map((c) => c.name);
+if (!builtinOverrideCols.includes('visible')) db.exec('ALTER TABLE builtin_course_overrides ADD COLUMN visible INTEGER NOT NULL DEFAULT 1');
+if (!builtinOverrideCols.includes('cover_mode')) db.exec("ALTER TABLE builtin_course_overrides ADD COLUMN cover_mode TEXT NOT NULL DEFAULT 'default'");
+if (!builtinOverrideCols.includes('cover_image')) db.exec('ALTER TABLE builtin_course_overrides ADD COLUMN cover_image TEXT');
+if (!builtinOverrideCols.includes('cover_text')) db.exec('ALTER TABLE builtin_course_overrides ADD COLUMN cover_text TEXT');
+
+const versionCols = db.prepare('PRAGMA table_info(course_versions)').all().map((c) => c.name);
+if (!versionCols.includes('cover_text')) db.exec('ALTER TABLE course_versions ADD COLUMN cover_text TEXT');
+if (!versionCols.includes('cover_text_checked')) {
+  db.exec('ALTER TABLE course_versions ADD COLUMN cover_text_checked INTEGER NOT NULL DEFAULT 0');
+}
+db.exec('UPDATE course_versions SET cover_text_checked=1 WHERE cover_text_checked=0 AND cover_text IS NOT NULL');
+backfillVersionCoverText(db);
 
 // ---- users ----
 export const users = {

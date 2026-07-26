@@ -2,11 +2,13 @@
 // 仅 admin 可见;所有数据来自 /api/admin/*。设计系统:令牌配色、无 emoji、无竖线、亮暗双主题。
 import { applyInitialTheme, toggleTheme } from './core/theme.js';
 import { icon, hydrateIcons } from './core/icons.js';
-import { initSession, getUser, isAdmin, api } from './core/session.js';
+import { initSession, getUser, isAdmin, api, apiForm } from './core/session.js';
 import { initAuthUI } from './core/auth-ui.js';
 import { toast } from './core/toast.js';
 import { sparkline, sparkbars } from './core/sparkline.js';
 import { BUILTIN_COURSES } from './core/course-registry.js';
+import { applyBuiltinOverrides, resolveCourseCover } from './core/course-overrides.js';
+import { COURSE_CATEGORIES } from './core/course-source.js';
 
 applyInitialTheme();
 
@@ -18,11 +20,15 @@ const body = $('adminBody');
 const state = { q: '', role: '', status: '', sort: 'id', dir: 'asc', page: 1, pageSize: 20 };
 let drawerUserId = null;
 let toolbarReady = false;
+let adminCourseRows = [];
+let courseEditorState = null;
+let courseEditorRequestToken = 0;
 
 const ACTION_LABEL = {
   disable: '禁用', enable: '启用', set_role: '改角色', reset_pw: '重置密码',
   rename: '改名', delete: '删除', create: '建号', force_logout: '强制下线', reset_state: '清空进度',
   course_approve: '通过课程', course_reject: '拒绝课程', course_takedown: '下架课程',
+  course_edit: '编辑课程', course_delete: '删除课程',
 };
 
 const COURSE_STATUS = { private: '私有', pending: '审核中', published: '已发布', rejected: '被拒', builtin: '内置示例' };
@@ -32,6 +38,9 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s == null ? '' : String(s);
   return d.innerHTML;
+}
+function escAttr(s) {
+  return esc(s).replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 function fmtDate(ms) { return ms ? new Date(ms).toLocaleDateString() : '—'; }
 function fmtRel(ms) {
@@ -132,32 +141,71 @@ function renderPending(list) {
         <span class="admin-row-meta">发布人 ${esc(p.publisher_name)} · ${esc(p.category || '未分类')} · ${fmtBytes(p.file_size)} · ${fmtRel(p.created_at)}</span>
       </div>
       <div class="review-actions">
-        <button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${esc(p.course_key)}" data-cid="${p.course_id}" data-vid="${p.version_id}">预览</button>
-        <button class="admin-mini-btn primary" type="button" data-act="approve-course" data-cid="${p.course_id}" data-vid="${p.version_id}" data-title="${esc(p.title)}">通过</button>
-        <button class="admin-mini-btn danger" type="button" data-act="reject-course" data-cid="${p.course_id}" data-vid="${p.version_id}" data-title="${esc(p.title)}">拒绝</button>
+        <button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${escAttr(p.course_key)}" data-cid="${escAttr(p.course_id)}" data-vid="${escAttr(p.version_id)}">预览</button>
+        <button class="admin-mini-btn primary" type="button" data-act="approve-course" data-cid="${escAttr(p.course_id)}" data-vid="${escAttr(p.version_id)}" data-title="${escAttr(p.title)}">通过</button>
+        <button class="admin-mini-btn danger" type="button" data-act="reject-course" data-cid="${escAttr(p.course_id)}" data-vid="${escAttr(p.version_id)}" data-title="${escAttr(p.title)}">拒绝</button>
       </div>
     </div>`).join('');
 }
 
-function renderAllCourses(list) {
-  const builtins = BUILTIN_COURSES.map((b) => ({
-    id: null, title: b.title, course_key: b.id, status: 'builtin',
-    publisher_name: '内置示例', category: '', updated_at: null,
+function renderAllCourses(list, overrides) {
+  const builtinSources = new Map(BUILTIN_COURSES.map((course) => [course.id, course]));
+  const builtins = applyBuiltinOverrides(BUILTIN_COURSES, overrides, { includeInvisible: true }).map((course) => {
+    const source = builtinSources.get(course.id);
+    return {
+      id: null,
+      ref: `builtin:${course.id}`,
+      title: course.title,
+      subtitle: course.subtitle || '',
+      description: course.description || '',
+      author: course.author || '',
+      publisher_name: course.publisherName || course.author || 'PigeonLib',
+      category: course.category || '',
+      course_key: course.id,
+      status: 'builtin',
+      updated_at: course.updatedAt || null,
+      visible: course.visible,
+      cover_mode: course.coverMode,
+      cover_image: course.coverImageOverride,
+      cover_text: course.coverTextOverride,
+      coverDataUrl: course.coverUrl,
+      coverText: course.coverText,
+      original: {
+        title: source.title,
+        subtitle: source.subtitle || '',
+        description: source.description || '',
+        author: source.author || '',
+        cover_image: source.coverUrl || '',
+        cover_text: source.coverText || '',
+      },
+    };
+  });
+  const uploaded = list.map((course) => ({
+    ...course,
+    ref: String(course.id),
+    visible: course.visible !== 0,
+    cover_mode: course.cover_mode || 'default',
+    cover_image: course.cover_image || '',
+    cover_text: course.cover_text_override || '',
+    coverDataUrl: course.cover_data || '',
+    coverText: course.cover_text || '',
   }));
-  const all = [...builtins, ...list];
-  $('adminAllCoursesSub').textContent = `${all.length} 门`;
-  if (!all.length) { $('adminAllCourses').innerHTML = '<p class="admin-empty">还没有课程</p>'; return; }
-  $('adminAllCourses').innerHTML = all.map((c) => {
+  adminCourseRows = [...builtins, ...uploaded];
+  $('adminAllCoursesSub').textContent = `${adminCourseRows.length} 门`;
+  if (!adminCourseRows.length) { $('adminAllCourses').innerHTML = '<p class="admin-empty">还没有课程</p>'; return; }
+  $('adminAllCourses').innerHTML = adminCourseRows.map((c, index) => {
     const vid = c.current_version_id || c.latest_version_id || '';
     return `
     <div class="admin-row review-row">
       <div class="admin-row-main">
-        <span class="admin-row-title">${esc(c.title)} <span class="admin-role${c.status === 'published' ? ' is-admin' : ''}">${esc(COURSE_STATUS[c.status] || c.status)}</span></span>
+        <span class="admin-row-title">${esc(c.title)} <span class="admin-role${c.status === 'published' ? ' is-admin' : ''}">${esc(COURSE_STATUS[c.status] || c.status)}</span>${c.visible === false ? ' <span class="admin-role is-hidden">已隐藏</span>' : ''}</span>
         <span class="admin-row-meta">发布人 ${esc(c.publisher_name)} · ${esc(c.category || '未分类')} · ${fmtRel(c.updated_at)}</span>
       </div>
       <div class="review-actions">
-        ${c.id && vid ? `<button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${esc(c.course_key)}" data-cid="${c.id}" data-vid="${vid}">预览</button>` : ''}
-        ${c.id && c.status === 'published' ? `<button class="admin-mini-btn danger" type="button" data-act="takedown-course" data-cid="${c.id}" data-title="${esc(c.title)}">下架</button>` : ''}
+        ${c.id && vid ? `<button class="admin-mini-btn" type="button" data-act="preview-course" data-key="${escAttr(c.course_key)}" data-cid="${c.id}" data-vid="${vid}">预览</button>` : ''}
+        <button class="admin-mini-btn" type="button" data-act="edit-course" data-course-idx="${index}" data-course-ref="${escAttr(c.ref)}">${icon('square-pen', { size: 14 })} 编辑</button>
+        <button class="admin-mini-btn danger" type="button" data-act="delete-course" data-course-idx="${index}" data-course-ref="${escAttr(c.ref)}">${icon('trash-2', { size: 14 })} 删除</button>
+        ${c.id && c.status === 'published' ? `<button class="admin-mini-btn danger" type="button" data-act="takedown-course" data-cid="${c.id}" data-title="${escAttr(c.title)}">下架</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -334,6 +382,8 @@ function closeDrawer() {
 
 // ---------- 建号弹窗 ----------
 function openModal() {
+  $('adminModal').classList.remove('admin-course-modal');
+  $('adminModal').setAttribute('aria-label', '新建用户');
   $('adminModal').innerHTML = `
     <button class="admin-icon-btn admin-modal-close" type="button" data-act="close-modal" aria-label="关闭">${icon('x', { size: 18 })}</button>
     <p class="auth-eyebrow">管理员建号</p>
@@ -357,6 +407,9 @@ function openModal() {
 }
 function closeModal() {
   $('modalOverlay').classList.remove('show');
+  courseEditorRequestToken += 1;
+  if (courseEditorState?.previewObjectUrl) URL.revokeObjectURL(courseEditorState.previewObjectUrl);
+  courseEditorState = null;
   setTimeout(() => { $('modalOverlay').hidden = true; }, 200);
 }
 async function submitCreate(e) {
@@ -371,6 +424,208 @@ async function submitCreate(e) {
   });
   if (r.ok) { toast('已创建用户', { type: 'success' }); closeModal(); await loadAll(); }
   else { $('createMsg').textContent = r.json?.error?.message || '创建失败'; btn.disabled = false; }
+}
+
+function courseDisplayPreview(kind, value) {
+  const image = value.cover_image || value.coverDataUrl || '';
+  const coverText = value.cover_text || value.coverText || Array.from(value.title || '')[0] || '课';
+  return `<section class="admin-course-preview" data-preview="${escAttr(kind)}">
+    <p class="admin-preview-label">${kind === 'original' ? '原始展示' : '当前展示'}</p>
+    <div class="admin-preview-cover${image ? ' has-image' : ''}"${image ? ` data-preview-cover-url="${escAttr(image)}"` : ''}>
+      ${image ? '' : `<span data-preview-cover-text>${esc(coverText)}</span>`}
+    </div>
+    <div class="admin-preview-copy">
+      <strong data-preview-title>${esc(value.title || '')}</strong>
+      <span data-preview-subtitle>${esc(value.subtitle || '')}</span>
+      ${kind === 'current' ? `
+        <span data-preview-publisher>${esc(value.publisher_name || '未设置发布人')}</span>
+        <span data-preview-category>${esc(value.category || '未分类')}</span>
+        <span data-preview-visibility>${value.visible ? '公开可见' : '已隐藏'}</span>` : `
+        <span data-preview-author>${esc(value.author || '未署名')}</span>`}
+      <p data-preview-description>${esc(value.description || '')}</p>
+    </div>
+  </section>`;
+}
+
+function hydrateCoursePreviewImages(root) {
+  root.querySelectorAll('[data-preview-cover-url]').forEach((cover) => {
+    cover.style.backgroundImage = `url(${JSON.stringify(cover.dataset.previewCoverUrl)})`;
+  });
+}
+
+function currentCourseDisplay(form) {
+  const data = new FormData(form);
+  const original = courseEditorState.original;
+  const current = courseEditorState.current;
+  const mode = String(data.get('coverMode') || 'default');
+  const resolved = resolveCourseCover({
+    title: String(data.get('title') || '').trim(),
+    baseImage: original.cover_image || '',
+    baseText: original.cover_text || '',
+    mode,
+    image: courseEditorState.previewObjectUrl || current.cover_image || '',
+    text: String(data.get('coverText') || '').trim(),
+  });
+  return {
+    title: String(data.get('title') || '').trim(),
+    subtitle: String(data.get('subtitle') || '').trim(),
+    publisher_name: String(data.get('publisherName') || '').trim(),
+    category: String(data.get('category') || '').trim(),
+    visible: form.elements.visible.checked,
+    description: String(data.get('description') || '').trim(),
+    cover_image: resolved.coverUrl,
+    cover_text: resolved.coverText,
+  };
+}
+
+function updateCourseEditorPreview(form) {
+  const coverMode = String(new FormData(form).get('coverMode') || 'default');
+  form.querySelector('[data-cover-panel="image"]').hidden = coverMode !== 'image';
+  form.querySelector('[data-cover-panel="text"]').hidden = coverMode !== 'text';
+  const coverTextInput = form.elements.coverText;
+  const textLength = Array.from(coverTextInput.value.trim()).length;
+  $('coverTextCount').textContent = `${textLength} / 6`;
+  coverTextInput.setCustomValidity(
+    coverMode === 'text' && (textLength < 1 || textLength > 6) ? '文字封面须为 1–6 个字符' : '',
+  );
+  $('adminModal').querySelector('[data-preview="current"]').outerHTML = courseDisplayPreview('current', currentCourseDisplay(form));
+  hydrateCoursePreviewImages($('adminModal'));
+}
+
+function renderCourseEditor() {
+  const { current, original } = courseEditorState;
+  $('adminModal').classList.add('admin-course-modal');
+  $('adminModal').setAttribute('aria-label', `编辑课程：${current.title}`);
+  const categories = ['<option value="">未分类</option>', ...COURSE_CATEGORIES.map((category) => (
+    `<option value="${escAttr(category)}"${current.category === category ? ' selected' : ''}>${esc(category)}</option>`
+  ))].join('');
+  const coverMode = current.cover_mode || 'default';
+  $('adminModal').innerHTML = `
+    <button class="admin-icon-btn admin-modal-close" type="button" data-act="close-modal" aria-label="关闭">${icon('x', { size: 18 })}</button>
+    <p class="auth-eyebrow">课程管理</p>
+    <h3 class="admin-modal-title">编辑课程展示</h3>
+    <div class="admin-course-previews">
+      ${courseDisplayPreview('original', original)}
+      ${courseDisplayPreview('current', {
+        ...current,
+        cover_image: current.coverDataUrl || '',
+        cover_text: current.coverText || '',
+      })}
+    </div>
+    <form class="admin-form admin-course-form" id="courseEditForm">
+      <label>标题<input name="title" type="text" maxlength="120" value="${escAttr(current.title)}" required></label>
+      <label>副标题<input name="subtitle" type="text" maxlength="180" value="${escAttr(current.subtitle || '')}"></label>
+      <label>分类<select name="category" class="admin-select">${categories}</select></label>
+      <label>发布人（平台）<input name="publisherName" type="text" maxlength="120" value="${escAttr(current.publisher_name || '')}" required></label>
+      <label class="admin-form-wide">作者（内容署名）<input name="author" type="text" maxlength="120" value="${escAttr(current.author || '')}"></label>
+      <label class="admin-form-wide">简介<textarea name="description" maxlength="2000" rows="5">${esc(current.description || '')}</textarea></label>
+      <label class="admin-visibility-toggle admin-form-wide"><input name="visible" type="checkbox"${current.visible === false ? '' : ' checked'}>课程可见</label>
+      <fieldset class="admin-cover-fieldset admin-form-wide">
+        <legend>封面展示</legend>
+        <div class="admin-cover-segments">
+          <label><input name="coverMode" type="radio" value="default"${coverMode === 'default' ? ' checked' : ''}>原封面</label>
+          <label><input name="coverMode" type="radio" value="image"${coverMode === 'image' ? ' checked' : ''}>图片</label>
+          <label><input name="coverMode" type="radio" value="text"${coverMode === 'text' ? ' checked' : ''}>文字</label>
+        </div>
+        <label data-cover-panel="image">图片封面<input name="coverImage" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label data-cover-panel="text">文字封面<input name="coverText" type="text" value="${escAttr(current.cover_text || '')}" aria-describedby="coverTextCount"></label>
+        <span id="coverTextCount" class="admin-cover-count" aria-live="polite">0 / 6</span>
+      </fieldset>
+      <p class="admin-form-msg admin-form-wide" id="courseEditMsg"></p>
+      <div class="admin-form-actions admin-form-wide">
+        <button class="admin-tool-btn" type="button" data-act="close-modal">取消</button>
+        <button class="admin-tool-btn primary" type="submit">保存修改</button>
+      </div>
+    </form>`;
+  const form = $('courseEditForm');
+  form.addEventListener('submit', submitCourseEdit);
+  form.addEventListener('input', () => updateCourseEditorPreview(form));
+  form.addEventListener('change', (event) => {
+    if (event.target === form.elements.coverImage) {
+      if (courseEditorState.previewObjectUrl) URL.revokeObjectURL(courseEditorState.previewObjectUrl);
+      courseEditorState.selectedImage = form.elements.coverImage.files?.[0] || null;
+      courseEditorState.previewObjectUrl = courseEditorState.selectedImage
+        ? URL.createObjectURL(courseEditorState.selectedImage)
+        : '';
+    }
+    updateCourseEditorPreview(form);
+  });
+  updateCourseEditorPreview(form);
+  form.elements.title.focus();
+}
+
+async function openCourseModal(course) {
+  const requestToken = ++courseEditorRequestToken;
+  $('adminModal').classList.add('admin-course-modal');
+  $('adminModal').setAttribute('aria-label', `编辑课程：${course.title}`);
+  $('adminModal').innerHTML = `
+    <button class="admin-icon-btn admin-modal-close" type="button" data-act="close-modal" aria-label="关闭">${icon('x', { size: 18 })}</button>
+    <p class="admin-empty">正在加载课程展示信息…</p>`;
+  $('modalOverlay').hidden = false;
+  void $('modalOverlay').offsetWidth;
+  $('modalOverlay').classList.add('show');
+
+  let original = course.original;
+  let current = course;
+  if (course.id) {
+    const response = await api('GET', `/admin/courses/${encodeURIComponent(course.ref)}`);
+    if (requestToken !== courseEditorRequestToken) return;
+    if (!response.ok || !response.json?.original) {
+      toast(response.json?.error?.message || '加载课程详情失败', { type: 'error' });
+      closeModal();
+      return;
+    }
+    original = response.json.original;
+    current = {
+      ...course,
+      ...response.json.course,
+      ref: course.ref,
+      visible: response.json.course.visible !== 0,
+      cover_mode: response.json.course.cover_mode || 'default',
+      cover_image: response.json.course.cover_image || '',
+      cover_text: response.json.course.cover_text || '',
+    };
+  }
+  courseEditorState = {
+    ref: course.ref,
+    original,
+    current,
+    selectedImage: null,
+    previewObjectUrl: '',
+  };
+  renderCourseEditor();
+}
+
+async function submitCourseEdit(event) {
+  event.preventDefault();
+  const editorState = courseEditorState;
+  const requestToken = courseEditorRequestToken;
+  const ref = editorState?.ref;
+  if (!ref) return;
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const controls = [...form.querySelectorAll('input, select, textarea, button')];
+  controls.forEach((control) => { control.disabled = true; });
+  const payload = new FormData();
+  for (const name of ['title', 'subtitle', 'category', 'publisherName', 'author', 'description']) {
+    payload.set(name, String(data.get(name) || '').trim());
+  }
+  payload.set('visible', form.elements.visible.checked ? 'true' : 'false');
+  const coverMode = String(data.get('coverMode') || 'default');
+  payload.set('coverMode', coverMode);
+  payload.set('coverText', String(data.get('coverText') || '').trim());
+  const image = data.get('coverImage');
+  if (coverMode === 'image' && image instanceof File && image.size > 0) payload.set('coverImage', image);
+  const response = await apiForm('PATCH', `/admin/courses/${encodeURIComponent(ref)}`, payload);
+  if (courseEditorState !== editorState || courseEditorRequestToken !== requestToken || courseEditorState?.ref !== ref) return;
+  if (!response.ok) {
+    $('courseEditMsg').textContent = response.json?.error?.message || '保存失败';
+    controls.forEach((control) => { control.disabled = false; });
+    return;
+  }
+  toast('课程展示信息已更新', { type: 'success' });
+  closeModal();
+  await loadAll();
 }
 
 // ---------- CSV 导出 ----------
@@ -438,7 +693,7 @@ async function loadAll() {
   if (courses.ok) renderCourses(courses.json.courses || []);
   if (sessions.ok) renderSessions(sessions.json.sessions || []);
   if (pending.ok) renderPending(pending.json.items || []);
-  if (allCourses.ok) renderAllCourses(allCourses.json.courses || []);
+  if (allCourses.ok) renderAllCourses(allCourses.json.courses || [], allCourses.json.builtinOverrides || []);
   renderUserTable(users.json);
   if (audit.ok) renderAudit(audit.json.entries || []);
 }
@@ -463,6 +718,30 @@ function bindEvents() {
     if (act === 'export-csv') { exportCsv(); return; }
     if (act === 'page-prev') { state.page = Math.max(1, state.page - 1); loadUsers(); return; }
     if (act === 'page-next') { state.page += 1; loadUsers(); return; }
+
+    if (act === 'edit-course') {
+      const course = adminCourseRows[Number(el.dataset.courseIdx)];
+      if (course) openCourseModal(course);
+      return;
+    }
+    if (act === 'delete-course') {
+      const course = adminCourseRows[Number(el.dataset.courseIdx)];
+      if (!course) return;
+      const detail = course.status === 'builtin'
+        ? '该课程将从在线课程列表隐藏；离线默认包仍会保留。'
+        : '课程记录和已上传文件都将删除，此操作不可恢复。';
+      if (!confirm(`删除《${course.title}》？${detail}`)) return;
+      el.disabled = true;
+      const response = await api('DELETE', `/admin/courses/${encodeURIComponent(course.ref)}`);
+      if (!response.ok) {
+        toast(response.json?.error?.message || '删除课程失败', { type: 'error' });
+        el.disabled = false;
+        return;
+      }
+      toast('课程已删除', { type: 'success' });
+      await loadAll();
+      return;
+    }
 
     if (act === 'revoke-session') {
       const sid = Number(el.dataset.sid);

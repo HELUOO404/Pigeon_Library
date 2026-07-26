@@ -50,6 +50,17 @@ export async function apiUpload(path, formData) {
   }
 }
 
+export async function apiForm(method, path, formData) {
+  try {
+    const res = await fetch(API_BASE + path, { method, credentials: 'include', body: formData });
+    let json = null;
+    try { json = await res.json(); } catch { /* empty response */ }
+    return { ok: res.ok, status: res.status, json };
+  } catch {
+    return { ok: false, status: 0, json: null, networkError: true };
+  }
+}
+
 // 二进制下载(课程包字节):返回 {ok,status,bytes};bytes 为 Uint8Array,失败为 null。
 export async function apiBytes(path) {
   try {

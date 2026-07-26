@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "node-html-parser": "^6.1.13",
+    "playwright": "1.61.1",
     "vite": "^6.0.7"
   },
   "dependencies": {

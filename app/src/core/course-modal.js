@@ -5,6 +5,7 @@ import { icon } from './icons.js';
 import { toast } from './toast.js';
 import { isLoggedIn, getUser, isAdmin } from './session.js';
 import { promptLogin } from './auth-ui.js';
+import { firstCodePoint } from './course-overrides.js';
 import {
   getSocial, setRating, listComments, addComment, deleteComment,
   addToShelf, removeFromShelf,
@@ -106,7 +107,7 @@ function render() {
   const { card, social, shelved, loading } = current;
   const s = card.stats || {};
   const cover = card.coverDataUrl || '';
-  const coverText = card.coverText || (card.title || '?').slice(0, 1);
+  const coverText = card.coverText || firstCodePoint(card.title || '?');
   const publisher = card.publisherName || card.author || '未署名';
   const ratingLine = social
     ? `${starsStatic(social.avgRating)} <span class="detail-metric-num">${social.avgRating || '—'}</span> <span class="detail-metric-sub">(${social.ratingCount} 人评分)</span>`

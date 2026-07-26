@@ -8,7 +8,9 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch index.js",
-    "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.mjs"
+    "smoke": "node --disable-warning=ExperimentalWarning scripts/smoke.mjs",
+    "smoke:admin-courses": "node --disable-warning=ExperimentalWarning scripts/admin-course-metadata-smoke.mjs",
+    "test:admin-cover": "node --test tests/course-cover.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
