@@ -1,0 +1,2 @@
+courses/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
+dist-courses/**/*.mp4 filter=lfs diff=lfs merge=lfs -text

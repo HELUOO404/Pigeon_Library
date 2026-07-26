@@ -14,3 +14,32 @@ Thumbs.db
 .cache/
 # CLI 本地会话(含 cookie + 使用者自己的后端地址,语义同 server/.env,绝不提交)
 tools/.pigeon-cli.json
+
+# —— 课程内容与抓取数据(本地资产,不入库;部署时另行分发)——
+# courses/ 与 dist-courses/ 只保留入库示例(demo-course / ic-packaging),其余课程包不提交
+courses/*
+!courses/README.md
+!courses/demo-course/
+!courses/ic-packaging/
+dist-courses/*
+!dist-courses/README.md
+!dist-courses/demo-course.pigeon
+!dist-courses/ic-packaging.pigeon
+# dev 期拷入 app 的课程包副本(由脚本生成)
+app/courses/
+# 表格 QA 图片夹具(来自课程素材,不入库)
+app/public/qa/
+# 原站抓取数据与满分审计(约 5GB,只存本机)
+tools/autosmt-2026/reports/
+# 原始资料
+奥施特资料/
+
+# —— QA 运行产物(截图/结果 json;*.log 已全局忽略)——
+tools/autosmt-2026/qa/*.png
+tools/autosmt-2026/qa/*.json
+
+# —— 本地 agent/浏览器工作痕迹 ——
+.agents/
+.superpowers/
+.vite/
+.audit-*/
