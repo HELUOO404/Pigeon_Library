@@ -28,6 +28,12 @@ if (config.seedAdminUser && config.seedAdminPass && !users.byUsername(config.see
 
 const app = express();
 app.disable('x-powered-by');
+// 反代层数(TRUST_PROXY)。设了才认 X-Forwarded-For,req.ip 才是真实客户端 IP;
+// 不设则限流按反代地址归并,全站用户共用一个配额而互相误伤(见 config.trustProxy)。
+if (config.trustProxy !== '0') {
+  const hops = Number(config.trustProxy);
+  app.set('trust proxy', Number.isFinite(hops) && hops > 0 ? hops : config.trustProxy);
+}
 
 // CORS:仅放行白名单源;无 Origin(curl/同源/Node fetch)放行。携带 cookie。
 app.use(cors({

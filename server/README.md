@@ -83,6 +83,6 @@ slot 枚举:`progress | quiz | wrong | studyTime | simulations | theme | localCo
 
 - 密码 bcrypt 哈希,绝不存明文;登录失败统一 401(不泄漏用户名是否存在)。
 - 会话:随机 256-bit token + httpOnly cookie(生产 Secure);过期清理。
-- CORS 白名单 + `credentials`;`/api/auth/*` 基础限流。
+- CORS 白名单 + `credentials`;`/api/auth/*` 基础限流(每 IP 每分钟 20 次)。**反代部署须设 `.env` 的 `TRUST_PROXY=1`**,否则 `req.ip` 恒为反代地址,全站用户共用一个配额而互相误伤;直连公网保持 `0`,以免伪造 `X-Forwarded-For` 绕过限流。
 - state 一律按会话 `userId` 隔离,不信任请求里的任何用户标识。
 - **真实密钥/口令由你在 `.env` 配置,代码不内置。**

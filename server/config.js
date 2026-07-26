@@ -43,6 +43,9 @@ export const config = {
   maxPigeonBytes: 50 * 1024 * 1024, // 单个 .pigeon 上传上限(与格式上限一致)
   authRateWindowMs: 60 * 1000,
   authRateMax: 20,                  // 每 IP 每窗口的认证请求上限
+  // 前面隔了几层反向代理(IIS/Nginx)。反代部署必须设为 1,否则 req.ip 恒为反代地址,
+  // 限流会把所有用户算作同一个 IP 而互相误伤;直连公网保持 0,以免伪造 XFF 绕过限流。
+  trustProxy: process.env.TRUST_PROXY || '0',
 };
 
 // 合法 slot 枚举(与前端 store 对齐)。
