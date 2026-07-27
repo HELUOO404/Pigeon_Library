@@ -24,7 +24,12 @@ function loadDotEnv() {
 }
 loadDotEnv();
 
-const DATA_DIR = path.join(here, 'data');
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(here, process.env.DATA_DIR)
+  : path.join(here, 'data');
+const STATIC_DIR = process.env.STATIC_DIR
+  ? path.resolve(here, process.env.STATIC_DIR)
+  : '';
 
 export const config = {
   port: Number(process.env.PORT) || 8787,
@@ -37,6 +42,7 @@ export const config = {
   dataDir: DATA_DIR,
   dbPath: path.join(DATA_DIR, 'pglib.db'),
   coursesDir: path.join(DATA_DIR, 'courses'),  // 课程包文件存储根目录
+  staticDir: STATIC_DIR,                     // 可选:生产静态站目录;空值=仅 API
   cookieName: 'pglib_sess',
   bcryptRounds: 10,
   maxStateBytes: 256 * 1024,        // 单 slot data_json 上限
