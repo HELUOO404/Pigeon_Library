@@ -200,13 +200,14 @@ assert.match(root.html, /<[^>]*(?=[^>]*id="oxidation-tabs-panel-video")(?=[^>]*r
 assert.match(root.html, /<ol class="course-list">\s*<li>First <strong>preserved<\/strong><\/li>\s*<li>Second item<\/li>\s*<\/ol>/);
 
 // imageGroup: source order, alt text, optional caption, and resolved local assets are retained.
-assert.match(root.html, /<div class="image-group">\s*<figure><img[^>]*src="blob:native\/assets\/images\/oxidation-a.png"[^>]*alt="Oxidation specimen A"[^>]*><figcaption>First specimen<\/figcaption><\/figure>\s*<figure><img[^>]*src="blob:native\/assets\/images\/oxidation-b.png"[^>]*alt="Oxidation specimen B"[^>]*><\/figure>\s*<\/div>/);
+assert.match(root.html, /<div class="image-group">[^]*data-src="blob:native\/assets\/images\/oxidation-a\.png"[^]*alt="Oxidation specimen A"[^]*<figcaption>First specimen<\/figcaption>[^]*data-src="blob:native\/assets\/images\/oxidation-b\.png"[^]*alt="Oxidation specimen B"[^]*<\/div>/);
+assert.doesNotMatch(root.html, /<img[^>]*\ssrc="blob:native\/assets\/images\//);
 
 // paramsTable: old string cells remain valid, while rich cells retain table semantics and media.
 assert.match(root.html, /<th(?=[^>]*scope="col")[^>]*>Process<\/th>/);
 assert.match(root.html, /<th(?=[^>]*scope="row")(?=[^>]*rowspan="2")[^>]*>Oxidation<\/th>/);
 assert.match(root.html, /<td(?=[^>]*colspan="2")(?=[^>]*data-label="Evidence")[^>]*><strong>Measured <\/strong>result<\/td>/);
-assert.match(root.html, /<td(?=[^>]*colspan="2")(?=[^>]*data-label="Evidence")[^>]*><img(?=[^>]*src="blob:native\/assets\/images\/temperature.png")(?=[^>]*alt="Temperature profile")[^>]*><\/td>/);
+assert.match(root.html, /<td(?=[^>]*colspan="2")(?=[^>]*data-label="Evidence")[^>]*>[^]*?data-src="blob:native\/assets\/images\/temperature\.png"[^]*?alt="Temperature profile"[^]*?<\/td>/);
 
 const output = parse(root.html);
 
@@ -218,7 +219,7 @@ const equipmentCell = equipmentTable.querySelector('tbody td[rowspan="2"]:last-c
 assert.ok(equipmentCell);
 assert.ok(equipmentCell.querySelector('.params-table-cell-images'));
 assert.deepEqual(equipmentCell.querySelectorAll('img').map((image) => ({
-  src: image.getAttribute('src'),
+  src: image.getAttribute('data-src'),
   alt: image.getAttribute('alt'),
 })), [
   { src: 'blob:native/assets/images/spinner.png', alt: 'Spinner' },
@@ -333,15 +334,14 @@ const tableGroupedImage = output.querySelectorAll('img').find((image) => image.g
 for (const image of [nativeImage, groupedImage, tableImage, tableGroupedImage]) {
   assert.ok(image);
   assert.equal(Object.hasOwn(image.attributes, 'onload'), false);
-  assert.match(image.getAttribute('src'), /^blob:native\//);
+  assert.match(image.getAttribute('data-src'), /^blob:native\//);
 }
-const video = output.querySelector('video');
-assert.equal(Object.hasOwn(video.attributes, 'onload'), false);
-assert.equal(Object.hasOwn(video.querySelector('source').attributes, 'onload'), false);
-assert.equal(Object.hasOwn(video.querySelector('track').attributes, 'onload'), false);
-assert.match(video.getAttribute('poster'), /^blob:native\//);
-assert.match(video.querySelector('source').getAttribute('src'), /^blob:native\//);
-assert.match(video.querySelector('track').getAttribute('src'), /^blob:native\//);
+const videoGate = output.querySelector('[data-action="load-course-video"]');
+assert.ok(videoGate);
+assert.equal(output.querySelector('video'), null);
+assert.match(videoGate.getAttribute('data-poster'), /^blob:native\//);
+assert.match(videoGate.getAttribute('data-src'), /^blob:native\//);
+assert.match(videoGate.getAttribute('data-captions'), /^blob:native\//);
 
 // Mobile layout must retain the control and table semantics without horizontal scrolling.
 const learnCss = readFileSync(path.join(ROOT, 'app', 'src', 'styles', 'learn.css'), 'utf8');

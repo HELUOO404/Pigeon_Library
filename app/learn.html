@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="css-pending">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PigeonLib</title>
   <link rel="icon" type="image/svg+xml" href="/brand-logo.svg">
+  <style>html{background:#f4efe2}html.css-pending body>*{visibility:hidden}html.css-pending body::before{content:"PigeonLib · 课程正在拆封…";visibility:visible;position:fixed;inset:0;display:grid;place-items:center;color:#6b6254;font:600 13px ui-monospace,monospace;letter-spacing:.06em}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/src/styles/learn.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>html.css-pending body>*{visibility:visible}html.css-pending body::before{display:none}</style></noscript>
+  <link rel="stylesheet" href="/src/styles/learn.css" onload="document.documentElement.classList.remove('css-pending')">
 </head>
 <body>
   <div class="header">

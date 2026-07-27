@@ -77,9 +77,10 @@ const legacyVideo = legacyTable.querySelector('video');
 assert.equal(legacyVideo.getAttribute('poster'), 'blob:qa/assets/images/legacy-poster.png');
 assert.equal(legacyVideo.querySelector('source').getAttribute('src'), 'blob:qa/assets/media/legacy.mp4');
 assert.equal(legacyVideo.querySelector('track').getAttribute('src'), 'blob:qa/assets/media/legacy.vtt');
-assert.match(root.html, /src="blob:qa\/assets\/media\/lecture.m4v"/);
-assert.match(root.html, /poster="blob:qa\/assets\/images\/poster.png"/);
-assert.match(root.html, /src="blob:qa\/assets\/media\/lecture.vtt"/);
+assert.match(root.html, /data-src="blob:qa\/assets\/media\/lecture.m4v"/);
+assert.match(root.html, /data-poster="blob:qa\/assets\/images\/poster.png"/);
+assert.match(root.html, /data-captions="blob:qa\/assets\/media\/lecture.vtt"/);
+assert.doesNotMatch(root.html, /<figure class="course-video"[^]*?<video/);
 
 const sandboxMarkup = renderSandboxBlock({
   type: 'sandbox',

@@ -141,10 +141,24 @@ function serveBuiltinCourse() {
   }
 }
 
+function preserveCssGate() {
+  return {
+    name: 'preserve-css-gate',
+    enforce: 'post',
+    transformIndexHtml(html) {
+      if (!html.includes('class="css-pending"')) return html
+      return html.replace(
+        /<link rel="stylesheet" crossorigin href="(\/assets\/[^"]+\.css)">/,
+        '<link rel="stylesheet" crossorigin href="$1" onload="document.documentElement.classList.remove(\'css-pending\')">',
+      )
+    },
+  }
+}
+
 export default defineConfig({
   root: '.',
   publicDir: 'public',
-  plugins: [serveBuiltinCourse()],
+  plugins: [serveBuiltinCourse(), preserveCssGate()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,

@@ -8,7 +8,7 @@ import { icon, hydrateIcons } from './core/icons.js';
 import { initSession, api } from './core/session.js';
 import { initSync } from './core/sync.js';
 import { initAuthUI } from './core/auth-ui.js';
-import { activateContentTab, markMastered, markRead, renderCourseContent, sandboxTokenSnapshot } from './render/content-renderer.js';
+import { activateContentTab, initDeferredMedia, markMastered, markRead, renderCourseContent, sandboxTokenSnapshot } from './render/content-renderer.js';
 import { initExamEngine, backToStudy, exitExam, nextExamQuestion, openExam, prevExamQuestion, selectExamOption, selectMatchLeft, selectMatchRight, setExamChapter, sortDragStart, sortDrop, startCustomExam, startExam } from './render/exam-engine.js';
 import { bindTooltipEvents, initGlossary, initTermTips, navigateToTerm, processTermTips } from './render/glossary.js';
 import { closePanel, handlePanelAction, initPanels, openPanel } from './render/panels.js';
@@ -366,6 +366,28 @@ function bindEvents() {
       if (!expanded) closeStepSimulationFullscreen(store); // 收卡时退出仿真全屏
     } else if (action === 'mark-mastered') markMastered(target.dataset.kpId, target, store, refreshProgress);
     else if (action === 'switch-content-tab') activateContentTab(target);
+    else if (action === 'load-course-video') {
+      const figure = target.closest('.course-video');
+      if (!figure) return;
+      const video = document.createElement('video');
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      if (target.dataset.poster) video.poster = target.dataset.poster;
+      const source = document.createElement('source');
+      source.src = target.dataset.src;
+      video.append(source);
+      if (target.dataset.captions) {
+        const track = document.createElement('track');
+        track.kind = 'captions';
+        track.src = target.dataset.captions;
+        track.default = true;
+        video.append(track);
+      }
+      figure.dataset.videoState = 'loaded';
+      target.closest('.course-video-gate')?.replaceWith(video);
+      video.play().catch(() => {});
+    }
     else if (action === 'select-quiz') selectOpt(target);
     else if (action === 'submit-quiz') submitQuiz(target.dataset.qid);
     else if (action === 'open-panel') openPanel(target.dataset.panel);
@@ -635,6 +657,7 @@ async function main() {
   });
   renderSidebar(document.getElementById('sidebar'), course.manifest, store, currentChapter, currentSection);
   renderCourseContent(document.getElementById('main'), course, store);
+  initDeferredMedia(document.getElementById('main'));
   if (currentChapter !== course.manifest.chapters[0]?.id) {
     document.querySelectorAll('.chapter-content').forEach((chapter) => {
       chapter.style.display = chapter.id === `ch-${currentChapter}` ? 'block' : 'none';

@@ -313,12 +313,12 @@ function renderTableCellContent(cell, course) {
   if (Array.isArray(cell.images) && cell.images.length) {
     const images = cell.images
       .filter((image) => image && typeof image === 'object' && typeof image.src === 'string' && image.src)
-      .map((image) => `<img loading="lazy" onerror="this.style.display='none'" src="${escapeAttr(course.resolveAsset(image.src))}" alt="${escapeAttr(image.alt || '')}">`)
+      .map((image) => deferredImage(course.resolveAsset(image.src), image.alt || '', 'params-table-media'))
       .join('');
     return `${content}${images ? `<div class="params-table-cell-images">${images}</div>` : ''}`;
   }
   const image = cell.image?.src
-    ? `<img loading="lazy" onerror="this.style.display='none'" src="${escapeAttr(course.resolveAsset(cell.image.src))}" alt="${escapeAttr(cell.image.alt || '')}">`
+    ? deferredImage(course.resolveAsset(cell.image.src), cell.image.alt || '', 'params-table-media')
     : '';
   return `${content}${image}`;
 }
@@ -448,11 +448,74 @@ function renderList(block) {
   return `<${tag} class="course-list">${(block.items || []).map((item) => `<li>${renderSpans(item)}</li>`).join('')}</${tag}>`;
 }
 
+function deferredImage(src, alt = '', className = '') {
+  return `<span class="media-placeholder ${escapeAttr(className)}" data-media-state="pending"><img class="deferred-image" data-src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" decoding="async"><span class="media-placeholder-label" aria-hidden="true">图片正在投递…</span></span>`;
+}
+
+export function initDeferredMedia(root = document) {
+  for (const image of root.querySelectorAll('.course-html img[src]')) {
+    if (image.closest('.media-placeholder')) continue;
+    const placeholder = document.createElement('span');
+    placeholder.className = 'media-placeholder course-image';
+    placeholder.dataset.mediaState = 'pending';
+    const label = document.createElement('span');
+    label.className = 'media-placeholder-label';
+    label.setAttribute('aria-hidden', 'true');
+    label.textContent = '图片正在投递…';
+    image.dataset.src = image.getAttribute('src');
+    image.removeAttribute('src');
+    image.removeAttribute('loading');
+    image.classList.add('deferred-image');
+    image.before(placeholder);
+    placeholder.append(image, label);
+  }
+  const placeholders = [...root.querySelectorAll('.media-placeholder[data-media-state="pending"]')];
+  if (!placeholders.length) return;
+  const load = (placeholder) => {
+    if (placeholder.dataset.mediaState !== 'pending') return;
+    const image = placeholder.querySelector('img[data-src]');
+    if (!image) return;
+    placeholder.dataset.mediaState = 'loading';
+    image.addEventListener('load', () => { placeholder.dataset.mediaState = 'loaded'; }, { once: true });
+    image.addEventListener('error', () => {
+      placeholder.dataset.mediaState = 'error';
+      const label = placeholder.querySelector('.media-placeholder-label');
+      if (label) label.textContent = '图片投递失败 · 点击重试';
+      image.removeAttribute('src');
+      image.dataset.retry = '1';
+    }, { once: true });
+    image.src = image.dataset.src;
+  };
+  if (!('IntersectionObserver' in window)) {
+    placeholders.forEach(load);
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      observer.unobserve(entry.target);
+      load(entry.target);
+    }
+  }, { rootMargin: '800px 0px' });
+  placeholders.forEach((placeholder) => {
+    placeholder.addEventListener('click', () => {
+      if (placeholder.dataset.mediaState !== 'error') return;
+      placeholder.dataset.mediaState = 'pending';
+      const image = placeholder.querySelector('img[data-src]');
+      const label = placeholder.querySelector('.media-placeholder-label');
+      if (label) label.textContent = '图片正在重新投递…';
+      if (image) delete image.dataset.retry;
+      load(placeholder);
+    });
+    observer.observe(placeholder);
+  });
+}
+
 function renderImageGroup(block, course) {
   return `<div class="image-group">${(block.images || []).map((image) => {
     const src = course.resolveAsset(image.src);
     const caption = image.caption == null ? '' : `<figcaption>${escapeHtml(image.caption)}</figcaption>`;
-    return `<figure><img loading="lazy" onerror="this.style.display='none'" src="${escapeAttr(src)}" alt="${escapeAttr(image.alt || '')}">${caption}</figure>`;
+    return `<figure>${deferredImage(src, image.alt || '')}${caption}</figure>`;
   }).join('')}</div>`;
 }
 
@@ -522,7 +585,7 @@ function renderBlock(block, course, allowTabSet = true) {
       return `<h4>${escapeHtml(block.text || '')}</h4>`;
     case 'image': {
       const src = course.resolveAsset(block.src);
-      return `<img loading="lazy" onerror="this.style.display='none'" src="${escapeAttr(src)}" alt="${escapeAttr(block.alt || '')}" style="max-width:100%;margin:8px auto;display:block">`;
+      return deferredImage(src, block.alt || '', 'course-image');
     }
     case 'imageGroup':
       return renderImageGroup(block, course);
@@ -550,7 +613,7 @@ function renderBlock(block, course, allowTabSet = true) {
       const src = course.resolveAsset(block.src);
       const poster = block.poster ? course.resolveAsset(block.poster) : '';
       const captions = block.captions ? course.resolveAsset(block.captions) : '';
-      return `<figure class="course-video"><figcaption>${escapeHtml(block.title || '')}</figcaption><video controls playsinline preload="metadata" ${poster ? `poster="${escapeAttr(poster)}"` : ''}><source src="${escapeAttr(src)}">${captions ? `<track kind="captions" src="${escapeAttr(captions)}" default>` : ''}</video></figure>`;
+      return `<figure class="course-video" data-video-state="idle"><figcaption>${escapeHtml(block.title || '')}</figcaption><div class="course-video-gate"><button type="button" class="course-video-load" data-action="load-course-video" data-src="${escapeAttr(src)}"${poster ? ` data-poster="${escapeAttr(poster)}"` : ''}${captions ? ` data-captions="${escapeAttr(captions)}"` : ''}>${icon('play')}<span>加载并播放视频</span><small>点击后才使用网络流量</small></button></div></figure>`;
     }
     case 'stepSimulation':
       return renderStepSimulation(block, course);
