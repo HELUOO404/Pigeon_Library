@@ -23,6 +23,7 @@ assert.equal(existsSync(output), false, `Refusing to overwrite existing fixture 
 
 try {
   mkdirSync(path.join(source, 'assets', 'media'), { recursive: true });
+  mkdirSync(path.join(source, 'assets', 'images'), { recursive: true });
   mkdirSync(path.join(source, 'assets', 'simulations', 'demo'), { recursive: true });
   writeFileSync(path.join(source, 'manifest.json'), JSON.stringify({
     schemaVersion: 1,
@@ -37,12 +38,14 @@ try {
         title: 'Point',
         blocks: [
           { type: 'video', src: 'assets/media/a.php' },
+          { type: 'image', src: 'assets/images/figure.png', alt: 'Figure' },
           { type: 'sandbox', html: '<script src="assets/simulations/demo/runtime.js"></script>', dependencies: ['assets/simulations/demo/data.json'] },
         ],
       },
     },
   }));
   writeFileSync(path.join(source, 'assets', 'media', 'a.php'), new Uint8Array([0, 1, 2, 3]));
+  writeFileSync(path.join(source, 'assets', 'images', 'figure.png'), new Uint8Array([137, 80, 78, 71]));
   writeFileSync(path.join(source, 'assets', 'simulations', 'demo', 'runtime.js'), 'fetch("./data.json")');
   writeFileSync(path.join(source, 'assets', 'simulations', 'demo', 'data.json'), '{"ok":true}');
 
@@ -54,15 +57,18 @@ try {
   const manifest = JSON.parse(strFromU8(deployment['manifest.json']));
   assert.equal(manifest.assetBase, `/courses/${courseId}/`);
   assert.equal(deployment['assets/media/a.php'], undefined);
+  assert.equal(deployment['assets/images/figure.png'], undefined);
   assert.equal(deployment['assets/simulations/demo/runtime.js'], undefined);
   assert.ok(backup['assets/media/a.php']);
+  assert.ok(backup['assets/images/figure.png']);
   assert.ok(backup['assets/simulations/demo/runtime.js']);
   assert.ok(existsSync(path.join(output, 'assets', 'media', 'a.php')));
+  assert.ok(existsSync(path.join(output, 'assets', 'images', 'figure.png')));
   assert.ok(existsSync(path.join(output, 'assets', 'simulations', 'demo', 'data.json')));
   const report = JSON.parse(readFileSync(path.join(output, 'delivery-manifest.json'), 'utf8'));
   assert.equal(report.resourceClosure.missing.length, 0);
   assert.equal(report.resourceClosure.external.length, 0);
-  assert.equal(report.deployment.externalAssets.length, 3);
+  assert.equal(report.deployment.externalAssets.length, 4);
   assert.match(report.deployment.sha256, /^[a-f0-9]{64}$/);
   console.log('course-delivery: ok');
 } finally {

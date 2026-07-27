@@ -80,7 +80,16 @@ app.use('/api/admin', adminRouter);
 // 生产可选:同一 Node 进程托管 Vite 静态产物,避免额外 IIS/桌面窗口。
 // API 路由已在前,未知 /api 请求不会落到 HTML;其余路径按文件名或首页返回。
 if (config.staticDir && fs.existsSync(config.staticDir)) {
-  app.use(express.static(config.staticDir, { index: false, fallthrough: true }));
+  app.use(express.static(config.staticDir, {
+    index: false,
+    fallthrough: true,
+    setHeaders(res, file) {
+      const rel = path.relative(config.staticDir, file).replaceAll('\\', '/');
+      if (rel.startsWith('assets/') || /^courses\/.*(?:\.pigeon|\/assets\/)/.test(rel)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  }));
   app.get(/^\/(?!api(?:\/|$)).*/, (req, res) => {
     if (path.extname(req.path)) return res.status(404).end();
     return res.sendFile(path.join(config.staticDir, 'index.html'));

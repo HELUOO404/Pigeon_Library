@@ -182,6 +182,7 @@ const sourceInventory = walk(courseDir).map((file) => {
   const relative = relativeTo(courseDir, file);
   return { file, relative, size: statSync(file).size };
 });
+const referencedAssets = new Set(references.map(cleanReference).filter((reference) => reference.startsWith('assets/')));
 const backupPlan = portableBackupPlan(sourceInventory, MAX_PORTABLE_BYTES);
 const fullEntries = backupPlan.skip ? null : {};
 const deploymentEntries = {};
@@ -191,8 +192,10 @@ for (const item of sourceInventory) {
   item.sha256 = sha256(bytes);
   const entry = usesStoredCompression(item.relative) ? [new Uint8Array(bytes), { level: 0 }] : new Uint8Array(bytes);
   if (fullEntries) fullEntries[item.relative] = entry;
-  if (item.relative.startsWith('assets/media/') || item.relative.startsWith('assets/simulations/')) {
-    externalAssets.push({ path: item.relative, bytes: item.size, sha256: item.sha256 });
+  if (item.relative.startsWith('assets/')) {
+    if (referencedAssets.has(item.relative)) {
+      externalAssets.push({ path: item.relative, bytes: item.size, sha256: item.sha256 });
+    }
   } else {
     deploymentEntries[item.relative] = entry;
   }

@@ -42,7 +42,7 @@
 | 2026职业赛道初赛IC器件 | 2–3 | 42 | 85 | paramSelect×2（含工程1/2 仿真图 20+9 张） + stepSimulation×10 |
 | 2026职业赛道初赛IC封装 | 4–6 | 45 | 101 | paramSelect×9（含工程6 仿真图 2 张） + stepSimulation×6 |
 
-- 分离部署包在 `dist-courses/2026-vocational-preliminary/<id>/`（媒体走 `assetBase` 外置）；`.full.pigeon` 备份因超加载器 1GB 上限跳过（delivery-manifest 有记录）。
+- 分离部署包在 `dist-courses/2026-vocational-preliminary/<id>/`（全部 `assets/` 走 `assetBase` 外置，web `.pigeon` 仅保留 JSON/manifest；图片/视频按需加载）；`.full.pigeon` 备份因超加载器 1GB 上限跳过（delivery-manifest 有记录）。
 - 三门课已登记为内置课程（`app/src/core/course-registry.js`），dev/构建产物直接可学；浏览器冒烟通过（标题/章节/知识卡/交互块渲染，无加载失败）；工程仿真按钮回归验证通过（填满即出现 + 点开显示真实结果图，见截图核验记录）。
 
 ## 已知缺口（正式收尾前必须处理）

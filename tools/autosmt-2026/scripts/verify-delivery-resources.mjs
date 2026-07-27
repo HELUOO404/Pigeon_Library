@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const utf8 = new TextDecoder('utf-8', { fatal: true });
-const ALLOWED_EXTERNAL_ROOTS = ['assets/media/', 'assets/simulations/'];
+const ALLOWED_EXTERNAL_ROOTS = ['assets/'];
 
 function within(base, candidate) {
   const delta = path.relative(base, candidate);
@@ -91,6 +91,18 @@ function validateIsoBmff(file) {
 
 function validateExternalFormat(file) {
   const extension = path.extname(file).toLowerCase();
+  if (['.png', '.jpg', '.jpeg', '.webp', '.bmp'].includes(extension)) {
+    const bytes = readFileSync(file);
+    const valid = extension === '.png'
+      ? bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      : ['.jpg', '.jpeg'].includes(extension)
+        ? bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+        : extension === '.webp'
+          ? bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP'
+          : bytes.subarray(0, 2).toString('ascii') === 'BM';
+    if (!valid) throw new Error(`invalid ${extension.slice(1).toUpperCase()} signature`);
+    return;
+  }
   if (['.mp4', '.m4v', '.mov'].includes(extension)) {
     validateIsoBmff(file);
     return;
