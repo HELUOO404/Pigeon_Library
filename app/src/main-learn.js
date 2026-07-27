@@ -600,15 +600,18 @@ function switchSandboxMode(button) {
 
 async function main() {
   hydrateIcons();                       // 顶栏/工具/计时等静态 chrome 的 SVG 图标
-  await initSession();                  // 确认登录态(无后端则访客);须在 createStore 之前确定命名空间
+  const sessionReady = initSession();   // 与课程包并行加载;createStore 前再等它确定命名空间
   const params = new URLSearchParams(location.search);
-  const courseId = params.get('course') || 'ic-packaging';
+  const courseId = params.get('course') || '2026-ic-manufacturing';
   const srcId = params.get('src');
   const versionId = params.get('v');
   const isPreview = params.get('preview') === '1';
   const target = params.get('section');
   try {
-    course = await loadCourse(courseId, srcId, versionId);
+    [course] = await Promise.all([
+      loadCourse(courseId, srcId, versionId),
+      sessionReady,
+    ]);
   } catch (err) {
     document.getElementById('main').innerHTML = `<div class="overview-card"><h2>课程加载失败</h2><p>${pigeonErrorText(err)}</p></div>`;
     throw err;

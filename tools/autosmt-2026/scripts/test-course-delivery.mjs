@@ -52,10 +52,12 @@ try {
   const result = spawnSync(process.execPath, [builder, courseId], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   const deploymentPath = path.join(output, `${courseId}.pigeon`);
+  const webDeploymentPath = path.join(output, `${courseId}.web.pigeon.zip`);
   const deployment = unzipSync(new Uint8Array(readFileSync(deploymentPath)));
   const backup = unzipSync(new Uint8Array(readFileSync(full)));
   const manifest = JSON.parse(strFromU8(deployment['manifest.json']));
   assert.equal(manifest.assetBase, `/courses/${courseId}/`);
+  assert.deepEqual(readFileSync(webDeploymentPath), readFileSync(deploymentPath));
   assert.equal(deployment['assets/media/a.php'], undefined);
   assert.equal(deployment['assets/images/figure.png'], undefined);
   assert.equal(deployment['assets/simulations/demo/runtime.js'], undefined);

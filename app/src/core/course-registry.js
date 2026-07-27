@@ -15,7 +15,7 @@ export const BUILTIN_COURSES = [
   // 2026 职业赛道初赛(分离部署包:媒体走 assetBase 外置目录)
   {
     id: '2026-ic-manufacturing',
-    url: 'courses/2026-vocational-preliminary/2026-ic-manufacturing/2026-ic-manufacturing.pigeon?v=2026.1.1',
+    url: 'courses/2026-vocational-preliminary/2026-ic-manufacturing/2026-ic-manufacturing.web.pigeon.zip?v=2026.1.1',
     title: '2026职业赛道初赛IC制造',
     subtitle: '2026 职业赛道初赛',
     description: '2026职业赛道初赛IC制造 — 由 AutoSMT 原站满分验证内容逐字转化。',
@@ -26,7 +26,7 @@ export const BUILTIN_COURSES = [
   },
   {
     id: '2026-ic-packaging',
-    url: 'courses/2026-vocational-preliminary/2026-ic-packaging/2026-ic-packaging.pigeon?v=2026.1.1',
+    url: 'courses/2026-vocational-preliminary/2026-ic-packaging/2026-ic-packaging.web.pigeon.zip?v=2026.1.1',
     title: '2026职业赛道初赛IC封装',
     subtitle: '2026 职业赛道初赛',
     description: '2026职业赛道初赛IC封装 — 由 AutoSMT 原站满分验证内容逐字转化。',
@@ -37,7 +37,7 @@ export const BUILTIN_COURSES = [
   },
   {
     id: '2026-ic-devices',
-    url: 'courses/2026-vocational-preliminary/2026-ic-devices/2026-ic-devices.pigeon?v=2026.1.1',
+    url: 'courses/2026-vocational-preliminary/2026-ic-devices/2026-ic-devices.web.pigeon.zip?v=2026.1.1',
     title: '2026职业赛道初赛IC器件',
     subtitle: '2026 职业赛道初赛',
     description: '2026职业赛道初赛IC器件 — 由 AutoSMT 原站满分验证内容逐字转化。',

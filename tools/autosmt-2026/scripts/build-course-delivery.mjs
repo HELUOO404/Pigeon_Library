@@ -217,9 +217,12 @@ rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(outputDir, { recursive: true });
 const fullPath = path.join(outputRoot, `${courseId}.full.pigeon`);
 const deploymentPath = path.join(outputDir, `${courseId}.pigeon`);
+const webDeploymentPath = path.join(outputDir, `${courseId}.web.pigeon.zip`);
 if (!fullTooLarge) writeFileSync(fullPath, fullArchive);
 else rmSync(fullPath, { force: true });
 writeFileSync(deploymentPath, deploymentArchive);
+// Cloudflare 默认不缓存自定义 .pigeon 扩展名；同字节 .zip 别名供 web registry 使用。
+writeFileSync(webDeploymentPath, deploymentArchive);
 
 for (const asset of externalAssets) {
   const source = path.join(courseDir, asset.path);
@@ -238,6 +241,7 @@ const report = {
   resourceClosure: { references: references.length, missing: [], external: [] },
   deployment: {
     package: relativeTo(ROOT, deploymentPath),
+    webPackage: relativeTo(ROOT, webDeploymentPath),
     bytes: deploymentArchive.byteLength,
     sha256: sha256(deploymentArchive),
     assetBase: deploymentManifest.assetBase,
