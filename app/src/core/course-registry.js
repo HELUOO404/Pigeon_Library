@@ -12,17 +12,6 @@ const STORE = 'packages'; // { id, name, bytes(ArrayBuffer), meta, addedAt }
 
 // 内置课程:随站发布。base 由调用方传入(支持子路径部署)。
 export const BUILTIN_COURSES = [
-  {
-    id: 'ic-packaging',
-    url: 'courses/ic-packaging.pigeon',
-    title: 'IC封装技术',
-    subtitle: '集创赛备考 · 微电子封装工艺',
-    description: '面向集创赛与微电子方向的封装工艺速成课。系统梳理 IC 封装制程、引线贴装键合与立体封装,覆盖 PTH/SMD/BGA 等封装类型、SOP/BGA 表贴与晶圆级/系统级封装工艺,并带你走进封装实验工厂与量产工厂。每节配知识卡片、小节小测与章节考试,适合备赛冲刺与工艺入门系统打底。',
-    author: 'PigeonLib',
-    stats: { chapters: 3, knowledgePoints: 25, questions: 120 },
-    coverUrl: '/courses/ic-packaging-cover.png',
-    builtin: true,
-  },
   // 2026 职业赛道初赛(分离部署包:媒体走 assetBase 外置目录)
   {
     id: '2026-ic-manufacturing',
