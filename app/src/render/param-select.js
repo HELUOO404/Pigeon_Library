@@ -3,6 +3,7 @@
 //   下拉任意顺序填写 → 全填后统一提交计分;仿真按钮覆盖的参数区间(paramRange)全填后出现
 //   (与对错无关,忠实原站),点击展开原站已验证的结果图(images,非交互 sandbox)。
 import { escapeHtml } from './utils.js';
+import { deferredImage, initDeferredMedia } from './deferred-media.js';
 
 const blocks = new Map();
 const memoryStates = new Map();   // 访客 store 不持久化(get 恒返回 fallback),练习状态会话内暂存
@@ -132,7 +133,7 @@ function mergedValueHtml(value, course) {
     return `<div class="param-select-merged-images">${images.map((image) => {
       const src = typeof image === 'string' ? image : image?.src;
       const alt = typeof image === 'string' ? '' : image?.alt || '';
-      return src ? `<img loading="lazy" src="${escapeHtml(course.resolveAsset(src))}" alt="${escapeHtml(alt)}">` : '';
+      return src ? deferredImage(course.resolveAsset(src), alt, 'param-select-option-media') : '';
     }).join('')}</div>`;
   }
   return typeof value === 'string' || typeof value === 'number' ? escapeHtml(String(value)) : '';
@@ -315,7 +316,7 @@ function renderSimulations(id, block, course, state) {
       if (!src) return '';
       const alt = typeof image === 'string' ? sim.label || '' : image.alt || sim.label || '';
       const caption = typeof image === 'string' ? '' : image.caption || '';
-      return `<figure class="param-select-sim-figure"><img loading="lazy" src="${escapeHtml(course.resolveAsset(src))}" alt="${escapeHtml(alt)}">${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''}</figure>`;
+      return `<figure class="param-select-sim-figure">${deferredImage(course.resolveAsset(src), alt, 'param-select-sim-media')}${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''}</figure>`;
     }).join('');
     return `<div class="param-select-sim" data-sim="${index}">
       <button type="button" class="param-select-sim-toggle ${isOpen ? 'open' : ''}" data-action="param-sim-toggle" data-param-id="${escapeHtml(id)}" data-sim="${index}">${escapeHtml(sim.label || '仿真')}</button>
@@ -365,6 +366,8 @@ function replaceBlock(id, store) {
   const focusRepresentation = activeElement?.closest?.('.param-select-mobile') ? '.param-select-mobile' : '.param-select-table-wrap';
   const focusSelector = active?.param && active?.paramId === id ? `[data-param="${CSS.escape(active.param)}"]` : '';
   root.outerHTML = renderBlockHtml(entry.block, entry.course, stateFor(id, store));
+  const replacement = document.querySelector(`.param-select[data-param-id="${CSS.escape(id)}"]`);
+  if (replacement) initDeferredMedia(replacement);
   if (focusSelector) {
     document.querySelector(`.param-select[data-param-id="${CSS.escape(id)}"] ${focusRepresentation} ${focusSelector}`)?.focus({ preventScroll: true });
   }
