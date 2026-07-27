@@ -44,6 +44,7 @@ There is currently no approved full-course generation script. The retired `archi
 - `scripts/test-offline-content-renderer.mjs`: verifies package-relative HTML resources using both quote styles and local video asset resolution.
 - `scripts/test-fidelity-media.mjs`: verifies that the project fidelity gate covers video titles, HTML/sandbox visible text, and step questions/options stored in source-page scripts.
 - `scripts/test-course-delivery.mjs`: builds and removes a temporary course to verify resource-closure checks, split asset delivery (all `assets/` paths, including images/media/simulations), the full backup, assetBase, and SHA-256 reporting.
+- `scripts/optimize-delivery-images.py`: after delivery build, generates lossless `.webp` siblings for PNG/JPEG/BMP images; the web renderer prefers these variants and falls back to originals. Requires Pillow.
 - `scripts/capture-runtime-qa.mjs`: uses Chrome DevTools device emulation to capture desktop/mobile simulation screenshots and fail on any horizontal overflow or clipped component bounds.
 
 ## Evidence Rules

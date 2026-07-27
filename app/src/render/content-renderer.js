@@ -448,8 +448,14 @@ function renderList(block) {
   return `<${tag} class="course-list">${(block.items || []).map((item) => `<li>${renderSpans(item)}</li>`).join('')}</${tag}>`;
 }
 
+function webImageVariant(src) {
+  const value = String(src || '');
+  return /^\/courses\/.*\/assets\/images\/.*\.(?:png|jpe?g|bmp)$/i.test(value) ? `${value}.webp` : '';
+}
+
 function deferredImage(src, alt = '', className = '') {
-  return `<span class="media-placeholder ${escapeAttr(className)}" data-media-state="pending"><img class="deferred-image" data-src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" decoding="async"><span class="media-placeholder-label" aria-hidden="true">图片正在投递…</span></span>`;
+  const webp = webImageVariant(src);
+  return `<span class="media-placeholder ${escapeAttr(className)}" data-media-state="pending"><img class="deferred-image" data-src="${escapeAttr(src)}"${webp ? ` data-webp="${escapeAttr(webp)}"` : ''} alt="${escapeAttr(alt)}" decoding="async"><span class="media-placeholder-label" aria-hidden="true">图片正在投递…</span></span>`;
 }
 
 export function initDeferredMedia(root = document) {
@@ -476,15 +482,25 @@ export function initDeferredMedia(root = document) {
     const image = placeholder.querySelector('img[data-src]');
     if (!image) return;
     placeholder.dataset.mediaState = 'loading';
-    image.addEventListener('load', () => { placeholder.dataset.mediaState = 'loaded'; }, { once: true });
-    image.addEventListener('error', () => {
+    image.onload = () => {
+      image.onload = null;
+      image.onerror = null;
+      placeholder.dataset.mediaState = 'loaded';
+    };
+    image.onerror = () => {
+      if (image.dataset.webp && image.src.endsWith('.webp')) {
+        image.src = image.dataset.src;
+        return;
+      }
+      image.onload = null;
+      image.onerror = null;
       placeholder.dataset.mediaState = 'error';
       const label = placeholder.querySelector('.media-placeholder-label');
       if (label) label.textContent = '图片投递失败 · 点击重试';
       image.removeAttribute('src');
       image.dataset.retry = '1';
-    }, { once: true });
-    image.src = image.dataset.src;
+    };
+    image.src = image.dataset.webp || image.dataset.src;
   };
   if (!('IntersectionObserver' in window)) {
     placeholders.forEach(load);

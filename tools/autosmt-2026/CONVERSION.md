@@ -407,12 +407,13 @@ node tools/autosmt-2026/scripts/test-step-simulation.mjs
 node tools/autosmt-2026/scripts/test-fidelity-media.mjs
 ```
 
-逐门生成分离部署包（全部 `assets/` 资源放同源 sibling 目录，部署 `.pigeon` 仅保留 JSON/manifest，避免首次进入课程下载全部图片/媒体）：
+逐门生成分离部署包（全部 `assets/` 资源放同源 sibling 目录，部署 `.pigeon` 仅保留 JSON/manifest，避免首次进入课程下载全部图片/媒体），再生成无损 WebP 图片变体：
 
 ```powershell
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-manufacturing --collection 2026-vocational-preliminary
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-devices --collection 2026-vocational-preliminary
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-packaging --collection 2026-vocational-preliminary
+python tools/autosmt-2026/scripts/optimize-delivery-images.py
 ```
 
 若只需普通小课程的单包打包，才使用 `node tools/build-pigeon.mjs <courseId>`；三门 AutoSMT
