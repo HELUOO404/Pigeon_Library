@@ -94,7 +94,7 @@ npm start                     # 默认 http://localhost:8787
 | `PORT` | 监听端口(默认 8787) |
 | `NODE_ENV` | 设 `production` 时会话 cookie 启用 `Secure`(**需 HTTPS**) |
 | `CORS_ORIGINS` | 允许携带 cookie 的前端源,逗号分隔。**生产改成你的前端域名** |
-| `TRUST_PROXY` | 前面的反向代理层数。**IIS/Nginx 反代部署必须设 `1`**,否则限流按反代地址归并——一个用户连错几次密码会把全站挡在 429 外。直连公网保持 `0`(信任 `X-Forwarded-For` 会让攻击者伪造该头绕过限流) |
+| `TRUST_PROXY` | 本机反向代理。**IIS/Nginx/cloudflared 反代部署设 `loopback`**,仅信任环回代理链中的 `X-Forwarded-For`;否则限流按反代地址归并——一个用户连错几次密码会把全站挡在 429 外。直连公网保持 `0` |
 | `SESSION_TTL_DAYS` | 会话有效期(默认 30) |
 | `SEED_ADMIN_USER/PASS` | 可选,预置管理员;不设则**首个注册者自动成为管理员**。公网部署建议配置:否则从部署到你注册之间,任何人抢注即拿到管理权 |
 
@@ -127,7 +127,7 @@ npm start                     # 默认 http://localhost:8787
    npm install
    copy .env.example .env
    ```
-   编辑 `.env`:`NODE_ENV=production`、`PORT=8787`、`CORS_ORIGINS=https://你的域名`(同源部署时其实不跨域,见 5.4)、**`TRUST_PROXY=1`**(IIS 反代必须设,否则限流失效见 §四表格)、并建议设 `SEED_ADMIN_USER/PASS` 占住管理员位。
+   编辑 `.env`:`NODE_ENV=production`、`PORT=8787`、`CORS_ORIGINS=https://你的域名`(同源部署时其实不跨域,见 5.4)、**`TRUST_PROXY=loopback`**(本机反代必须设,否则限流失效见 §四表格)、并建议设 `SEED_ADMIN_USER/PASS` 占住管理员位。
 
 ### 5.2 把 Node 后端注册为 Windows 服务(NSSM)
 

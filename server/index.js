@@ -87,8 +87,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: { code: 'internal', message: '服务器内部错误' } });
 });
 
-const server = app.listen(config.port, () => {
-  console.log(`PigeonLib sync server → http://localhost:${config.port}  (CORS: ${config.corsOrigins.join(', ')})`);
+const server = app.listen(config.port, '127.0.0.1', () => {
+  console.log(`PigeonLib sync server → http://127.0.0.1:${config.port}  (CORS: ${config.corsOrigins.join(', ')})`);
 });
 
 function shutdown() {
