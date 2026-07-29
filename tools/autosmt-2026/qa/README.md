@@ -9,3 +9,6 @@ These screenshots are reproducible visual checks for the offline-media extension
 - `step-simulation-verified.png`: simulated correct selection plus media-ended state; the status reports tail-frame hold and Continue is enabled while the next step remains locked.
 
 The QA fixture is `app/offline-runtime-qa.html`. It imports the same renderer and interaction module used by `learn.html`; it is not part of any course package. `scripts/capture-runtime-qa.mjs` applies exact device metrics and fails on document or component overflow. The verified screenshot uses a simulated successful media event; real captured Experiment 43 media must still receive playback, decode, tail-frame, and continuation checks after download.
+
+- `test-progressive-media-browser.mjs`: cold-cache request gate for typed video, experiment clips, reusable gates, one active source, and mobile zero-clip behavior.
+- `test-poster-geometry-bandwidth.mjs`: captures real video/experiment posters for all three courses, asserts intrinsic aspect-ratio display, and enforces poster p90 ≤64 KiB and maximum ≤100 KiB. Generated screenshots/reports remain ignored.

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -45,7 +46,7 @@ try {
     },
   }));
   writeFileSync(path.join(source, 'assets', 'media', 'a.php'), new Uint8Array([0, 1, 2, 3]));
-  writeFileSync(path.join(source, 'assets', 'images', 'figure.png'), new Uint8Array([137, 80, 78, 71]));
+  writeFileSync(path.join(source, 'assets', 'images', 'figure.png'), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'));
   writeFileSync(path.join(source, 'assets', 'simulations', 'demo', 'runtime.js'), 'fetch("./data.json")');
   writeFileSync(path.join(source, 'assets', 'simulations', 'demo', 'data.json'), '{"ok":true}');
 
@@ -63,14 +64,21 @@ try {
   assert.equal(deployment['assets/simulations/demo/runtime.js'], undefined);
   assert.ok(backup['assets/media/a.php']);
   assert.ok(backup['assets/images/figure.png']);
+  assert.ok(backup['assets/generated/images/figure.png.webp']);
   assert.ok(backup['assets/simulations/demo/runtime.js']);
   assert.ok(existsSync(path.join(output, 'assets', 'media', 'a.php')));
   assert.ok(existsSync(path.join(output, 'assets', 'images', 'figure.png')));
+  assert.ok(existsSync(path.join(output, 'assets', 'generated', 'images', 'figure.png.webp')));
   assert.ok(existsSync(path.join(output, 'assets', 'simulations', 'demo', 'data.json')));
   const report = JSON.parse(readFileSync(path.join(output, 'delivery-manifest.json'), 'utf8'));
   assert.equal(report.resourceClosure.missing.length, 0);
   assert.equal(report.resourceClosure.external.length, 0);
-  assert.equal(report.deployment.externalAssets.length, 4);
+  assert.equal(report.deployment.externalAssets.length, 5);
+  const generatedAsset = report.deployment.externalAssets.find((asset) => asset.path === 'assets/generated/images/figure.png.webp');
+  assert.ok(generatedAsset);
+  const generatedBytes = readFileSync(path.join(output, generatedAsset.path));
+  assert.equal(generatedAsset.bytes, generatedBytes.length);
+  assert.equal(generatedAsset.sha256, createHash('sha256').update(generatedBytes).digest('hex'));
   assert.match(report.deployment.sha256, /^[a-f0-9]{64}$/);
   console.log('course-delivery: ok');
 } finally {

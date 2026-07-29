@@ -1,4 +1,6 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -143,7 +145,7 @@ const manifestPath = path.join(courseDir, 'manifest.json');
 const contentPath = path.join(courseDir, 'content.json');
 if (!existsSync(manifestPath) || !existsSync(contentPath)) throw new Error('Course source must include manifest.json and content.json.');
 const manifest = parseJson(manifestPath);
-const content = parseJson(contentPath);
+let content = parseJson(contentPath);
 if (manifest.id !== courseId) throw new Error(`manifest.id must equal ${courseId}.`);
 if (!manifest.title || !Array.isArray(manifest.chapters) || !manifest.chapters.length) throw new Error('Manifest must include title and chapters.');
 
@@ -159,6 +161,24 @@ if (collection === DEFAULT_COLLECTION) {
   }
 }
 
+const derivativeRoot = mkdtempSync(path.join(tmpdir(), 'pigeon-media-'));
+const cleanupDerivatives = () => rmSync(derivativeRoot, { recursive: true, force: true });
+process.once('exit', cleanupDerivatives);
+const derivativeContent = path.join(derivativeRoot, 'content.json');
+const generated = spawnSync('python', [
+  path.join(ROOT, 'tools', 'autosmt-2026', 'scripts', 'generate-media-derivatives.py'),
+  '--course-dir', courseDir,
+  '--stage-dir', derivativeRoot,
+  '--content', contentPath,
+  '--output-content', derivativeContent,
+], { cwd: ROOT, encoding: 'utf8' });
+if (generated.status !== 0) {
+  cleanupDerivatives();
+  throw new Error(generated.stderr.trim() || 'Media derivative generation failed.');
+}
+content = JSON.parse(readFileSync(derivativeContent, 'utf8'));
+const derivativeRecords = JSON.parse(generated.stdout).records || [];
+
 const references = [...new Set([
   ...(manifest.cover ? [manifest.cover] : []),
   ...contentReferences(content),
@@ -172,8 +192,11 @@ for (const reference of references) {
     continue;
   }
   const clean = cleanReference(reference);
-  const target = path.resolve(courseDir, clean);
-  if (!target.startsWith(`${courseDir}${path.sep}`) || !statSync(target, { throwIfNoEntry: false })?.isFile()) missing.push(reference);
+  const sourceTarget = path.resolve(courseDir, clean);
+  const derivedTarget = path.resolve(derivativeRoot, clean);
+  const insideSource = sourceTarget.startsWith(`${courseDir}${path.sep}`) && statSync(sourceTarget, { throwIfNoEntry: false })?.isFile();
+  const insideDerived = derivedTarget.startsWith(`${derivativeRoot}${path.sep}`) && statSync(derivedTarget, { throwIfNoEntry: false })?.isFile();
+  if (!insideSource && !insideDerived) missing.push(reference);
 }
 if (external.length) throw new Error(`Offline course contains external resource references:\n${external.join('\n')}`);
 if (missing.length) throw new Error(`Course resource closure is incomplete:\n${missing.join('\n')}`);
@@ -182,7 +205,22 @@ const sourceInventory = walk(courseDir).map((file) => {
   const relative = relativeTo(courseDir, file);
   return { file, relative, size: statSync(file).size };
 });
+sourceInventory.push(...derivativeRecords.map((record) => {
+  const file = path.join(derivativeRoot, record.path);
+  return { file, relative: record.path, size: statSync(file).size, derived: record.kind };
+}));
+const inventoryPaths = new Set();
+for (const item of sourceInventory) {
+  if (inventoryPaths.has(item.relative)) throw new Error(`Generated derivative path collides with a source file: ${item.relative}`);
+  inventoryPaths.add(item.relative);
+}
+const contentEntry = sourceInventory.find((item) => item.relative === 'content.json');
+if (contentEntry) {
+  contentEntry.file = derivativeContent;
+  contentEntry.size = statSync(derivativeContent).size;
+}
 const referencedAssets = new Set(references.map(cleanReference).filter((reference) => reference.startsWith('assets/')));
+for (const record of derivativeRecords) if (record.kind === 'image-webp') referencedAssets.add(record.path);
 const backupPlan = portableBackupPlan(sourceInventory, MAX_PORTABLE_BYTES);
 const fullEntries = backupPlan.skip ? null : {};
 const deploymentEntries = {};
@@ -225,7 +263,8 @@ writeFileSync(deploymentPath, deploymentArchive);
 writeFileSync(webDeploymentPath, deploymentArchive);
 
 for (const asset of externalAssets) {
-  const source = path.join(courseDir, asset.path);
+  const source = sourceInventory.find((item) => item.relative === asset.path)?.file;
+  if (!source) throw new Error(`External asset source is missing: ${asset.path}`);
   const target = path.join(outputDir, asset.path);
   mkdirSync(path.dirname(target), { recursive: true });
   cpSync(source, target, { force: true });
@@ -237,7 +276,7 @@ const report = {
   courseId,
   title: manifest.title,
   source: relativeTo(ROOT, courseDir),
-  sourceFiles: sourceInventory.map(({ relative, size, sha256: hash }) => ({ path: relative, bytes: size, sha256: hash })),
+  sourceFiles: sourceInventory.map(({ relative, size, sha256: hash, derived }) => ({ path: relative, bytes: size, sha256: hash, ...(derived ? { derived } : {}) })),
   resourceClosure: { references: references.length, missing: [], external: [] },
   deployment: {
     package: relativeTo(ROOT, deploymentPath),
@@ -263,6 +302,8 @@ const report = {
     },
 };
 writeFileSync(path.join(outputDir, 'delivery-manifest.json'), `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+cleanupDerivatives();
+process.removeListener('exit', cleanupDerivatives);
 console.log(JSON.stringify({
   courseId,
   collection: collection || null,

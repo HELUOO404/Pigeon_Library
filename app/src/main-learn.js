@@ -8,13 +8,13 @@ import { icon, hydrateIcons } from './core/icons.js';
 import { initSession, api } from './core/session.js';
 import { initSync } from './core/sync.js';
 import { initAuthUI } from './core/auth-ui.js';
-import { activateContentTab, initDeferredMedia, markMastered, markRead, renderCourseContent, sandboxTokenSnapshot } from './render/content-renderer.js';
+import { activateContentTab, initDeferredMedia, loadDeferredImages, markMastered, markRead, renderCourseContent, sandboxTokenSnapshot } from './render/content-renderer.js';
 import { initExamEngine, backToStudy, exitExam, nextExamQuestion, openExam, prevExamQuestion, selectExamOption, selectMatchLeft, selectMatchRight, setExamChapter, sortDragStart, sortDrop, startCustomExam, startExam } from './render/exam-engine.js';
 import { bindTooltipEvents, initGlossary, initTermTips, navigateToTerm, processTermTips } from './render/glossary.js';
 import { closePanel, handlePanelAction, initPanels, openPanel } from './render/panels.js';
 import { initQuiz, restoreQuizResults, selectOpt, submitQuiz } from './render/quiz.js';
 import { getReadingSectionId, renderSidebar, renderTabs, setSidebarChapter, setSidebarSection, toggleSidebarChapter, updateFooterProgress, updateSidebarProgress } from './render/sidebar-renderer.js';
-import { closeStepSimulationFullscreen, handleStepSimulationAction, initStepSimulations } from './render/step-simulation.js';
+import { closeStepSimulationFullscreen, handleStepSimulationAction, initStepSimulations, stopStepSimulationMedia } from './render/step-simulation.js';
 import { handleParamSelectAction, initParamSelects } from './render/param-select.js';
 import * as wrongbook from './render/wrongbook.js';
 import { getSections } from './render/utils.js';
@@ -33,6 +33,7 @@ let readingResizeObserver;
 let readingNavigationRequestId = 0;
 let readingNavigationTimer = 0;
 let readingNavigationTarget = null;
+let disposeMainMedia = () => {};
 const READING_NAVIGATION_SETTLE_MS = 1200;
 
 async function loadCourse(courseId, srcId, versionId) {
@@ -222,9 +223,38 @@ function setCardExpanded(header, expanded, onExpanded) {
   body.addEventListener('transitionend', finishTransition);
 }
 
+function loadSectionImages(sectionId) {
+  const section = document.querySelector(`.course-section[data-section-id="${CSS.escape(sectionId)}"]`);
+  if (!section) return;
+  const connection = navigator.connection;
+  const constrained = connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType);
+  loadDeferredImages(section, constrained ? 1 : 2);
+}
+
+function unloadCourseVideos(root = document) {
+  root?.querySelectorAll?.('.course-video video').forEach((video) => {
+    video.pause();
+    video.querySelectorAll('source, track').forEach((element) => element.remove());
+    video.removeAttribute('src');
+    video.load();
+    const figure = video.closest('.course-video');
+    const gate = figure?.querySelector('.course-video-gate');
+    const button = gate?.querySelector('.course-video-load');
+    const status = gate?.querySelector('.course-video-status');
+    video.dataset.disposed = '1';
+    if (gate) gate.hidden = false;
+    if (button) button.disabled = false;
+    if (status) status.textContent = '';
+    if (figure) figure.dataset.videoState = 'idle';
+    video.remove();
+  });
+}
+
 function switchChapter(chapterId) {
   if (document.getElementById('examView')?.classList.contains('active')) exitExam();
   closeStepSimulationFullscreen(store);   // 换章时强制退出仿真全屏覆盖层
+  const outgoingChapter = document.getElementById(`ch-${currentChapter}`);
+  if (outgoingChapter && currentChapter !== chapterId) unloadCourseVideos(outgoingChapter);
   currentChapter = chapterId;
   setExamChapter(chapterId);
   const firstSection = sections.find((section) => section.chapterId === chapterId);
@@ -274,6 +304,7 @@ function navigateTo(sectionId, cardId) {
   else document.getElementById(`ch-${chapter}`)?.style.setProperty('display', 'block');
   currentSection = sectionId;
   setSidebarSection(currentSection);
+  loadSectionImages(sectionId);
   recordLastCourse(sectionId);
   setFooterMode('normal');
   if (cardId) {
@@ -334,6 +365,7 @@ function refreshProgress() {
 }
 
 function bindEvents() {
+  document.addEventListener('pigeon-media-start', () => unloadCourseVideos());
   document.addEventListener('click', (event) => {
     const target = event.target.closest('[data-action]');
     if (!target) return;
@@ -363,13 +395,23 @@ function bindEvents() {
         else setTimeout(processTerms, 0);
       } : undefined;
       setCardExpanded(target, expanded, afterExpand);
-      if (!expanded) closeStepSimulationFullscreen(store); // 收卡时退出仿真全屏
+      if (!expanded) {
+        closeStepSimulationFullscreen(store); // 收卡时退出仿真全屏
+        unloadCourseVideos(target.closest('.knowledge-card'));
+      }
     } else if (action === 'mark-mastered') markMastered(target.dataset.kpId, target, store, refreshProgress);
     else if (action === 'switch-content-tab') activateContentTab(target);
     else if (action === 'load-course-video') {
       const figure = target.closest('.course-video');
-      if (!figure) return;
+      const gate = target.closest('.course-video-gate');
+      if (!figure || !gate || figure.dataset.videoState === 'loading') return;
+      const status = gate.querySelector('.course-video-status');
+      figure.dataset.videoState = 'loading';
+      target.disabled = true;
+      if (status) status.textContent = '正在加载视频…';
       const video = document.createElement('video');
+      unloadCourseVideos();
+      stopStepSimulationMedia(document, '', store);
       video.controls = true;
       video.playsInline = true;
       video.preload = 'metadata';
@@ -384,9 +426,30 @@ function bindEvents() {
         track.default = true;
         video.append(track);
       }
-      figure.dataset.videoState = 'loaded';
-      target.closest('.course-video-gate')?.replaceWith(video);
-      video.play().catch(() => {});
+      const fail = () => {
+        if (video.dataset.disposed) return;
+        video.pause();
+        video.querySelectorAll('source, track').forEach((element) => element.remove());
+        video.removeAttribute('src');
+        video.load();
+        video.remove();
+        figure.dataset.videoState = 'error';
+        gate.hidden = false;
+        target.disabled = false;
+        if (status) status.textContent = '视频加载失败，请重试';
+      };
+      video.addEventListener('error', fail, { once: true });
+      video.addEventListener('loadedmetadata', () => {
+        figure.dataset.videoState = 'loaded';
+        if (status) status.textContent = '';
+      }, { once: true });
+      gate.hidden = true;
+      figure.append(video);
+      video.play().catch(() => {
+        if (video.dataset.disposed || !video.isConnected || figure.querySelector('video') !== video) return;
+        figure.dataset.videoState = 'loaded';
+        gate.hidden = true;
+      });
     }
     else if (action === 'select-quiz') selectOpt(target);
     else if (action === 'submit-quiz') submitQuiz(target.dataset.qid);
@@ -452,7 +515,11 @@ function bindEvents() {
     }
   });
   window.addEventListener('beforeunload', saveStudyTime);
-  window.addEventListener('pagehide', () => course?.revoke());
+  window.addEventListener('pagehide', () => {
+    disposeMainMedia();
+    unloadCourseVideos();
+    course?.revoke();
+  });
 
   // sandbox 消息只认本页生成的 iframe(contentWindow 比对):统一处理高度、主题/模式握手与练习状态。
   window.addEventListener('message', (event) => {
@@ -657,7 +724,7 @@ async function main() {
   });
   renderSidebar(document.getElementById('sidebar'), course.manifest, store, currentChapter, currentSection);
   renderCourseContent(document.getElementById('main'), course, store);
-  initDeferredMedia(document.getElementById('main'));
+  disposeMainMedia = initDeferredMedia(document.getElementById('main'));
   if (currentChapter !== course.manifest.chapters[0]?.id) {
     document.querySelectorAll('.chapter-content').forEach((chapter) => {
       chapter.style.display = chapter.id === `ch-${currentChapter}` ? 'block' : 'none';

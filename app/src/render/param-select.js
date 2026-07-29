@@ -8,6 +8,7 @@ import { deferredImage, initDeferredMedia } from './deferred-media.js';
 const blocks = new Map();
 const memoryStates = new Map();   // 访客 store 不持久化(get 恒返回 fallback),练习状态会话内暂存
 const openSims = new Map();       // { blockId: Set<simIndex> } 仿真面板开合(会话态)
+const mediaDisposers = new Map(); // 局部重渲染前释放图片 observer/listener
 const STATE_VERSION = 1;
 
 function blockId(block) {
@@ -365,9 +366,11 @@ function replaceBlock(id, store) {
   const active = activeElement?.dataset;
   const focusRepresentation = activeElement?.closest?.('.param-select-mobile') ? '.param-select-mobile' : '.param-select-table-wrap';
   const focusSelector = active?.param && active?.paramId === id ? `[data-param="${CSS.escape(active.param)}"]` : '';
+  mediaDisposers.get(id)?.();
+  mediaDisposers.delete(id);
   root.outerHTML = renderBlockHtml(entry.block, entry.course, stateFor(id, store));
   const replacement = document.querySelector(`.param-select[data-param-id="${CSS.escape(id)}"]`);
-  if (replacement) initDeferredMedia(replacement);
+  if (replacement) mediaDisposers.set(id, initDeferredMedia(replacement));
   if (focusSelector) {
     document.querySelector(`.param-select[data-param-id="${CSS.escape(id)}"] ${focusRepresentation} ${focusSelector}`)?.focus({ preventScroll: true });
   }

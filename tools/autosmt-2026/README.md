@@ -37,14 +37,15 @@ There is currently no approved full-course generation script. The retired `archi
 - `scripts/enqueue-autosmt-job.ps1`: adds a credential-free job JSON file to the local queue.
 - `scripts/build-autosmt-section-index.mjs`: derives included experiment/engineering targets from captured section menus.
 - `scripts/index-autosmt-reference-images.mjs`: indexes prior-year image evidence.
-- `scripts/build-course-delivery.mjs`: produces a deployment package, sibling local media, and portable full backup once a course source is complete.
+- `scripts/build-course-delivery.mjs`: produces the split deployment and portable full backup, generates manifest-verified lossless WebP final images, and derives compressed WebP first-frame posters for videos that lack an explicit poster. Requires Pillow and an available ffmpeg; the helper may reuse `imageio_ffmpeg` when present.
+- `scripts/generate-media-derivatives.py`: build-internal staging helper; it never rewrites course source content.
+- `scripts/optimize-delivery-images.py`: compatibility entry point that rebuilds selected deliveries through the closure-safe builder; it no longer mutates output after the manifest is written.
 - `scripts/build-activity-resource-inventory.mjs`: derives direct asset references and dynamic PHP/video endpoints from every saved activity tab without changing the raw snapshots.
 - `scripts/audit-capture-integrity.mjs`: hard-checks the 49-activity scope, all 80 tab pairs, progress coverage, Experiment 1/9 tab structure, answer-bearing page count, and resource-inventory coverage.
 - `scripts/test-pigeon-media-loader.mjs` and `scripts/test-step-simulation.mjs`: local runtime regression checks for the offline-media extension.
 - `scripts/test-offline-content-renderer.mjs`: verifies package-relative HTML resources using both quote styles and local video asset resolution.
 - `scripts/test-fidelity-media.mjs`: verifies that the project fidelity gate covers video titles, HTML/sandbox visible text, and step questions/options stored in source-page scripts.
-- `scripts/test-course-delivery.mjs`: builds and removes a temporary course to verify resource-closure checks, split asset delivery (all `assets/` paths, including images/media/simulations), the full backup, assetBase, and SHA-256 reporting.
-- `scripts/optimize-delivery-images.py`: after delivery build, generates lossless `.webp` siblings for PNG/JPEG/BMP images; the web renderer prefers these variants and falls back to originals. Requires Pillow.
+- `scripts/test-course-delivery.mjs`: builds and removes a temporary course to verify resource-closure checks, split asset delivery (all `assets/` paths, including images/media/simulations and generated WebP variants), the full backup, assetBase, and SHA-256 reporting.
 - `scripts/capture-runtime-qa.mjs`: uses Chrome DevTools device emulation to capture desktop/mobile simulation screenshots and fail on any horizontal overflow or clipped component bounds.
 
 ## Evidence Rules

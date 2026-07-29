@@ -5,9 +5,9 @@ import { icon } from '../core/icons.js';
 import { escapeHtml, getSections, renderSpans, sectionDomId, textFromSpans } from './utils.js';
 import { renderStepSimulation } from './step-simulation.js';
 import { renderParamSelect } from './param-select.js';
-import { deferredImage, initDeferredMedia } from './deferred-media.js';
+import { deferredImage, initDeferredMedia, loadDeferredImages } from './deferred-media.js';
 
-export { initDeferredMedia };
+export { initDeferredMedia, loadDeferredImages };
 
 /**
  * sandbox 块里的相对资源路径(assets/...)在运行时并不存在,需解析成解包后的 Blob URL。
@@ -553,7 +553,7 @@ function renderBlock(block, course, allowTabSet = true) {
       const src = course.resolveAsset(block.src);
       const poster = block.poster ? course.resolveAsset(block.poster) : '';
       const captions = block.captions ? course.resolveAsset(block.captions) : '';
-      return `<figure class="course-video" data-video-state="idle"><figcaption>${escapeHtml(block.title || '')}</figcaption><div class="course-video-gate"><button type="button" class="course-video-load" data-action="load-course-video" data-src="${escapeAttr(src)}"${poster ? ` data-poster="${escapeAttr(poster)}"` : ''}${captions ? ` data-captions="${escapeAttr(captions)}"` : ''}>${icon('play')}<span>加载并播放视频</span><small>点击后才使用网络流量</small></button></div></figure>`;
+      return `<figure class="course-video" data-video-state="idle"><figcaption>${escapeHtml(block.title || '')}</figcaption><div class="course-video-gate">${poster ? deferredImage(poster, '', 'course-video-poster') : ''}<button type="button" class="course-video-load" data-action="load-course-video" data-src="${escapeAttr(src)}"${poster ? ` data-poster="${escapeAttr(poster)}"` : ''}${captions ? ` data-captions="${escapeAttr(captions)}"` : ''}>${icon('play')}<span>加载并播放视频</span><small>点击后才使用完整视频流量</small></button><span class="course-video-status" role="status" aria-live="polite"></span></div></figure>`;
     }
     case 'stepSimulation':
       return renderStepSimulation(block, course);
@@ -628,8 +628,10 @@ export function renderCourseContent(root, course, store) {
   const html = course.manifest.chapters.map((chapter, idx) => `
     <div class="chapter-content" id="ch-${escapeHtml(chapter.id)}" style="display:${idx === 0 ? 'block' : 'none'}">
       ${chapter.sections.map((section) => `
-        ${renderOverview(section, course)}
-        ${section.knowledgePoints.map((kp) => renderKnowledgePoint(kp, course, progress)).join('')}
+        <section class="course-section" data-section-id="${escapeAttr(section.id)}">
+          ${renderOverview(section, course)}
+          ${section.knowledgePoints.map((kp) => renderKnowledgePoint(kp, course, progress)).join('')}
+        </section>
       `).join('')}
     </div>
   `).join('');

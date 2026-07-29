@@ -2,10 +2,13 @@
 //   支持两种形态:扁平 steps(单组无组头)与 groups(组头本身是下拉答题项,忠实原站两级计分)。
 //   布局:页面内步骤列限高内滚 + 覆盖层全屏练习;移动端(≤768px)不渲染视频面板。
 import { icon } from '../core/icons.js';
+import { deferredImage, initDeferredMedia } from './deferred-media.js';
 import { escapeHtml } from './utils.js';
 
 const simulations = new Map();
 const visibleMedia = new Set();     // 本次页面会话内答对过的仿真 → 才创建 video(防刷新直显尾帧)
+const mediaLeases = new Map();      // { simulationId: { generation, video } }，过期回调不得推进状态
+const mediaDisposers = new Map();   // 重渲染前释放首帧 observer/listener
 const fullscreenIds = new Set();    // 处于全屏覆盖层的仿真(会话态,不持久化)
 const memoryStates = new Map();     // 会话内状态兜底:访客 store 不持久化(get 恒返回 fallback),练习状态在此暂存
 const STATE_VERSION = 3;
@@ -205,15 +208,18 @@ function renderMedia(id, block, course, state) {
   if (isMobile()) return ''; // 移动端不渲染视频面板(答对以行级视觉确认代替);CSS 同步隐藏
   const mediaVisible = visibleMedia.has(id);
   const display = mediaVisible ? stepAt(block, state.displayStep) : null;
+  const preview = display || stepAt(block, Math.max(1, state.displayStep || 1));
   const src = assetUrl(course, display?.clip);
-  const poster = assetUrl(course, display?.poster || block.poster);
+  const poster = assetUrl(course, preview?.poster || block.poster);
   const label = mediaVisible && state.displayStep > 0 ? `步骤 ${state.displayStep}` : '仿真视频';
-  const replay = src
+  const replay = preview?.clip && state.displayStep > 0
     ? `<button type="button" class="step-simulation-replay" data-action="simulation-replay" data-simulation-id="${escapeHtml(id)}" title="重新播放" aria-label="重新播放">${icon('rotate-ccw', { size: 16 })}</button>`
     : '';
   const player = src
     ? `<video class="step-simulation-video" data-simulation-id="${escapeHtml(id)}" data-media-step="${state.displayStep}" ${poster ? `poster="${escapeHtml(poster)}"` : ''} playsinline preload="metadata" controls><source src="${escapeHtml(src)}"></video>`
-    : '<div class="step-simulation-video step-simulation-video-empty" aria-hidden="true"></div>';
+    : (poster
+      ? deferredImage(poster, `${label}首帧`, 'step-simulation-poster')
+      : '<div class="step-simulation-video step-simulation-video-empty" aria-hidden="true"></div>');
   return `<div class="step-simulation-media">
     <div class="step-simulation-media-head">
       <div class="step-simulation-media-label">${escapeHtml(label)}</div>
@@ -271,15 +277,45 @@ function renderSimulation(block, course, state = defaultState()) {
   </div>`;
 }
 
+function disposeMedia(id) {
+  const previous = mediaLeases.get(id);
+  const generation = (previous?.generation || 0) + 1;
+  const video = previous?.video;
+  if (video) {
+    video.pause();
+    video.querySelectorAll('source, track').forEach((element) => element.remove());
+    video.removeAttribute('src');
+    video.load();
+  }
+  mediaLeases.set(id, { generation, video: null });
+  return generation;
+}
+
+function leaseMedia(id, video) {
+  const generation = disposeMedia(id);
+  mediaLeases.set(id, { generation, video });
+  return generation;
+}
+
+function ownsMedia(id, generation, video) {
+  const lease = mediaLeases.get(id);
+  return lease?.generation === generation && lease.video === video && video.isConnected;
+}
+
 function replaceSimulation(id, store) {
   const entry = simulations.get(id);
   const root = document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"]`);
   if (!entry || !root) return;
+  disposeMedia(id);
+  mediaDisposers.get(id)?.();
+  mediaDisposers.delete(id);
   const active = document.activeElement?.dataset;
   const focusSelector = active?.step ? `[data-step="${CSS.escape(active.step)}"]`
     : active?.group && document.activeElement?.dataset?.action === 'simulation-group-select' ? `[data-action="simulation-group-select"][data-group="${CSS.escape(active.group)}"]`
       : '';
   root.outerHTML = renderSimulation(entry.block, entry.course, stateFor(id, store));
+  const replacement = document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"]`);
+  if (replacement) mediaDisposers.set(id, initDeferredMedia(replacement));
   wireMedia(id, store);
   if (focusSelector) {
     document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"] ${focusSelector}`)?.focus({ preventScroll: true });
@@ -306,8 +342,13 @@ function showStepMedia(id, entry, state, store) {
   if (isMobile()) return; // 移动端无视频面板,行级高亮即是确认
   const media = root.querySelector('.step-simulation-media');
   if (!media) return;
+  disposeMedia(id);
+  mediaDisposers.get(id)?.();
+  mediaDisposers.delete(id);
   visibleMedia.add(id);
   media.outerHTML = renderMedia(id, entry.block, entry.course, state);
+  const currentMedia = root.querySelector('.step-simulation-media');
+  if (currentMedia) mediaDisposers.set(id, initDeferredMedia(currentMedia));
   wireMedia(id, store);
   void playDisplayed(id, store);
 }
@@ -322,12 +363,18 @@ async function playDisplayed(id, store) {
   const root = document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"]`);
   const video = root?.querySelector('.step-simulation-video');
   if (!video?.querySelector('source')?.getAttribute('src')) return;
+  const generation = mediaLeases.get(id)?.video === video
+    ? mediaLeases.get(id).generation
+    : leaseMedia(id, video);
+  document.dispatchEvent(new CustomEvent('pigeon-media-start', { detail: { simulationId: id } }));
+  pauseOtherSimulationMedia(id, store);
   try {
     video.currentTime = 0;
     await video.play();
   } catch {
     // Browser autoplay policy may require the user to press the native play control.
   }
+  if (!ownsMedia(id, generation, video)) return;
 }
 
 function wireMedia(id, store) {
@@ -335,13 +382,19 @@ function wireMedia(id, store) {
   const video = root?.querySelector('.step-simulation-video');
   if (!video || video.dataset.wired) return;
   video.dataset.wired = '1';
+  const generation = mediaLeases.get(id)?.video === video
+    ? mediaLeases.get(id).generation
+    : leaseMedia(id, video);
   const initialState = stateFor(id, store);
   const initialStep = Number(video.dataset.mediaStep);
   if (initialState.played[initialStep]) {
     if (video.readyState >= 1) holdTailFrame(video);
-    else video.addEventListener('loadedmetadata', () => holdTailFrame(video), { once: true });
+    else video.addEventListener('loadedmetadata', () => {
+      if (ownsMedia(id, generation, video)) holdTailFrame(video);
+    }, { once: true });
   }
   video.addEventListener('ended', () => {
+    if (!ownsMedia(id, generation, video)) return;
     const entry = simulations.get(id);
     if (!entry) return;
     const state = stateFor(id, store);
@@ -389,7 +442,37 @@ function wireEscape(store) {
   });
 }
 
-/** 组件卸载/切卡时强制退出覆盖层(main-learn 在 toggle-card 与换章时调用)。 */
+function stopSimulationMedia(id, store) {
+  const entry = simulations.get(id);
+  const root = document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"]`);
+  if (!entry || !root) return;
+  disposeMedia(id);
+  mediaDisposers.get(id)?.();
+  mediaDisposers.delete(id);
+  visibleMedia.delete(id);
+  const media = root.querySelector('.step-simulation-media');
+  if (!media) return;
+  media.outerHTML = renderMedia(id, entry.block, entry.course, stateFor(id, store));
+  const replacement = root.querySelector('.step-simulation-media');
+  if (replacement) mediaDisposers.set(id, initDeferredMedia(replacement));
+}
+
+function pauseOtherSimulationMedia(exceptId = '', store) {
+  for (const [id, lease] of mediaLeases) {
+    if (id === exceptId || !lease.video) continue;
+    stopSimulationMedia(id, store);
+  }
+}
+
+export function stopStepSimulationMedia(root = document, exceptId = '', store) {
+  for (const [id, lease] of mediaLeases) {
+    if (id === exceptId || !lease.video) continue;
+    const simulation = document.querySelector(`.step-simulation[data-simulation-id="${CSS.escape(id)}"]`);
+    if (simulation && root.contains(simulation)) stopSimulationMedia(id, store);
+  }
+}
+
+/** 强制退出当前覆盖层；普通收卡/换章只处理实际处于全屏的仿真。 */
 export function closeStepSimulationFullscreen(store) {
   for (const id of [...fullscreenIds]) setFullscreen(id, store, false);
 }
@@ -398,6 +481,7 @@ export function renderStepSimulation(block, course) {
   const id = simulationId(block);
   if (!id) return '';
   simulations.set(id, { block, course });
+  disposeMedia(id);
   visibleMedia.delete(id);
   fullscreenIds.delete(id);
   return renderSimulation(block, course);
@@ -405,7 +489,10 @@ export function renderStepSimulation(block, course) {
 
 export function initStepSimulations(store) {
   wireEscape(store);
-  for (const id of simulations.keys()) replaceSimulation(id, store);
+  for (const id of simulations.keys()) {
+    disposeMedia(id);
+    replaceSimulation(id, store);
+  }
 }
 
 export function handleStepSimulationAction(target, store) {

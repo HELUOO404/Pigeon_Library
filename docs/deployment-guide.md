@@ -74,6 +74,12 @@ cd app && npm run build                           # → app/dist/
 
 纯静态部署下,用户数据全部留在浏览器本地(访客档案),无跨设备同步——这是完全合法的部署形态。
 
+### 3.1 媒体缓存与原子发布
+
+分离课程的 package、`assets/images`、`assets/media` 与 `delivery-manifest.json` 必须作为一个完整版本发布。推荐使用带字节版本的目录或内容哈希 URL；只有这类不可变 URL 才设置 `Cache-Control: public, max-age=31536000, immutable`。HTML、课程注册表和仍可能原地更新的 URL 必须 revalidate，不得套用 immutable。
+
+发布顺序固定为：上传新版本全部 assets → 上传课程 package/manifest → 最后切换 HTML/注册表引用。至少保留上一完整版本；回滚只切回上一引用，不在原路径逐文件覆盖。上线后以冷缓存和暖缓存各验证一次：图片/首帧 MIME 正确，重复访问不可变 URL 的传输字节为 0；视频响应包含 `Content-Length`、`Accept-Ranges: bytes`，`Range: bytes=0-1023` 返回 `206`、正确 `Content-Range` 与长度。任一资源 404、哈希不一致或 Range 失败都阻断发布。
+
 ---
 
 ## 四、可选:同步后端部署

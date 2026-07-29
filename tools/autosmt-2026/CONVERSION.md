@@ -351,7 +351,11 @@ Canvas 颜色或字体。操作练习初始五项必须为空且 Canvas 未绘�
 3. `manifest.assetBase` 仅指向同源本地分离资源；完整备份仍应包含全部媒体。不得把
    `http(s)://`、`//`、`/` 外部资源、PHP endpoint、登录 cookie 或动态网络请求写入包。
 4. 用构建器扫描 `content.json`、`manifest.json` 和所有块引用，逐一确认文件存在、路径未
-   越界、哈希可复现。找不到图片不许用空路径、占位图或幽灵引用掩盖；应报告源 URL 和文件。
+   越界、哈希可复现。构建器在临时目录生成与原图同像素尺寸的 lossless WebP，并在课程没有
+   显式 poster 时从同一视频约 0.5 秒处生成最长边不超过 1280px 的压缩 WebP 首帧（避开常见空白起始帧）；增强只写入构建副本，
+   不改课程源。全部派生文件必须与原资源一起进入 deployment/full 包的资源闭包、字节数和
+   SHA-256 清单。首帧 p90 必须不超过 64 KiB，单张硬上限 100 KiB；浏览器中按源宽高比完整显示，
+   不得裁切或拉伸。找不到图片不许用空路径、占位图或幽灵引用掩盖；应报告源 URL 和文件。
    源 `alt` 为空时保持为空并列入可访问性报告，不能凭图片内容猜写替代文本。
 5. 资源请求失败、控制台 404/CORS/脚本错误或字幕/海报缺失均阻断交付，除非该资源经证据
    证明原站本来就不存在，并在报告中明确记录。
@@ -407,13 +411,13 @@ node tools/autosmt-2026/scripts/test-step-simulation.mjs
 node tools/autosmt-2026/scripts/test-fidelity-media.mjs
 ```
 
-逐门生成分离部署包（全部 `assets/` 资源放同源 sibling 目录，部署 `.pigeon` 仅保留 JSON/manifest，避免首次进入课程下载全部图片/媒体），再生成无损 WebP 图片变体：
+逐门生成分离部署包（全部 `assets/` 资源放同源 sibling 目录，部署 `.pigeon` 仅保留 JSON/manifest，避免首次进入课程下载全部图片/媒体）。构建器同时生成清单内的无损 WebP 最终图和压缩视频首帧；需要 Pillow 和可用的 ffmpeg（已有 `imageio_ffmpeg` 时自动复用其二进制）：
 
 ```powershell
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-manufacturing --collection 2026-vocational-preliminary
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-devices --collection 2026-vocational-preliminary
 node tools/autosmt-2026/scripts/build-course-delivery.mjs 2026-ic-packaging --collection 2026-vocational-preliminary
-python tools/autosmt-2026/scripts/optimize-delivery-images.py
+# 或一次重建三门：python tools/autosmt-2026/scripts/optimize-delivery-images.py
 ```
 
 若只需普通小课程的单包打包，才使用 `node tools/build-pigeon.mjs <courseId>`；三门 AutoSMT
